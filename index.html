@@ -1,0 +1,2549 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="theme-color" content="#18181B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="المكتب الضريبي">
+<title>دفتر المكتب الضريبي المصري | إدارة الممولين والفحص والساب</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/svg+xml" href="./icon.svg">
+<link rel="apple-touch-icon" href="./icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-paper: #FAF8F5;
+  --surface-panel: #FFFFFF;
+  --surface-subtle: #F4F1EA;
+  --ink-primary: #18181B;
+  --ink-secondary: #52525B;
+  --ink-muted: #71717A;
+  --border-hair: #E4E4E7;
+  --border-strong: #D4D4D8;
+  --accent-brass: #854D0E;
+  --accent-brass-hover: #713F12;
+  --accent-brass-tint: #FEF9C3;
+  --status-urgent: #991B1B;
+  --status-urgent-bg: #FEF2F2;
+  --status-safe: #166534;
+  --status-safe-bg: #F0FDF4;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  font-style: normal !important;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-paper);
+  color: var(--ink-primary);
+  font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  direction: rtl;
+  text-align: right;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+}
+
+.num-tabular {
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
+}
+
+.app-shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 16px 88px 16px;
+}
+
+.top-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 0 14px 0;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background-color: var(--ink-primary);
+  color: var(--bg-paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--accent-brass);
+  flex-shrink: 0;
+}
+
+.brand-title {
+  font-size: clamp(1.15rem, 2.5vw, 1.45rem);
+  font-weight: 800;
+  margin: 0;
+  color: var(--ink-primary);
+  letter-spacing: -0.01em;
+}
+
+.brand-meta {
+  font-size: 0.82rem;
+  color: var(--ink-secondary);
+  margin: 2px 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nav-scroller {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-bottom: 1px solid var(--border-hair);
+  margin-bottom: 24px;
+  background-color: var(--bg-paper);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px 0;
+  min-width: max-content;
+}
+
+.nav-tab {
+  min-height: 44px;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: var(--ink-secondary);
+  font-family: 'Tajawal', sans-serif;
+  font-size: 0.96rem;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.nav-tab:hover {
+  color: var(--ink-primary);
+  background-color: var(--surface-subtle);
+}
+
+.nav-tab.active {
+  background-color: var(--ink-primary);
+  color: #FFFFFF;
+}
+
+.tab-count {
+  font-size: 0.78rem;
+  padding: 1px 7px;
+  border-radius: 4px;
+  background-color: rgba(133, 77, 14, 0.14);
+  color: var(--accent-brass);
+  font-weight: 800;
+}
+
+.nav-tab.active .tab-count {
+  background-color: var(--accent-brass);
+  color: #FFFFFF;
+}
+
+.btn {
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  white-space: nowrap;
+  border: 1px solid var(--border-strong);
+  background-color: var(--surface-panel);
+  color: var(--ink-primary);
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.btn:hover {
+  background-color: var(--surface-subtle);
+}
+
+.btn:focus-visible, .input-field:focus-visible, .select-field:focus-visible, .textarea-field:focus-visible, .nav-tab:focus-visible {
+  outline: 2px solid var(--accent-brass);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background-color: var(--accent-brass);
+  color: #FFFFFF;
+  border-color: var(--accent-brass);
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-brass-hover);
+}
+
+.btn-dark {
+  background-color: var(--ink-primary);
+  color: #FFFFFF;
+  border-color: var(--ink-primary);
+}
+
+.btn-dark:hover {
+  opacity: 0.92;
+}
+
+.btn-danger {
+  color: var(--status-urgent);
+  border-color: #FCA5A5;
+  background-color: var(--status-urgent-bg);
+}
+
+.btn-sm {
+  min-height: 38px;
+  padding: 5px 11px;
+  font-size: 0.85rem;
+}
+
+.input-field, .select-field, .textarea-field {
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background-color: var(--surface-panel);
+  color: var(--ink-primary);
+  font-family: 'Tajawal', sans-serif;
+  font-size: 0.95rem;
+}
+
+.textarea-field {
+  min-height: 92px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--ink-secondary);
+  margin-bottom: 5px;
+}
+
+.summary-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 0 18px 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-hair);
+}
+
+.summary-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.metric-inline {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.metric-value {
+  font-size: clamp(1.3rem, 2.4vw, 1.65rem);
+  font-weight: 800;
+  color: var(--ink-primary);
+}
+
+.metric-value.urgent {
+  color: var(--status-urgent);
+}
+
+.metric-label {
+  font-size: 0.88rem;
+  color: var(--ink-secondary);
+  font-weight: 600;
+}
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  margin-bottom: 20px;
+  align-items: end;
+}
+
+.ledger-panel {
+  background-color: var(--surface-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ledger-row {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border-hair);
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr) auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.ledger-row:last-child {
+  border-bottom: none;
+}
+
+.ledger-row:hover {
+  background-color: #FDFCFB;
+}
+
+.client-name {
+  font-size: 1.08rem;
+  font-weight: 800;
+  color: var(--ink-primary);
+  margin: 0 0 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.client-sub {
+  font-size: 0.86rem;
+  color: var(--ink-secondary);
+  margin: 0 0 6px 0;
+}
+
+.tag-inline {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background-color: var(--surface-subtle);
+  color: var(--ink-secondary);
+  border: 1px solid var(--border-hair);
+}
+
+.tag-inline.urgent {
+  background-color: var(--status-urgent-bg);
+  color: var(--status-urgent);
+  border-color: #FECACA;
+}
+
+.tag-inline.safe {
+  background-color: var(--status-safe-bg);
+  color: var(--status-safe);
+  border-color: #BBF7D0;
+}
+
+.tag-inline.brass {
+  background-color: var(--accent-brass-tint);
+  color: var(--accent-brass);
+  border-color: #FDE047;
+}
+
+.case-problem {
+  font-size: 0.94rem;
+  color: var(--ink-primary);
+  margin: 0 0 8px 0;
+  line-height: 1.55;
+}
+
+.case-action {
+  font-size: 0.9rem;
+  color: var(--accent-brass);
+  font-weight: 700;
+  margin: 0;
+  padding-right: 10px;
+  border-right: 3px solid var(--accent-brass);
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.task-row {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-hair);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.task-row:last-child {
+  border-bottom: none;
+}
+
+.task-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.task-check-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background-color: var(--surface-panel);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--status-safe);
+}
+
+.task-row.done .task-title {
+  text-decoration: line-through;
+  color: var(--ink-muted);
+}
+
+.task-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: var(--ink-primary);
+}
+
+.calc-subnav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 20px;
+}
+
+.calc-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.result-stream {
+  background-color: var(--surface-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.result-headline {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink-secondary);
+  margin: 0 0 4px 0;
+}
+
+.result-big {
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  font-weight: 800;
+  color: var(--accent-brass);
+  margin: 0 0 14px 0;
+}
+
+.dl-ledger {
+  margin: 0;
+  padding: 0;
+}
+
+.dl-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border-hair);
+  gap: 12px;
+}
+
+.dl-row:last-child {
+  border-bottom: none;
+}
+
+.dl-term {
+  font-size: 0.92rem;
+  color: var(--ink-secondary);
+  font-weight: 600;
+}
+
+.dl-val {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--ink-primary);
+}
+
+.tufte-chart {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-hair);
+}
+
+.tufte-bar-group {
+  margin-bottom: 12px;
+}
+
+.tufte-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.tufte-bar-track {
+  width: 100%;
+  height: 12px;
+  background-color: var(--surface-subtle);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.tufte-bar-fill {
+  height: 100%;
+  background-color: #94A3B8;
+  border-radius: 3px;
+  transition: transform 0.2s ease;
+}
+
+.tufte-bar-fill.focal {
+  background-color: var(--accent-brass);
+}
+
+.tufte-bar-fill.danger {
+  background-color: var(--status-urgent);
+}
+
+.ref-item {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-hair);
+}
+
+.ref-item:last-child {
+  border-bottom: none;
+}
+
+.ref-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--ink-primary);
+  margin: 0 0 6px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ref-legal {
+  font-family: 'Noto Naskh Arabic', serif;
+  font-size: 0.95rem;
+  color: var(--ink-secondary);
+  background-color: var(--surface-subtle);
+  padding: 8px 12px;
+  border-right: 3px solid var(--ink-primary);
+  margin: 0 0 8px 0;
+}
+
+.ref-balady {
+  font-size: 0.95rem;
+  color: var(--ink-primary);
+  margin: 0;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(24, 24, 27, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+
+.modal-backdrop.open {
+  display: flex;
+}
+
+.modal-sheet {
+  background-color: var(--surface-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  max-width: 680px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 22px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-hair);
+}
+
+.modal-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.toast-box {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  max-width: 420px;
+  margin: 0 auto;
+  background-color: var(--ink-primary);
+  color: #FFFFFF;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  z-index: 200;
+  border-right: 4px solid var(--accent-brass);
+}
+
+.toast-box.show {
+  display: flex;
+}
+
+.view-section {
+  display: none;
+}
+
+.view-section.active {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .controls-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ledger-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .row-actions {
+    justify-content: flex-start;
+  }
+  .calc-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .form-grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .top-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .header-actions {
+    justify-content: space-between;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <header class="top-header">
+    <div class="brand-block">
+      <div class="brand-mark" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/></svg>
+      </div>
+      <div>
+        <h1 class="brand-title">دفتر المكتب الضريبي المصري (SAP &amp; Tax Companion)</h1>
+        <p class="brand-meta">
+          <span id="storageStatusBadge" class="tag-inline safe">محفوظ تلقائياً (IndexedDB + الموبايل)</span>
+          <span id="lastSavedText">آخر حفظ: الآن</span>
+        </p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn" id="btnInstallPwa" style="display:none;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>تثبيت التطبيق</span>
+      </button>
+      <button type="button" class="btn btn-dark" id="btnOpenBackupModal">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span>النسخ الاحتياطي والاسترجاع</span>
+      </button>
+      <button type="button" class="btn btn-primary" id="btnQuickAddClient">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>إضافة ممول جديد</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="nav-scroller" role="navigation" aria-label="أقسام التطبيق">
+    <div class="nav-tabs">
+      <button type="button" class="nav-tab active" data-tab="view-clients">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>الممولين والحالات</span>
+        <span class="tab-count" id="navClientsCount">20</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="view-tasks">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <span>الأجندة والمهام</span>
+        <span class="tab-count" id="navTasksCount">0</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="view-calc">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+        <span>حاسبة الضرائب والفحص</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="view-reference">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>القوانين والنماذج ومولّد الطعون</span>
+      </button>
+    </div>
+  </div>
+
+  <section id="view-clients" class="view-section active">
+    <div class="summary-strip">
+      <div class="summary-metrics">
+        <div class="metric-inline">
+          <span class="metric-value num-tabular" id="statTotalClients">20</span>
+          <span class="metric-label">إجمالي ملفات الممولين</span>
+        </div>
+        <div class="metric-inline">
+          <span class="metric-value urgent num-tabular" id="statUrgentClients">0</span>
+          <span class="metric-label">ملفات طعون ولجان عاجلة</span>
+        </div>
+        <div class="metric-inline">
+          <span class="metric-value num-tabular" id="statRealEstateClients">0</span>
+          <span class="metric-label">ملفات عقارات (استثمار / تصرفات / ثروة)</span>
+        </div>
+      </div>
+      <div>
+        <button type="button" class="btn btn-sm" id="btnExportClientsCsv">تصدير جدول العملاء (CSV)</button>
+      </div>
+    </div>
+
+    <div class="controls-grid">
+      <div>
+        <label class="field-label" for="clientSearchInput">بحث بالاسم، النشاط، المأمورية، أو رقم النموذج</label>
+        <input type="search" id="clientSearchInput" class="input-field" placeholder="ابحث عن محمد صلاح، عزيزة، كليم، بنها أول، نموذج 19...">
+      </div>
+      <div>
+        <label class="field-label" for="clientCategoryFilter">قسم الملفات</label>
+        <select id="clientCategoryFilter" class="select-field">
+          <option value="ALL">كل الأقسام</option>
+          <option value="فحص ولجان وطعون">فحص ولجان وطعون</option>
+          <option value="عقارات (استثمار/تصرفات/ثروة)">عقارات (استثمار / تصرفات / ثروة)</option>
+          <option value="توقف وورثة وأطباء">توقف وورثة وأطباء وإقرارات</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="clientStatusFilter">حالة المتابعة</label>
+        <select id="clientStatusFilter" class="select-field">
+          <option value="ALL">كل الحالات</option>
+          <option value="عاجل / طعن">عاجل / طعن أو حجز</option>
+          <option value="قيد المتابعة">قيد المتابعة باللجان/المأمورية</option>
+          <option value="منتهي">منتهي / تم التسوية</option>
+        </select>
+      </div>
+      <div>
+        <button type="button" class="btn" id="btnResetFilters">مسح الفلتر</button>
+      </div>
+    </div>
+
+    <div class="ledger-panel" id="clientsListContainer"></div>
+  </section>
+
+  <section id="view-tasks" class="view-section">
+    <div class="summary-strip">
+      <div class="summary-metrics">
+        <div class="metric-inline">
+          <span class="metric-value num-tabular" id="statOpenTasks">0</span>
+          <span class="metric-label">مهام مفتوحة في الأجندة</span>
+        </div>
+        <div class="metric-inline">
+          <span class="metric-value urgent num-tabular" id="statHighPriorityTasks">0</span>
+          <span class="metric-label">مهام عاجلة (طعون 30 يوم ومحاضر حجز)</span>
+        </div>
+        <div class="metric-inline">
+          <span class="metric-value num-tabular" id="statCompletedTasks">0</span>
+          <span class="metric-label">مهام منجزة</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ledger-panel" style="padding: 18px; margin-bottom: 20px;">
+      <div class="form-grid-2">
+        <div>
+          <label class="field-label" for="newTaskTitle">المهمة أو الإجراء المطلوب في المأمورية / الساب</label>
+          <input type="text" id="newTaskTitle" class="input-field" placeholder="مثال: تقديم صحيفة طعن نموذج 19 أو استخراج موقف ضريبي...">
+        </div>
+        <div>
+          <label class="field-label" for="newTaskClient">الممول المرتبط بالمهمة</label>
+          <select id="newTaskClient" class="select-field"></select>
+        </div>
+      </div>
+      <div class="controls-grid" style="margin-bottom: 0;">
+        <div>
+          <label class="field-label" for="newTaskType">نوع الإجراء</label>
+          <select id="newTaskType" class="select-field">
+            <option value="طعن 30 يوم / نموذج 19 و15">طعن 30 يوم / نموذج 19 و15</option>
+            <option value="لجنة داخلية / مختصة / فض منازعات">لجنة داخلية / مختصة / فض منازعات</option>
+            <option value="محضر حجز إداري وفتح باب الطعن">محضر حجز إداري وفتح باب الطعن</option>
+            <option value="شهادة موقف ضريبي / تسوية / حفظ">شهادة موقف ضريبي / تسوية / حفظ</option>
+            <option value="إقرار ضريبي / اعتماد محاسب">إقرار ضريبي / اعتماد محاسب</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="newTaskDue">تاريخ الاستحقاق / الجلسة</label>
+          <input type="date" id="newTaskDue" class="input-field">
+        </div>
+        <div>
+          <label class="field-label" for="newTaskPriority">الأولوية</label>
+          <select id="newTaskPriority" class="select-field">
+            <option value="عاجل">عاجل (ميعاد حتمي)</option>
+            <option value="عادي">عادي</option>
+          </select>
+        </div>
+        <div>
+          <button type="button" class="btn btn-primary" id="btnAddTask">إضافة للأجندة</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+      <button type="button" class="btn btn-sm btn-dark task-filter-btn" data-filter="OPEN">قيد التنفيذ</button>
+      <button type="button" class="btn btn-sm task-filter-btn" data-filter="URGENT">عاجل فقط</button>
+      <button type="button" class="btn btn-sm task-filter-btn" data-filter="DONE">المكتملة</button>
+      <button type="button" class="btn btn-sm task-filter-btn" data-filter="ALL">كل المهام</button>
+    </div>
+
+    <div class="ledger-panel" id="tasksListContainer"></div>
+  </section>
+
+  <section id="view-calc" class="view-section">
+    <div class="calc-subnav">
+      <button type="button" class="btn btn-dark calc-mode-btn" data-mode="calc-inspection">1. مقارنة الفحص (قانون 91 vs المادة 3 vs قانون 6/2025)</button>
+      <button type="button" class="btn calc-mode-btn" data-mode="calc-invoice">2. حاسبة الفاتورة والخصم (41) وقيد اليومية</button>
+      <button type="button" class="btn calc-mode-btn" data-mode="calc-payroll">3. حاسبة كسب العمل والتأمينات 2026</button>
+      <button type="button" class="btn calc-mode-btn" data-mode="calc-realestate">4. حاسبة التصرفات العقارية (2.5%)</button>
+    </div>
+
+    <div id="calc-inspection" class="calc-pane">
+      <div class="calc-layout">
+        <div class="ledger-panel" style="padding: 20px;">
+          <h2 style="margin:0 0 12px 0; font-size:1.15rem;">حاسبة الفحص التقديري والمقارنة بين القوانين</h2>
+          <p style="margin:0 0 16px 0; font-size:0.88rem; color:var(--ink-secondary);">
+            احسب رقم الأعمال بمعادلة المأمور (<span class="num-tabular">اليومية &times; 310 &times; النسبة</span>) أو أدخل رقم الأعمال السنوي مباشرة (مثال الريكورد: <span class="num-tabular">4,561,230</span> جنيه) لتعرف أي قانون أوفر للممول وتكتشف فخ «ضريبة الإقرار الأكبر».
+          </p>
+
+          <div class="form-grid-2">
+            <div>
+              <label class="field-label" for="inspInputMethod">طريقة إدخال رقم الأعمال</label>
+              <select id="inspInputMethod" class="select-field">
+                <option value="DIRECT">إدخال رقم الأعمال السنوي مباشرة</option>
+                <option value="DAILY">معادلة الفحص التقديري (يومية &times; أيام)</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="inspEntityType">نوع الكيان الضريبي (في قانون 91)</label>
+              <select id="inspEntityType" class="select-field">
+                <option value="INDIVIDUAL">منشأة فردية / أشخاص طبيعيين (شرائح ق 7/2024)</option>
+                <option value="CORP">شركة أشخاص / أموال (سعر ثابت 22.5%)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="inspDailyFields" class="form-grid-2" style="display:none;">
+            <div>
+              <label class="field-label" for="inspDailyRev">الإيراد اليومي التقديري (جنيه)</label>
+              <input type="number" id="inspDailyRev" class="input-field" value="1000" min="0" step="50">
+            </div>
+            <div>
+              <label class="field-label" for="inspWorkDays">عدد أيام العمل في السنة (المعتاد 310)</label>
+              <input type="number" id="inspWorkDays" class="input-field" value="310" min="1" max="366">
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div id="inspTurnoverBox">
+              <label class="field-label" for="inspTurnover">إجمالي رقم الأعمال السنوي (جنيه)</label>
+              <input type="number" id="inspTurnover" class="input-field" value="4561230" min="0" step="1000">
+            </div>
+            <div>
+              <label class="field-label" for="inspProfitMargin">نسبة صافي الربح الحكمية للنشاط (%)</label>
+              <input type="number" id="inspProfitMargin" class="input-field" value="20" min="1" max="100" step="0.5">
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div>
+              <label class="field-label" for="inspReturnTax">ضريبة الإقرار المرفوعة على الساب (إن وجدت)</label>
+              <input type="number" id="inspReturnTax" class="input-field" value="0" min="0" step="100">
+            </div>
+            <div>
+              <label class="field-label" for="inspWhtPaid">مبالغ مخصومة تحت حساب الضريبة (نموذج 41)</label>
+              <input type="number" id="inspWhtPaid" class="input-field" value="1400" min="0" step="100">
+            </div>
+          </div>
+
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+            <button type="button" class="btn btn-sm" id="btnPresetAudio1">مثال الريكورد (4.56 مليون @ 20%)</button>
+            <button type="button" class="btn btn-sm" id="btnPresetAudio2">مثال الريكورد (4.56 مليون @ 5%)</button>
+            <button type="button" class="btn btn-sm" id="btnPresetAudio3">مثال فحص تقديري (1000 &times; 310 &times; 20%)</button>
+          </div>
+        </div>
+
+        <div class="result-stream" id="inspResultsPanel"></div>
+      </div>
+    </div>
+
+    <div id="calc-invoice" class="calc-pane" style="display:none;">
+      <div class="calc-layout">
+        <div class="ledger-panel" style="padding: 20px;">
+          <h2 style="margin:0 0 12px 0; font-size:1.15rem;">حاسبة الفاتورة والخصم (نموذج 41) ومولّد القيد اليومي</h2>
+          <p style="margin:0 0 16px 0; font-size:0.88rem; color:var(--ink-secondary);">
+            تذكّر القاعدة الذهبية: الخصم تحت حساب الضريبة (1% أو 3% أو 5%) يُحسب دائماً على <strong>صافي القيمة قبل ضريبة القيمة المضافة</strong>.
+          </p>
+          <div class="form-grid-2">
+            <div>
+              <label class="field-label" for="invNetAmount">صافي قيمة الفاتورة قبل الضريبة (جنيه)</label>
+              <input type="number" id="invNetAmount" class="input-field" value="10000" min="0" step="100">
+            </div>
+            <div>
+              <label class="field-label" for="invVatRate">فئة ضريبة القيمة المضافة</label>
+              <select id="invVatRate" class="select-field">
+                <option value="14">14% (السعر العام والمقاولات الجديدة ق 157/2025)</option>
+                <option value="5">5% (آلات ومعدات إنتاجية)</option>
+                <option value="0">0% (تصدير أو معفى)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-grid-2">
+            <div>
+              <label class="field-label" for="invWhtRate">نسبة الخصم تحت حساب الضريبة (نموذج 41)</label>
+              <select id="invWhtRate" class="select-field">
+                <option value="1">1% (توريدات، مشتريات، مقاولات &gt; 300 ج)</option>
+                <option value="3">3% (خدمات، صيانة، نقل، تسويق &gt; 300 ج)</option>
+                <option value="5">5% (أتعاب مهن حرة &gt; 100 ج / عمولة وسمسرة)</option>
+                <option value="20">20% (ضريبة مستقطعة لغير المقيمين - المادة 56)</option>
+                <option value="0">0% (منضم لقانون 6/2025 أو دفعات مقدمة م 60)</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="invRole">موقع العميل في المعاملة</label>
+              <select id="invRole" class="select-field">
+                <option value="BUYER">نحن المشتري (ندفع للمورد ونخصم منه)</option>
+                <option value="SELLER">نحن البائع (العميل يخصم مننا تحت حساب الضريبة)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="result-stream" id="invResultsPanel"></div>
+      </div>
+    </div>
+
+    <div id="calc-payroll" class="calc-pane" style="display:none;">
+      <div class="calc-layout">
+        <div class="ledger-panel" style="padding: 20px;">
+          <h2 style="margin:0 0 12px 0; font-size:1.15rem;">حاسبة ضريبة كسب العمل والتأمينات الاجتماعية (معايير 2026)</h2>
+          <p style="margin:0 0 16px 0; font-size:0.88rem; color:var(--ink-secondary);">
+            تطبق حدود التأمينات لعام 2026 (الحد الأدنى <span class="num-tabular">2,700</span> والأقصى <span class="num-tabular">16,700</span> جنيه، حصة العامل 11% والشركة 18.75%)، والإعفاء الشخصي <span class="num-tabular">20,000</span> جنيه، والشريحة الصفرية <span class="num-tabular">40,000</span> جنيه (قانون 7 لسنة 2024).
+          </p>
+          <div class="form-grid-2">
+            <div>
+              <label class="field-label" for="payGrossMonthly">إجمالي المرتب الشهري الخاضع (جنيه)</label>
+              <input type="number" id="payGrossMonthly" class="input-field" value="25000" min="0" step="500">
+            </div>
+            <div>
+              <label class="field-label" for="payInsWage">أجر الاشتراك التأميني الشهري (أقصى 16,700)</label>
+              <input type="number" id="payInsWage" class="input-field" value="16700" min="0" step="100">
+            </div>
+          </div>
+        </div>
+        <div class="result-stream" id="payResultsPanel"></div>
+      </div>
+    </div>
+
+    <div id="calc-realestate" class="calc-pane" style="display:none;">
+      <div class="calc-layout">
+        <div class="ledger-panel" style="padding: 20px;">
+          <h2 style="margin:0 0 12px 0; font-size:1.15rem;">حاسبة التصرفات العقارية (2.5%) ومقارنتها بالاستثمار العقاري</h2>
+          <p style="margin:0 0 16px 0; font-size:0.88rem; color:var(--ink-secondary);">
+            توضح الفرق الضريبي بين محاسبة العميل كـ «تصرف عقاري عادي» (2.5% مقطوعة بنص المادة 42) وبين تحويله لملف «استثمار عقاري» عند تكرار البيع وظهور أحكام صحة التوقيع.
+          </p>
+          <div class="form-grid-2">
+            <div>
+              <label class="field-label" for="reSaleValue">إجمالي قيمة عقد بيع العقار / الشقة (جنيه)</label>
+              <input type="number" id="reSaleValue" class="input-field" value="1500000" min="0" step="50000">
+            </div>
+            <div>
+              <label class="field-label" for="reProfitMargin">نسبة صافي الربح التقديرية لو تحول لاستثمار عقاري (%)</label>
+              <input type="number" id="reProfitMargin" class="input-field" value="15" min="1" max="100">
+            </div>
+          </div>
+        </div>
+        <div class="result-stream" id="reResultsPanel"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-reference" class="view-section">
+    <div class="ledger-panel" style="padding: 20px; margin-bottom: 24px;">
+      <h2 style="margin:0 0 6px 0; font-size:1.18rem;">مولّد صحف الطعن والطلبات الجاهزة (يسحب بيانات العميل أوتوماتيك)</h2>
+      <p style="margin:0 0 14px 0; font-size:0.9rem; color:var(--ink-secondary);">
+        اختر أي ممول من القائمة ونوع المذكرة القانونية (صحيفة طعن على نموذج 19 دخل أو نموذج 15 قيمة مضافة، أو طلب تطبيق المادة 3، أو طلب شهادة موقف ضريبي تسلسلي) لنسخ النص جاهزاً للساب أو الطباعة.
+      </p>
+      <div class="controls-grid" style="margin-bottom: 12px;">
+        <div>
+          <label class="field-label" for="memoClientSelect">اختر الممول</label>
+          <select id="memoClientSelect" class="select-field"></select>
+        </div>
+        <div>
+          <label class="field-label" for="memoTemplateType">نوع المذكرة / الطلب</label>
+          <select id="memoTemplateType" class="select-field">
+            <option value="APPEAL_19">صحيفة طعن على نموذج 19 ضرائب دخل (م 54 ق 206/2020)</option>
+            <option value="APPEAL_15">صحيفة طعن على نموذج 15 قيمة مضافة</option>
+            <option value="ARTICLE_3">طلب المحاسبة بالمادة الثالثة (ق 30/2023) وتعديل الربط</option>
+            <option value="TAX_POSITION">طلب شهادة موقف ضريبي تسلسلي (لحفظ ملف القيمة المضافة)</option>
+            <option value="SEIZURE_APPEAL">مذكرة طعن على محضر حجز إداري لفتح باب الطعن في الربط</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="memoFormNum">رقم الصادر / النموذج</label>
+          <input type="text" id="memoFormNum" class="input-field" placeholder="مثال: 151/2025">
+        </div>
+        <div>
+          <button type="button" class="btn btn-primary" id="btnCopyMemo">نسخ نص المذكرة</button>
+        </div>
+      </div>
+      <textarea id="memoOutputArea" class="textarea-field" style="min-height: 155px; font-family: 'Noto Naskh Arabic', serif; font-size: 1rem;"></textarea>
+    </div>
+
+    <div class="controls-grid" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);">
+      <div>
+        <label class="field-label" for="refSearchInput">ابحث في القوانين، النماذج (19، 15، 16 مكرر)، وتصنيفات الساب الـ 20</label>
+        <input type="search" id="refSearchInput" class="input-field" placeholder="ابحث عن نموذج 19، نموذج 15، المادة 22، التقادم، محضر حجز، Active To، وثيقة جديدة...">
+      </div>
+      <div>
+        <label class="field-label" for="refCategorySelect">تصنيف الدليل</label>
+        <select id="refCategorySelect" class="select-field">
+          <option value="ALL">كل المراجع والقوانين والنماذج</option>
+          <option value="النماذج والورق الضريبي">1. دليل الورق والنماذج الضريبية (19 و15 وعيلتهم)</option>
+          <option value="القوانين والمواد الحاكمة">2. نصوص مواد القوانين وشرحها بالبلدي</option>
+          <option value="تريكات الفحص واللجان والعقارات">3. تريكات الفحص واللجان والتقادم والعقارات</option>
+          <option value="تصنيفات الساب وحلول البورتال">4. تصنيفات الساب الـ 20 وحلول الفاتورة الإلكترونية</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="ledger-panel" id="referenceListContainer"></div>
+  </section>
+</div>
+
+<div class="modal-backdrop" id="clientModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="clientModalTitle">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h2 class="modal-title" id="clientModalTitle">إضافة / تعديل ملف ممول</h2>
+      <button type="button" class="btn btn-sm" id="btnCloseClientModal">إغلاق</button>
+    </div>
+    <form id="clientForm">
+      <input type="hidden" id="clientFormId">
+      <div class="form-grid-2">
+        <div>
+          <label class="field-label" for="clientFormName">اسم الممول / الشركة *</label>
+          <input type="text" id="clientFormName" class="input-field" required placeholder="مثال: محمد صلاح / ورثة محمد الهيلي">
+        </div>
+        <div>
+          <label class="field-label" for="clientFormOffice">المأمورية المختصة</label>
+          <input type="text" id="clientFormOffice" class="input-field" placeholder="مثال: مأمورية بنها أول / بنها تاني">
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div>
+          <label class="field-label" for="clientFormActivity">النشاط والوضع الحالي *</label>
+          <input type="text" id="clientFormActivity" class="input-field" required placeholder="مثال: استثمار عقاري / طبيب / مقاولات متوقف">
+        </div>
+        <div>
+          <label class="field-label" for="clientFormCategory">قسم الملف</label>
+          <select id="clientFormCategory" class="select-field">
+            <option value="فحص ولجان وطعون">فحص ولجان وطعون</option>
+            <option value="عقارات (استثمار/تصرفات/ثروة)">عقارات (استثمار/تصرفات/ثروة)</option>
+            <option value="توقف وورثة وأطباء">توقف وورثة وأطباء وإقرارات</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div>
+          <label class="field-label" for="clientFormStatus">حالة المتابعة</label>
+          <select id="clientFormStatus" class="select-field">
+            <option value="عاجل / طعن">عاجل / طعن أو حجز</option>
+            <option value="قيد المتابعة">قيد المتابعة باللجان/المأمورية</option>
+            <option value="منتهي">منتهي / تم التسوية</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="clientFormNoticeDate">تاريخ استلام نموذج 19 أو 15 (لحساب مهلة الـ 30 يوم)</label>
+          <input type="date" id="clientFormNoticeDate" class="input-field">
+        </div>
+      </div>
+      <div style="margin-bottom: 12px;">
+        <label class="field-label" for="clientFormProblem">تفاصيل المشكلة والأرقام والسنوات *</label>
+        <textarea id="clientFormProblem" class="textarea-field" required placeholder="اكتب كل تفاصيل الفحص، السنوات، أرقام الضريبة، المأمور الفاحص..."></textarea>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label class="field-label" for="clientFormAction">الإجراء المطلوب في المكتب *</label>
+        <input type="text" id="clientFormAction" class="input-field" required placeholder="مثال: تقديم طعن على محضر الحجز / مطابقة عقود الشقة بمذكرة الفحص">
+      </div>
+      <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <button type="submit" class="btn btn-primary">حفظ بيانات الممول</button>
+        <button type="button" class="btn btn-danger" id="btnDeleteClientInModal" style="display:none;">حذف الملف</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="backupModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="backupModalTitle">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h2 class="modal-title" id="backupModalTitle">النسخ الاحتياطي واسترجاع البيانات من ملف</h2>
+      <button type="button" class="btn btn-sm" id="btnCloseBackupModal">إغلاق</button>
+    </div>
+
+    <div style="margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--border-hair);">
+      <h3 style="margin:0 0 6px 0; font-size:1.05rem;">1. حفظ نسخة احتياطية كاملة على الموبايل أو الكمبيوتر</h3>
+      <p style="margin:0 0 12px 0; font-size:0.88rem; color:var(--ink-secondary);">
+        التطبيق بيحفظ كل تعديل أوتوماتيك في مكانين جوه الموبايل (<span class="num-tabular">IndexedDB + localStorage</span>). وعشان تضمن إن بياناتك مستحيل تضيع حتى لو غيرت الموبايل، نزّل ملف النسخة الاحتياطية (<span class="num-tabular">.json</span>) أو شاركه على واتساب/درايف:
+      </p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button type="button" class="btn btn-primary" id="btnDownloadBackupFile">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>تحميل ملف النسخة الاحتياطية (.json)</span>
+        </button>
+        <button type="button" class="btn" id="btnShareBackupFile">مشاركة الملف (واتساب / درايف)</button>
+        <button type="button" class="btn" id="btnCopyBackupJson">نسخ كود النسخة كنص</button>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--border-hair);">
+      <h3 style="margin:0 0 6px 0; font-size:1.05rem;">2. استرجاع النسخة الاحتياطية من ملف (.json)</h3>
+      <p style="margin:0 0 12px 0; font-size:0.88rem; color:var(--ink-secondary);">
+        اختر ملف النسخة الاحتياطية من جهازك (أو الصق محتواه في الصندوق بالأسفل)، وحدد طريقة الاسترجاع:
+      </p>
+      <div class="form-grid-2">
+        <div>
+          <label class="field-label" for="restoreFileInput">اختر ملف النسخة الاحتياطية (.json)</label>
+          <input type="file" id="restoreFileInput" class="input-field" accept=".json,application/json" style="padding: 6px;">
+        </div>
+        <div>
+          <label class="field-label" for="restoreModeSelect">طريقة الاسترجاع</label>
+          <select id="restoreModeSelect" class="select-field">
+            <option value="MERGE">دمج وتحديث مع البيانات الحالية (آمن - لا يحذف الجديد)</option>
+            <option value="REPLACE">استبدال كامل بالنسخة الاحتياطية</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label class="field-label" for="restoreJsonTextarea">أو الصق كود النسخة الاحتياطية هنا مباشرة</label>
+        <textarea id="restoreJsonTextarea" class="textarea-field" placeholder='{"version": 2, "clients": [...], "tasks": [...]}' style="min-height: 75px; font-size:0.84rem;"></textarea>
+      </div>
+      <div id="restorePreviewBox" style="font-size:0.86rem; color:var(--status-safe); font-weight:700; margin-bottom:10px;"></div>
+      <button type="button" class="btn btn-dark" id="btnExecuteRestore">استرجاع البيانات الآن</button>
+    </div>
+
+    <div>
+      <h3 style="margin:0 0 6px 0; font-size:1rem; color:var(--status-urgent);">3. استعادة البيانات الأصلية للـ 20 عميلاً من الريكورد</h3>
+      <p style="margin:0 0 10px 0; font-size:0.85rem; color:var(--ink-secondary);">
+        لو حابب ترجع القائمة الافتراضية للـ 20 عميلاً والمهام الأساسية اللي اتشرحت في الريكورد مع الأستاذ:
+      </p>
+      <button type="button" class="btn btn-danger btn-sm" id="btnResetToDefaultData">إعادة تحميل بيانات الريكورد الأصلية</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-box" id="toastBox" role="status" aria-live="polite">
+  <span id="toastMessage">تم الحفظ بنجاح</span>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const STORAGE_KEY = 'egyptian_tax_office_companion_v2';
+  const DB_NAME = 'EgyptianTaxOfficeDB';
+  const DB_STORE = 'app_state';
+
+  const DEFAULT_CLIENTS = [
+    {
+      id: 'c1',
+      name: 'محمد صلاح',
+      office: 'مأمورية أول / مأمورية تاني',
+      activity: 'ملابس جاهزة سابقاً (مغلق) -> استثمار عقاري حالياً',
+      category: 'فحص ولجان وطعون',
+      status: 'عاجل / طعن',
+      noticeDate: '',
+      problem: 'كان بيتحاسب على ملابس جاهزة في سنوات (2013-2015) بقانون 91 وقفل النشاط. لما اتفتح له استثمار عقاري، اتحسب أولاً على مادة 3 بـ 17,000 جنيه، لكن المصلحة طبقت فتوى البحوث «الإضافي يتبع الأصل» واعتبرته فحصاً إضافياً فعايزة تحاسبه بقانون 91 بضريبة 70,000 إلى 80,000 جنيه.',
+      action: 'التمسك بأن الاستثمار العقاري ملف جديد برقم ومأمورية مختلفة لتثبيت ضريبة الـ 17 ألف جنيه أو تصعيده للمحكمة.'
+    },
+    {
+      id: 'c2',
+      name: 'عزيزة',
+      office: 'فحص مع المأمور أحمد صابر',
+      activity: 'ملف دخل وفحص سنوات 2016 إلى 2022',
+      category: 'فحص ولجان وطعون',
+      status: 'عاجل / طعن',
+      noticeDate: '2024-12-25',
+      problem: 'صدر لها نموذج 19 بتاريخ صادر 25/12/2024 (آخر ميعاد للـ 30 يوم: 25/1/2025). تم تقديم الطعن برقم 151/2025 عن سنوات 2016-2022 مع المأمور أحمد صابر.',
+      action: 'الدفع بالتقادم الخمسي عن 2016-2020 بشرط تأسيس السنوات بتدرج بسيط (1000 ثم 1100) حتى لا يقفز الأساس في 2021-2022 وما بعدها.'
+    },
+    {
+      id: 'c3',
+      name: 'سعيد الحجاج (سعيد حجاد)',
+      office: 'محكمة / تقرير خبير وتعديل ربط',
+      activity: 'ملف محكمة عن سنوات 2015 إلى 2020',
+      category: 'فحص ولجان وطعون',
+      status: 'قيد المتابعة',
+      noticeDate: '',
+      problem: 'صدر له تقرير خبير في المحكمة طبق قانون 91 فطلعت الضريبة فوق 90,000 جنيه. بعد إحضار تقرير الخبير لمعرفة أسس التقدير وحسابها على المادة 3 نزلت الضريبة إلى 32,000 جنيه فقط.',
+      action: 'تم تقديم طلب تطبيق المادة 3 والموافقة على تعديل الربط؛ مطلوب متابعة تسوية الربط النهائي وفوائد التأخير.'
+    },
+    {
+      id: 'c4',
+      name: 'أحمد يوسف (أخو حسن يوسف)',
+      office: 'منظومة الساب / شعبة الحجز',
+      activity: 'نشاط متوقف (المقر مملوك لأخيه حسن يوسف)',
+      category: 'فحص ولجان وطعون',
+      status: 'عاجل / طعن',
+      noticeDate: '',
+      problem: '1) وصل له نموذج 19 على منظومة SAP وعدى ميعاد الـ 30 يوم فربط لعدم الطعن. 2) قفل نشاط أحمد قد يجعل المأمورية تفتح ملف «ثروة عقارية» على أخيه حسن صاحب المكان.',
+      action: 'الذهاب لمأمور الحجز لعمل محضر حجز والتوقيع عليه، ثم الطعن على محضر الحجز لفتح باب الطعن من جديد، وتقديم توقف مؤقت للثروة العقارية لحسن.'
+    },
+    {
+      id: 'c5',
+      name: 'عبد المعبود معوض',
+      office: 'لجنة طعن / لجنة إنهاء المنازعات',
+      activity: 'ملف منازعات ضريبية + لجنة داخلية 2022',
+      category: 'فحص ولجان وطعون',
+      status: 'عاجل / طعن',
+      noticeDate: '',
+      problem: 'كان عليه ضريبة في لجنة الطعن (مثلاً 3,000 جنيه)، فدخل لجنة إنهاء/فض المنازعات التي خفضت المبلغ كثيراً (إلى 300 جنيه)، لكن المأمورية ربطت عليه خطأً بقرار لجنة الطعن الأعلى!',
+      action: 'الجلوس مع المأمورية لتعديل الأوراد والربط بقرار لجنة فض المنازعات المخفض، ومتابعة لجنة سنة 2022.'
+    },
+    {
+      id: 'c6',
+      name: 'سامح',
+      office: 'اللجنة الداخلية المختصة (عند فواز)',
+      activity: 'ملف فحص منتهي حتى سنة 2022',
+      category: 'فحص ولجان وطعون',
+      status: 'قيد المتابعة',
+      noticeDate: '',
+      problem: 'خلصت لجنته حتى 2022 في اللجنة الداخلية المختصة وصدر القرار، والقرار في طريقه للمأمورية.',
+      action: 'متابعة وصول قرار اللجنة المختصة للمأمورية لعمل الربط وإصدار الأوراد للسداد.'
+    },
+    {
+      id: 'c7',
+      name: 'موسى الحفناوي',
+      office: 'اللجنة الداخلية المختصة',
+      activity: 'ملف فحص باللجنة المختصة (نفس قصة سامح)',
+      category: 'فحص ولجان وطعون',
+      status: 'قيد المتابعة',
+      noticeDate: '',
+      problem: 'نفس وضع ملف سامح باللجنة المختصة ولسه شغال قيد استكمال الإجراءات.',
+      action: 'متابعة خروج قرار اللجنة المختصة وترحيله للمأمورية للربط.'
+    },
+    {
+      id: 'c8',
+      name: 'كليم حسقيال',
+      office: 'مأمورية بنها أول / بنها تاني',
+      activity: 'استثمار عقاري (بنها أول) وتصرف عقاري (بنها تاني)',
+      category: 'عقارات (استثمار/تصرفات/ثروة)',
+      status: 'عاجل / طعن',
+      noticeDate: '',
+      problem: 'فاتح استثمار عقاري في بنها أول، لكن بنها تاني حاسبته كتصرف عقاري على نفس العقار، ومذكرة الفحص كتبت «قطعة أرض» وهي «شقة» (أو العكس) بنفس المبلغ والمشتري والحدود، والمأمورية متخوفة من تعديله.',
+      action: 'مطابقة العقود بمذكرة الفحص (الاسم، الثمن، الحوض، الحدود) لإثبات سابقة المحاسبة ومنع الازدواج الضريبي.'
+    },
+    {
+      id: 'c9',
+      name: 'خالد عبد الصادق',
+      office: 'ضرائب عامة / تصرفات عقارية',
+      activity: 'بيع شقق متكرر (ظهر له 4 تصرفات عقارية)',
+      category: 'عقارات (استثمار/تصرفات/ثروة)',
+      status: 'قيد المتابعة',
+      noticeDate: '',
+      problem: 'المشترون رفعوا دعاوى صحة توقيع بالمحكمة، وبسبب الربط الإلكتروني بين المحاكم والضرائب ظهرت 4 تصرفات على صفحته، وكثرتها ستحوله لاستثمار عقاري.',
+      action: 'الاستعلام الدوري على صفحته بالمنظومة لمعرفة التصرفات التي ظهرت فقط والتقرير عنها دون فتح عقود لم تأخذ صحة توقيع.'
+    },
+    {
+      id: 'c10',
+      name: 'إسلام صابر إبراهيم شعبان',
+      office: 'مأمورية بنها تاني',
+      activity: 'نشاط بيع قطع/عقارات (توقف في 2021)',
+      category: 'عقارات (استثمار/تصرفات/ثروة)',
+      status: 'عاجل / طعن',
+      noticeDate: '',
+      problem: 'توقف وقفل النشاط في 2021، ثم ظهرت على صفحته تعاملات في سنة 2022 فبعتت المأمورية نماذج فحص عن 2022.',
+      action: 'تم الطعن على النماذج؛ المطلوب فحص طبيعة تعاملات 2022 وتسويتها في لجنة داخلية.'
+    },
+    {
+      id: 'c11',
+      name: 'عبد الفتاح يحيى',
+      office: 'ضرائب عامة',
+      activity: 'استثمار عقاري مسجل',
+      category: 'عقارات (استثمار/تصرفات/ثروة)',
+      status: 'قيد المتابعة',
+      noticeDate: '',
+      problem: 'له ملف استثمار عقاري بيتحاسب عليه كتاجر، ونزلت له محاسبة منفصلة كتصرفات عقارية (2.5%).',
+      action: 'إلغاء المحاسبة كتصرفات عقارية لأن العقارات داخلة في ملف الاستثمار العقاري.'
+    },
+    {
+      id: 'c12',
+      name: 'خالد عبد الهادي',
+      office: 'ضرائب عامة',
+      activity: 'تصرفات عقارية فقط (بدون ملف استثمار)',
+      category: 'عقارات (استثمار/تصرفات/ثروة)',
+      status: 'قيد المتابعة',
+      noticeDate: '',
+      problem: 'عليه تصرفات عقارية مسجلة وليس له ملف استثمار عقاري.',
+      action: 'المحاسبة عنها كتصرفات عقارية عادية (2.5%) وإنهاء الملف.'
+    },
+    {
+      id: 'c13',
+      name: 'عصام الدين',
+      office: 'ضرائب عامة',
+      activity: 'ملف تصرفات عقارية (مرتبط بملفات عبد الفتاح وخالد)',
+      category: 'عقارات (استثمار/تصرفات/ثروة)',
+      status: 'قيد المتابعة',
+      noticeDate: '',
+      problem: 'مطلوب تسوية موقف التصرفات العقارية المسجلة على ملفه.',
+      action: 'مراجعة التصرفات المسجلة وإنهاء المحاسبة بالمأمورية.'
+    },
+    {
+      id: 'c14',
+      name: 'د. مجدي فتحي عبد الحميد السعداني',
+      office: 'مهن حرة',
+      activity: 'طبيب (عيادة خاصة + موظف بمستشفى)',
+      category: 'توقف وورثة وأطباء',
+      status: 'عاجل / طعن',
+      noticeDate: '',
+      problem: 'خلصت لجنته عن سنوات 2018-2021، لكن في إقراره كتب مبالغ مخصومة تحت حساب الضريبة (كسب عمل) بـ 11,250 جنيه، بينما مفردات المرتب طالع فيها خصم نحو 2,000 جنيه فقط.',
+      action: 'إحضار شهادة/إفادة رسمية من جهة عمله تثبت استقطاع الـ 11,250 جنيه تحت حساب الضريبة لاعتماد خصمها.'
+    },
+    {
+      id: 'c15',
+      name: 'د. فوزي',
+      office: 'مهن حرة',
+      activity: 'طبيب بشري',
+      category: 'توقف وورثة وأطباء',
+      status: 'منتهي',
+      noticeDate: '',
+      problem: 'خلصت اللجنة بتاعته وتمت تسوية الملف بالكامل.',
+      action: 'استخراج واستلام ورقة التسوية النهائية فقط.'
+    },
+    {
+      id: 'c16',
+      name: 'محمد عماد الشامي',
+      office: 'منظومة الساب (SAP)',
+      activity: 'نشاط متوقف قبل الساب (قبل 9/2023)',
+      category: 'توقف وورثة وأطباء',
+      status: 'عاجل / طعن',
+      noticeDate: '',
+      problem: 'كان متوقفاً قبل إطلاق منظومة الساب (9/2023) والمفروض حفظ نهائي، لكنه دخل وربط على الساب بالخطأ فاعتبرته المأمورية شغالاً وتطالب بمحاسبته.',
+      action: 'إثبات التوقف السابق والمطالبة بحفظ الملف نهائياً وإلغاء الالتزامات على الساب.'
+    },
+    {
+      id: 'c17',
+      name: 'سعد شعراوي',
+      office: 'ضرائب عامة + قيمة مضافة (SAP)',
+      activity: 'مقاولات متوقف من 2014 -> فُتح له ثروة عقارية 2023 بالخطأ',
+      category: 'توقف وورثة وأطباء',
+      status: 'عاجل / طعن',
+      noticeDate: '',
+      problem: 'قفل المقاولات واتحاسب لحد 2014. في 2023 محامٍ قريبه ربط له على الساب وفتح نشاط «ثروة عقارية» عشان أجر مكان، فظنت القيمة المضافة أن المقاولات لسه شغالة وتطالب بمحاسبته!',
+      action: 'تم قفل الثروة العقارية على الساب بعد بيع الأرض؛ مطلوب تقديم طلب «موقف ضريبي» من الساب يثبت تسلسل القفل من 2014 لتسليمه للقيمة المضافة وحفظها.'
+    },
+    {
+      id: 'c18',
+      name: 'ورثة محمد الهيلي',
+      office: 'منظومة الساب / المأمورية',
+      activity: 'ملف ورثة (7 ورثة، تنازل 2 وبقي المستمرون)',
+      category: 'توقف وورثة وأطباء',
+      status: 'قيد المتابعة',
+      noticeDate: '',
+      problem: 'متحاسب لحد 2021، لكن سيستم المأمورية بعت نماذج لكل الورثة بالخطأ شاملاً الورثة المتنازلين الذين لا يجب محاسبتهم.',
+      action: 'متابعة حل مشكلة السيستم بالمأمورية لاستبعاد المتنازلين، وتسجيل الطعن في أجندة المكتب (أول جلسة 27/1).'
+    },
+    {
+      id: 'c19',
+      name: 'ماجد وهيب',
+      office: 'بورتال الفاتورة الإلكترونية',
+      activity: 'إصدار فواتير إلكترونية',
+      category: 'توقف وورثة وأطباء',
+      status: 'منتهي',
+      noticeDate: '',
+      problem: 'كان مطلوباً عمل الفاتورة الإلكترونية الخاصة به وتم إنجازها.',
+      action: 'ملف منتهي بالكامل.'
+    },
+    {
+      id: 'c20',
+      name: 'علاء الدين',
+      office: 'ضرائب عامة',
+      activity: 'نشاط قفل ثم فتح مرة أخرى',
+      category: 'توقف وورثة وأطباء',
+      status: 'قيد المتابعة',
+      noticeDate: '',
+      problem: 'قفل النشاط ورجع فتحه تاني ويحتاج إثبات موقفه الضريبي.',
+      action: 'استخراج شهادة موقف ضريبي / تسوية للملف.'
+    }
+  ];
+
+  const DEFAULT_TASKS = [
+    { id: 't1', title: 'عمل محضر حجز إداري والطعن عليه لفتح باب الطعن في نموذج 19 على الساب', clientId: 'c4', clientName: 'أحمد يوسف (أخو حسن يوسف)', type: 'محضر حجز إداري وفتح باب الطعن', due: '2026-11-22', priority: 'عاجل', done: false },
+    { id: 't2', title: 'متابعة جلسة اللجنة الداخلية مع المأمور أحمد صابر (طعن رقم 151/2025) والتمسك بالتقادم الخمسي 2016-2020 بتدرج منخفض', clientId: 'c2', clientName: 'عزيزة', type: 'لجنة داخلية / مختصة / فض منازعات', due: '2026-11-24', priority: 'عاجل', done: false },
+    { id: 't3', title: 'تعديل الربط في المأمورية من مبلغ لجنة الطعن إلى قرار لجنة إنهاء المنازعات المخفض', clientId: 'c5', clientName: 'عبد المعبود معوض', type: 'لجنة داخلية / مختصة / فض منازعات', due: '2026-11-23', priority: 'عاجل', done: false },
+    { id: 't4', title: 'التقديم على شهادة موقف ضريبي من الساب توضح تسلسل قفل المقاولات من 2014 وقفل الثروة العقارية لتسليمها للقيمة المضافة', clientId: 'c17', clientName: 'سعد شعراوي', type: 'شهادة موقف ضريبي / تسوية / حفظ', due: '2026-11-21', priority: 'عاجل', done: false },
+    { id: 't5', title: 'مطابقة عقود البيع بمذكرة الفحص بين بنها أول وبنها تاني (خلاف وصف شقة مقابل قطعة أرض) لمنع الازدواج', clientId: 'c8', clientName: 'كليم حسقيال', type: 'لجنة داخلية / مختصة / فض منازعات', due: '2026-11-25', priority: 'عاجل', done: false },
+    { id: 't6', title: 'إحضار إفادة رسمية من المستشفى بخصم 11,250 جنيه تحت حساب الضريبة لمطابقة إقرار 2021/2022', clientId: 'c14', clientName: 'د. مجدي فتحي عبد الحميد السعداني', type: 'إقرار ضريبي / اعتماد محاسب', due: '2026-11-26', priority: 'عاجل', done: false },
+    { id: 't7', title: 'الدفع باستقلال ملف الاستثمار العقاري عن ملف الملابس القديم لتطبيق المادة 3 (17 ألف بدلاً من 75 ألف)', clientId: 'c1', clientName: 'محمد صلاح', type: 'طعن 30 يوم / نموذج 19 و15', due: '2026-11-25', priority: 'عاجل', done: false },
+    { id: 't8', title: 'الاستعلام الدوري على البوابة عن ظهور أي تصرفات عقارية جديدة (أحكام صحة توقيع) بعد الـ 4 تصرفات', clientId: 'c9', clientName: 'خالد عبد الصادق', type: 'إقرار ضريبي / اعتماد محاسب', due: '2026-11-28', priority: 'عادي', done: false },
+    { id: 't9', title: 'طلب حفظ الملف نهائياً وإلغاء ربط الساب الخاطئ لثبوت التوقف قبل سبتمبر 2023', clientId: 'c16', clientName: 'محمد عماد الشامي', type: 'شهادة موقف ضريبي / تسوية / حفظ', due: '2026-11-27', priority: 'عاجل', done: false },
+    { id: 't10', title: 'متابعة ورود قرار اللجنة الداخلية المختصة للمأمورية لإصدار أوراد الربط والسداد', clientId: 'c6', clientName: 'سامح', type: 'لجنة داخلية / مختصة / فض منازعات', due: '2026-11-29', priority: 'عادي', done: false },
+    { id: 't11', title: 'إلغاء محاسبة التصرفات العقارية المنفصلة لوجود ملف استثمار عقاري نشط', clientId: 'c11', clientName: 'عبد الفتاح يحيى', type: 'شهادة موقف ضريبي / تسوية / حفظ', due: '2026-11-30', priority: 'عادي', done: false },
+    { id: 't12', title: 'استلام ورقة التسوية النهائية بعد انتهاء اللجنة', clientId: 'c15', clientName: 'د. فوزي', type: 'شهادة موقف ضريبي / تسوية / حفظ', due: '2026-11-20', priority: 'عادي', done: true }
+  ];
+
+  const REFERENCE_ITEMS = [
+    {
+      category: 'النماذج والورق الضريبي',
+      title: 'نموذج 19 ضرائب دخل (أصلي vs مكرر/إضافي) — ميعاد الطعن 30 يوماً',
+      legal: 'المادة (54) من قانون الإجراءات الضريبية الموحد رقم 206 لسنة 2020: «يكون للممول الطعن على نموذج ربط الضريبة خلال ثلاثين يوماً من تاريخ إعلانه به، وإلا أصبح الربط نهائياً».',
+      balady: 'أخطر ورقة في المكتب! «19 أصلي» بيطلع لأول محاسبة عن السنة؛ أما «19 مكرر/إضافي» فبيطلع لما الممول يكون اتحاسب قبل كده عن السنة دي (مثلاً كمحامي أو ملابس) وبعدين يظهرله نشاط تاني (زي بيع شقق/استثمار عقاري). وفق فتوى البحوث «الإضافي يتبع الأصل» يعني بيتحاسب بنفس قانون الفحص الأصلي (قانون 91).'
+    },
+    {
+      category: 'النماذج والورق الضريبي',
+      title: 'نموذج 15 قيمة مضافة (تعديل أو تقدير الضريبة) — ميعاد الطعن 30 يوماً',
+      legal: 'إخطار تعديل الإقرار الشهري أو تقدير ضريبة القيمة المضافة بمعرفة المأمورية طبقاً لقانون 67 لسنة 2016 وقانون 206 لسنة 2020.',
+      balady: 'هو «أخو نموذج 19» بس في القيمة المضافة! بيجيلك لما المأمورية تفحص القيمة المضافة أو تلاقي فروق بين فواتيرك الإلكترونية ونموذج 10، وميعاد الطعن عليه 30 يوم برضه من تاريخ الإعلان.'
+    },
+    {
+      category: 'النماذج والورق الضريبي',
+      title: 'نموذج 31 / 32 فحص (إخطار بدء الفحص الضريبي) ومذكرة الفحص',
+      legal: 'المادة (41) من قانون 206 لسنة 2020: تخطر المأمورية الممول ببدء الفحص والبيانات المطلوبة، ويلتزم بتوفيرها خلال 15 يوماً وله طلب مد المهلة خلال 10 أيام.',
+      balady: 'لما يجيلك إخطار فحص على الساب، بترفع الورق PDF أو تطلب تأجيل. وقبل ما تقعد في اللجنة الداخلية، لازم تطلب صورة «مذكرة الفحص» عشان تشوف المأمور حسب اليومية وأيام العمل ونسبة الربح إزاي.'
+    },
+    {
+      category: 'النماذج والورق الضريبي',
+      title: 'نموذج 16 مكرر حصر (إخطار التوقف الكلي أو الجزئي) — خلال 30 يوماً',
+      legal: 'المادة (57) من قانون 91 لسنة 2005 والمادة (26) من قانون 206 لسنة 2020: يلتزم الممول بإخطار المأمورية بالتوقف خلال 30 يوماً من تاريخ التوقف.',
+      balady: 'يتقدم من الساب (النماذج -> نماذج التسجيلات). لو العميل قفل ومقدمش إخطار التوقف، المأمورية هتحاسبه ضريبياً لحد اليوم اللي يخطر فيه. وممنوع لأي عميل متوقف قبل سبتمبر 2023 يربط ملفه على الساب!'
+    },
+    {
+      category: 'تريكات الفحص واللجان والعقارات',
+      title: 'حيلة «محضر الحجز الإداري» لفتح باب الطعن بعد فوات الـ 30 يوماً',
+      legal: 'المنازعة في أصل الدين وصحة إجراءات الإعلان بنماذج الربط عند توقيع الحجز الإداري طبقاً لقانون الحجز الإداري رقم 308 لسنة 1955.',
+      balady: 'لو نموذج 19 نزل على الساب وعدى 30 يوم وبقى «ربط لعدم الطعن»، المكتب بيروح لمأمور الحجز يقوله «اعمل عليا محضر حجز» ويمضي عليه، وفوراً يقدم «طعن على محضر الحجز» وينازع في الإعلان وأصل الدين، فيتفتح له باب الطعن في الربط من أول وجديد!'
+    },
+    {
+      category: 'تريكات الفحص واللجان والعقارات',
+      title: 'فخ «التقادم الخمسي» مع تسلسل الأساس التدريجي للملف (2016 - 2022)',
+      legal: 'المادة (91) من قانون 91 لسنة 2005: يسقط حق المصلحة في المطالبة بالضريبة بمضي 5 سنوات من انتهاء ميعاد الإقرار ما لم ينقطع التقادم بإجراء قاطع (ولو وافقت في اللجنة يسقط حقك في الدفع بالتقادم).',
+      balady: 'لو المأمور بيفحص 2016-2022، وسنوات 2016-2020 ساقطة تقادم، أحياناً يبدأ 2016 بيومية عالية (1000 ج) ويزود كل سنة لحد ما يوصل في 2021-2022 لـ 2000 ج، وبعدين يسقط الـ 5 سنين ويحاسبك في 2021-2022 على 2000! كده الملف «شرخ منك» للسنين الجاية. الصح تفاوضه يبدأ بأساس صغير وتدرج 5 أو 10 جنيه عشان الأساس يفضل مستقر.'
+    },
+    {
+      category: 'تريكات الفحص واللجان والعقارات',
+      title: 'فخ «ضريبة الإقرار لا رجعة فيها» (المأمورية بتعتمد الأكبر دائماً)',
+      legal: 'الإقرار الضريبي حجة على الممول باعتباره إقراراً قضائياً بالمديونية الضريبية لا يجوز العدول عنه لأقل منه إلا بإقرار معدل في الميعاد قبل الفحص.',
+      balady: 'لو رفعت الإقرار على الساب بضريبة 5,000 ج (لأن الساب بيحسب أوتوماتيك بقانون 91)، وفي الفحص طلبت المادة 3 وطلعت الضريبة 1,000 ج، المأمور هيلزمك بـ 5,000 ج (ضريبة الإقرار الأكبر)! عشان كده ظبط نسبة الربح في الإقرار على الحد الآمن الأقل.'
+    },
+    {
+      category: 'تريكات الفحص واللجان والعقارات',
+      title: 'مثلث العقارات: التصرفات (2.5%) vs الاستثمار العقاري vs الثروة العقارية',
+      legal: 'المادة (42) ق 91/2005 للتصرفات العقارية (2.5% قطعية)، والمادة (19) للأرباح التجارية (الاستثمار العقاري)، والمواد (37-41) للثروة العقارية (الإيجار).',
+      balady: '1) محاكم «صحة التوقيع» مربوطة بالضرائب: أي عقد ياخد صحة توقيع بيظهر على صفحة البائع فوراً. 2) لو فاتح استثمار عقاري مينفعش تتحاسب تصرفات (2.5%) على نفس الشقق. 3) ملف الثروة العقارية (تأجير محل) بيفضل مفتوح مدى الحياة حتى لو المستأجر مشي؛ لازم تقدم «توقف مؤقت» طول ما هو فاضي ومبيتقفلش نهائي إلا ببيع الملك!'
+    },
+    {
+      category: 'القوانين والمواد الحاكمة',
+      title: 'شروط خصم المصروفات (المادة 22) والمصروفات المرفوضة (المادة 24) وقاعدة الـ 7%',
+      legal: 'المادة (22 و24) من قانون 91 لسنة 2005 والمادة (28) من اللائحة التنفيذية: يشترط أن تكون التكاليف مرتبطة بالنشاط وحقيقية ومؤيدة بفواتير إلكترونية، ولا يقبل خصم المخصصات والغرامات وضريبة الدخل.',
+      balady: 'أي مصروف بدون فاتورة إلكترونية بيترد للربح وتدفع عليه 22.5%، ما عدا المصروفات النثرية اللي العرف جرى إن ملهاش فاتورة (بوفيه، إكراميات، انتقالات داخلية) بحد أقصى 7% من المصروفات العمومية المؤيدة بمستندات.'
+    },
+    {
+      category: 'القوانين والمواد الحاكمة',
+      title: 'تعديل ضريبة القيمة المضافة للمقاولات (قانون 157 لسنة 2025)',
+      legal: 'القانون رقم 157 لسنة 2025 ودليل مصلحة الضرائب لخدمات المقاولات وأعمال التشييد والبناء: إلغاء ضريبة الجدول 5% وخضوع المقاولات للسعر العام 14%.',
+      balady: 'المقاولات دلوقتي بقت تخضع لـ 14% قيمة مضافة بدل 5% جدول، والميزة الكبيرة إن المقاول بقى من حقه يخصم ضريبة المدخلات (14%) اللي دفعها على مشتريات الحديد والأسمنت ومواد البناء بفواتير إلكترونية.'
+    },
+    {
+      category: 'تصنيفات الساب وحلول البورتال',
+      title: 'اعتماد المحاسب القانوني (حدود 2 مليون فردي و5 مليون شركات) وفخ الخطوات الثلاث',
+      legal: 'يلزم اعتماد الإقرار من محاسب قانوني مقيد لشركات الأموال، وللأفراد والشركات عند تجاوز حدود رقم الأعمال المقررة (2 مليون للفردي و5 مليون للشركات).',
+      balady: 'المحاسب القانوني ليه أكونتين: «أكونت ممول» لمكتبه، و«أكونت محاسب» للاعتماد. خطوات الاعتماد 3: (1) تقديم مبدئي من حساب الشركة ودعوة المحاسب (يصبح تحت المراجعة)، (2) دخول المحاسب من حسابه والضغط موافقة (تم الحفظ فقط!)، (3) الرجوع لحساب الشركة -> الالتزامات والضغط موافقة للإرسال النهائي!'
+    },
+    {
+      category: 'تصنيفات الساب وحلول البورتال',
+      title: 'إيقاف كود EGS مكرر بعد قبوله (Active To) + حل اختفاء «وثيقة جديدة»',
+      legal: 'توثيق منظومة الفاتورة الإلكترونية (Update EGS Code Usage - activeTo) وتعليمات طلب استخدام البورتال للممولين بدون ERP (أقل من 200 فاتورة شهرياً).',
+      balady: '1) مفيش حذف لكود EGS بعد قبوله؛ ادخل على الأكواد -> تعديل -> خانة «نشط إلى» (Active To) وحط تاريخ اليوم واحفظ فيتعطل من تاني يوم. 2) لو مسجل جديد ومش ظاهرله «وثيقة جديدة»، قدم نموذج طلب إصدار فواتير على البورتال PDF للمأمورية من نفس إيميل التسجيل.'
+    }
+  ];
+
+  let appState = {
+    version: 2,
+    lastSaved: new Date().toISOString(),
+    clients: JSON.parse(JSON.stringify(DEFAULT_CLIENTS)),
+    tasks: JSON.parse(JSON.stringify(DEFAULT_TASKS)),
+    taskFilter: 'OPEN'
+  };
+
+  function openIdb() {
+    return new Promise((resolve) => {
+      if (!window.indexedDB) return resolve(null);
+      const req = window.indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = function(e) {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(DB_STORE)) {
+          db.createObjectStore(DB_STORE);
+        }
+      };
+      req.onsuccess = function(e) { resolve(e.target.result); };
+      req.onerror = function() { resolve(null); };
+    });
+  }
+
+  async function saveState(silent) {
+    appState.lastSaved = new Date().toISOString();
+    const raw = JSON.stringify(appState);
+    try { window.localStorage.setItem(STORAGE_KEY, raw); } catch (err) {}
+    try {
+      const db = await openIdb();
+      if (db) {
+        const tx = db.transaction(DB_STORE, 'readwrite');
+        tx.objectStore(DB_STORE).put(raw, 'main');
+      }
+    } catch (err) {}
+    updateHeaderSaveTime();
+    if (!silent) showToast('تم حفظ التعديلات تلقائياً على جهازك');
+  }
+
+  async function loadState() {
+    let loaded = null;
+    try {
+      const rawLocal = window.localStorage.getItem(STORAGE_KEY);
+      if (rawLocal) loaded = JSON.parse(rawLocal);
+    } catch (err) {}
+
+    try {
+      const db = await openIdb();
+      if (db) {
+        const idbRaw = await new Promise((res) => {
+          const tx = db.transaction(DB_STORE, 'readonly');
+          const req = tx.objectStore(DB_STORE).get('main');
+          req.onsuccess = () => res(req.result);
+          req.onerror = () => res(null);
+        });
+        if (idbRaw) {
+          const idbParsed = JSON.parse(idbRaw);
+          if (!loaded || (idbParsed.lastSaved > loaded.lastSaved)) {
+            loaded = idbParsed;
+          }
+        }
+      }
+    } catch (err) {}
+
+    if (loaded && Array.isArray(loaded.clients) && Array.isArray(loaded.tasks)) {
+      appState = loaded;
+    } else {
+      await saveState(true);
+    }
+
+    if (navigator.storage && navigator.storage.persist) {
+      try { navigator.storage.persist(); } catch (e) {}
+    }
+  }
+
+  function updateHeaderSaveTime() {
+    const el = document.getElementById('lastSavedText');
+    if (!el) return;
+    try {
+      const dt = new Date(appState.lastSaved);
+      el.textContent = 'آخر حفظ تلقائي: ' + dt.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      el.textContent = 'محفوظ تلقائياً';
+    }
+  }
+
+  let toastTimer = null;
+  function showToast(msg) {
+    const box = document.getElementById('toastBox');
+    const txt = document.getElementById('toastMessage');
+    if (!box || !txt) return;
+    txt.textContent = msg;
+    box.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => box.classList.remove('show'), 3200);
+  }
+
+  function escapeHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function formatMoney(num) {
+    const n = Number(num) || 0;
+    return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  }
+
+  function getAppealBadgeHtml(noticeDateStr) {
+    if (!noticeDateStr) return '';
+    const start = new Date(noticeDateStr + 'T00:00:00');
+    if (isNaN(start.getTime())) return '';
+    const deadline = new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const today = new Date();
+    const diffDays = Math.ceil((deadline.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+    const deadlineFormatted = deadline.toISOString().slice(0, 10);
+    if (diffDays < 0) {
+      return '<span class="tag-inline urgent">نموذج 19/15: انتهت مهلة الـ 30 يوم (' + deadlineFormatted + ')</span>';
+    } else if (diffDays <= 10) {
+      return '<span class="tag-inline urgent">متبقي للطعن ' + diffDays + ' يوم (آخره ' + deadlineFormatted + ')</span>';
+    }
+    return '<span class="tag-inline brass">مهلة الطعن: متبقي ' + diffDays + ' يوم (آخره ' + deadlineFormatted + ')</span>';
+  }
+
+  function renderClients() {
+    const container = document.getElementById('clientsListContainer');
+    const q = (document.getElementById('clientSearchInput').value || '').trim().toLowerCase();
+    const catFilter = document.getElementById('clientCategoryFilter').value;
+    const statusFilter = document.getElementById('clientStatusFilter').value;
+
+    const total = appState.clients.length;
+    const urgentCount = appState.clients.filter(c => c.status === 'عاجل / طعن').length;
+    const reCount = appState.clients.filter(c => c.category.indexOf('عقارات') !== -1).length;
+
+    document.getElementById('statTotalClients').textContent = total;
+    document.getElementById('navClientsCount').textContent = total;
+    document.getElementById('statUrgentClients').textContent = urgentCount;
+    document.getElementById('statRealEstateClients').textContent = reCount;
+
+    const filtered = appState.clients.filter(c => {
+      if (catFilter !== 'ALL' && c.category !== catFilter) return false;
+      if (statusFilter !== 'ALL' && c.status !== statusFilter) return false;
+      if (q) {
+        const hay = (c.name + ' ' + c.office + ' ' + c.activity + ' ' + c.problem + ' ' + c.action).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div style="padding:32px 20px; text-align:center; color:var(--ink-secondary);">لا توجد ملفات مطابقة للبحث الحالي. اضغط «مسح الفلتر» أو أضف ممولاً جديداً.</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(c => {
+      let statusClass = 'brass';
+      if (c.status === 'عاجل / طعن') statusClass = 'urgent';
+      else if (c.status === 'منتهي') statusClass = 'safe';
+
+      return '<div class="ledger-row" data-client-id="' + escapeHtml(c.id) + '">' +
+        '<div>' +
+          '<h3 class="client-name">' +
+            '<span>' + escapeHtml(c.name) + '</span>' +
+            '<span class="tag-inline ' + statusClass + '">' + escapeHtml(c.status) + '</span>' +
+          '</h3>' +
+          '<p class="client-sub">' + escapeHtml(c.activity) + '</p>' +
+          '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
+            (c.office ? '<span class="tag-inline">' + escapeHtml(c.office) + '</span>' : '') +
+            '<span class="tag-inline">' + escapeHtml(c.category) + '</span>' +
+            getAppealBadgeHtml(c.noticeDate) +
+          '</div>' +
+        '</div>' +
+        '<div>' +
+          '<p class="case-problem">' + escapeHtml(c.problem) + '</p>' +
+          '<p class="case-action">المطلوب: ' + escapeHtml(c.action) + '</p>' +
+        '</div>' +
+        '<div class="row-actions">' +
+          '<button type="button" class="btn btn-sm" data-action="edit-client" data-id="' + escapeHtml(c.id) + '">تعديل</button>' +
+          '<button type="button" class="btn btn-sm" data-action="client-to-task" data-id="' + escapeHtml(c.id) + '">+ مهمة</button>' +
+          '<button type="button" class="btn btn-sm btn-dark" data-action="client-to-memo" data-id="' + escapeHtml(c.id) + '">صياغة طعن/طلب</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    populateClientDropdowns();
+  }
+
+  function populateClientDropdowns() {
+    const taskSelect = document.getElementById('newTaskClient');
+    const memoSelect = document.getElementById('memoClientSelect');
+    const opts = appState.clients.map(c => '<option value="' + escapeHtml(c.id) + '">' + escapeHtml(c.name) + ' (' + escapeHtml(c.activity) + ')</option>').join('');
+    if (taskSelect) taskSelect.innerHTML = '<option value="">-- بدون ربط أو اختر الممول --</option>' + opts;
+    if (memoSelect) {
+      const currentVal = memoSelect.value;
+      memoSelect.innerHTML = opts;
+      if (currentVal && appState.clients.some(c => c.id === currentVal)) {
+        memoSelect.value = currentVal;
+      }
+      generateLegalMemo();
+    }
+  }
+
+  function renderTasks() {
+    const container = document.getElementById('tasksListContainer');
+    const openCount = appState.tasks.filter(t => !t.done).length;
+    const urgentCount = appState.tasks.filter(t => !t.done && t.priority === 'عاجل').length;
+    const doneCount = appState.tasks.filter(t => t.done).length;
+
+    document.getElementById('statOpenTasks').textContent = openCount;
+    document.getElementById('navTasksCount').textContent = openCount;
+    document.getElementById('statHighPriorityTasks').textContent = urgentCount;
+    document.getElementById('statCompletedTasks').textContent = doneCount;
+
+    const filtered = appState.tasks.filter(t => {
+      if (appState.taskFilter === 'OPEN') return !t.done;
+      if (appState.taskFilter === 'URGENT') return !t.done && t.priority === 'عاجل';
+      if (appState.taskFilter === 'DONE') return t.done;
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div style="padding:30px 20px; text-align:center; color:var(--ink-secondary);">لا توجد مهام في هذا التصنيف حالياً.</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(t => {
+      return '<div class="task-row ' + (t.done ? 'done' : '') + '">' +
+        '<div class="task-main">' +
+          '<button type="button" class="task-check-btn" data-action="toggle-task" data-id="' + escapeHtml(t.id) + '" aria-label="تغيير حالة المهمة">' +
+            (t.done
+              ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>'
+              : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/></svg>') +
+          '</button>' +
+          '<div>' +
+            '<h3 class="task-title">' + escapeHtml(t.title) + '</h3>' +
+            '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
+              (t.clientName ? '<span class="tag-inline brass">الممول: ' + escapeHtml(t.clientName) + '</span>' : '') +
+              '<span class="tag-inline">' + escapeHtml(t.type || 'إجراء ضريبي') + '</span>' +
+              (t.priority === 'عاجل' ? '<span class="tag-inline urgent">عاجل</span>' : '') +
+              (t.due ? '<span class="tag-inline num-tabular">' + escapeHtml(t.due) + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<button type="button" class="btn btn-sm btn-danger" data-action="delete-task" data-id="' + escapeHtml(t.id) + '">حذف</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  function calcLaw91IndividualTax(netProfit) {
+    if (netProfit <= 0) return 0;
+    let tax = 0;
+    if (netProfit <= 600000) {
+      if (netProfit > 40000) tax += Math.min(netProfit - 40000, 15000) * 0.10;
+      if (netProfit > 55000) tax += Math.min(netProfit - 55000, 15000) * 0.15;
+      if (netProfit > 70000) tax += Math.min(netProfit - 70000, 130000) * 0.20;
+      if (netProfit > 200000) tax += Math.min(netProfit - 200000, 200000) * 0.225;
+      if (netProfit > 400000) tax += (netProfit - 400000) * 0.25;
+    } else {
+      if (netProfit <= 700000) {
+        tax += Math.min(netProfit, 55000) * 0.10;
+        if (netProfit > 55000) tax += Math.min(netProfit - 55000, 15000) * 0.15;
+        if (netProfit > 70000) tax += Math.min(netProfit - 70000, 130000) * 0.20;
+        if (netProfit > 200000) tax += Math.min(netProfit - 200000, 200000) * 0.225;
+        if (netProfit > 400000) tax += (netProfit - 400000) * 0.25;
+      } else if (netProfit <= 1200000) {
+        tax = netProfit * 0.225;
+      } else {
+        tax = 1200000 * 0.25 + (netProfit - 1200000) * 0.275;
+      }
+    }
+    return Math.round(tax);
+  }
+
+  function calcArticle3Law30Tax(turnover) {
+    if (turnover <= 0) return { tax: 0, label: '0' };
+    if (turnover < 250000) return { tax: 1000, label: 'أقل من 250 ألف (1,000 ج قطعية)' };
+    if (turnover < 500000) return { tax: 2500, label: '250 إلى 500 ألف (2,500 ج قطعية)' };
+    if (turnover < 1000000) return { tax: 5000, label: '500 ألف إلى مليون (5,000 ج قطعية)' };
+    if (turnover < 2000000) return { tax: Math.round(turnover * 0.005), label: 'مليون إلى 2 مليون (0.5% من رقم الأعمال)' };
+    if (turnover < 3000000) return { tax: Math.round(turnover * 0.0075), label: '2 إلى 3 مليون (0.75% من رقم الأعمال)' };
+    if (turnover <= 10000000) return { tax: Math.round(turnover * 0.01), label: '3 إلى 10 مليون (1% من رقم الأعمال)' };
+    return { tax: null, label: 'تجاوز 10 مليون (خارج سقف المادة 3 ق 30/2023)' };
+  }
+
+  function calcLaw6Of2025Tax(turnover) {
+    if (turnover <= 0) return { tax: 0, label: '0' };
+    if (turnover < 500000) return { tax: Math.round(turnover * 0.004), label: 'أقل من 500 ألف (0.4% من رقم الأعمال)' };
+    if (turnover < 2000000) return { tax: Math.round(turnover * 0.005), label: '500 ألف لأقل من 2 مليون (0.5%)' };
+    if (turnover < 3000000) return { tax: Math.round(turnover * 0.0075), label: '2 مليون لأقل من 3 مليون (0.75%)' };
+    if (turnover <= 10000000) return { tax: Math.round(turnover * 0.01), label: '3 مليون حتى 10 مليون (1%)' };
+    if (turnover <= 20000000) return { tax: Math.round(turnover * 0.015), label: 'أكثر من 10 حتى 20 مليون (1.5%)' };
+    return { tax: null, label: 'تجاوز 20 مليون (خارج سقف قانون 6 لسنة 2025)' };
+  }
+
+  function runInspectionCalculator() {
+    const method = document.getElementById('inspInputMethod').value;
+    const entity = document.getElementById('inspEntityType').value;
+    const dailyFields = document.getElementById('inspDailyFields');
+    const turnoverInput = document.getElementById('inspTurnover');
+
+    let turnover = Number(turnoverInput.value) || 0;
+    if (method === 'DAILY') {
+      dailyFields.style.display = 'grid';
+      const daily = Number(document.getElementById('inspDailyRev').value) || 0;
+      const days = Number(document.getElementById('inspWorkDays').value) || 310;
+      turnover = daily * days;
+      turnoverInput.value = turnover;
+      turnoverInput.readOnly = true;
+    } else {
+      dailyFields.style.display = 'none';
+      turnoverInput.readOnly = false;
+    }
+
+    const margin = Number(document.getElementById('inspProfitMargin').value) || 0;
+    const returnTax = Number(document.getElementById('inspReturnTax').value) || 0;
+    const whtPaid = Number(document.getElementById('inspWhtPaid').value) || 0;
+
+    const netProfit = Math.round(turnover * (margin / 100));
+    const law91Tax = entity === 'CORP' ? Math.round(netProfit * 0.225) : calcLaw91IndividualTax(netProfit);
+    const art3 = calcArticle3Law30Tax(turnover);
+    const law6 = calcLaw6Of2025Tax(turnover);
+
+    const candidates = [{ name: 'قانون 91 لسنة 2005', val: law91Tax }];
+    if (art3.tax !== null) candidates.push({ name: 'المادة 3 (قانون 30 لسنة 2023)', val: art3.tax });
+    if (law6.tax !== null) candidates.push({ name: 'قانون 6 لسنة 2025 (التسهيلات)', val: law6.tax });
+
+    candidates.sort((a, b) => a.val - b.val);
+    const best = candidates[0];
+    const effectiveTax = Math.max(best.val, returnTax);
+    const netPayable = Math.max(0, effectiveTax - whtPaid);
+    const maxVal = Math.max(law91Tax, art3.tax || 0, law6.tax || 0, returnTax, 1);
+
+    let trapAlertHtml = '';
+    if (returnTax > best.val) {
+      trapAlertHtml = '<div style="margin-top:12px; padding:10px 12px; background:var(--status-urgent-bg); border-right:3px solid var(--status-urgent); color:var(--status-urgent); font-size:0.88rem; font-weight:700;">' +
+        'تنبيه فخ الإقرار: ضريبة الإقرار المرفوعة (' + formatMoney(returnTax) + ' ج) أكبر من ضريبة ' + best.name + ' (' + formatMoney(best.val) + ' ج). المأمورية ستعتمد ضريبة الإقرار الأكبر لأن الإقرار لا رجعة فيه!' +
+      '</div>';
+    }
+
+    const panel = document.getElementById('inspResultsPanel');
+    panel.innerHTML =
+      '<p class="result-headline">الاختيار الأوفر قانونياً للممول</p>' +
+      '<p class="result-big">' + escapeHtml(best.name) + ' — <span class="num-tabular">' + formatMoney(best.val) + '</span> ج</p>' +
+      '<dl class="dl-ledger">' +
+        '<div class="dl-row"><dt class="dl-term">إجمالي رقم الأعمال السنوي</dt><dd class="dl-val num-tabular">' + formatMoney(turnover) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">صافي الربح التقديري (' + margin + '%)</dt><dd class="dl-val num-tabular">' + formatMoney(netProfit) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">1. الضريبة على قانون 91 لسنة 2005</dt><dd class="dl-val num-tabular">' + formatMoney(law91Tax) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">2. الضريبة على المادة 3 (' + art3.label + ')</dt><dd class="dl-val num-tabular">' + (art3.tax !== null ? formatMoney(art3.tax) + ' ج' : 'غير خاضع') + '</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">3. الضريبة على قانون 6/2025 (' + law6.label + ')</dt><dd class="dl-val num-tabular">' + (law6.tax !== null ? formatMoney(law6.tax) + ' ج' : 'غير خاضع') + '</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">مبالغ مخصومة تحت حساب الضريبة (نموذج 41)</dt><dd class="dl-val num-tabular">- ' + formatMoney(whtPaid) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term" style="color:var(--ink-primary); font-weight:800;">الصافي النهائي واجب السداد بعد الخصم</dt><dd class="dl-val num-tabular" style="color:var(--status-safe); font-size:1.1rem;">' + formatMoney(netPayable) + ' ج</dd></div>' +
+      '</dl>' +
+      trapAlertHtml +
+      '<div class="tufte-chart">' +
+        '<div class="tufte-bar-group">' +
+          '<div class="tufte-bar-label"><span>قانون 91 لسنة 2005</span><span class="num-tabular">' + formatMoney(law91Tax) + ' ج</span></div>' +
+          '<div class="tufte-bar-track"><div class="tufte-bar-fill ' + (best.name.indexOf('91') !== -1 ? 'focal' : '') + '" style="width:' + Math.min(100, Math.round((law91Tax / maxVal) * 100)) + '%"></div></div>' +
+        '</div>' +
+        (art3.tax !== null ? (
+          '<div class="tufte-bar-group">' +
+            '<div class="tufte-bar-label"><span>المادة 3 (قانون 30/2023)</span><span class="num-tabular">' + formatMoney(art3.tax) + ' ج</span></div>' +
+            '<div class="tufte-bar-track"><div class="tufte-bar-fill ' + (best.name.indexOf('المادة 3') !== -1 ? 'focal' : '') + '" style="width:' + Math.min(100, Math.round((art3.tax / maxVal) * 100)) + '%"></div></div>' +
+          '</div>'
+        ) : '') +
+      '</div>';
+  }
+
+  function runInvoiceCalculator() {
+    const net = Number(document.getElementById('invNetAmount').value) || 0;
+    const vatRate = Number(document.getElementById('invVatRate').value) || 0;
+    const whtRate = Number(document.getElementById('invWhtRate').value) || 0;
+    const role = document.getElementById('invRole').value;
+
+    const vatAmount = Math.round(net * (vatRate / 100) * 100) / 100;
+    const grossInvoice = Math.round((net + vatAmount) * 100) / 100;
+    const whtAmount = Math.round(net * (whtRate / 100) * 100) / 100;
+    const netCashTransfer = Math.round((grossInvoice - whtAmount) * 100) / 100;
+
+    let journalText = '';
+    if (role === 'BUYER') {
+      journalText =
+        'من مذكورين:\n' +
+        '  ' + formatMoney(net) + ' من حـ/ المشتريات أو المصروفات (بالصافي)\n' +
+        '  ' + formatMoney(vatAmount) + ' من حـ/ ضريبة القيمة المضافة - مدخلات (تُخصم في نموذج 10)\n' +
+        'إلى مذكورين:\n' +
+        '  ' + formatMoney(whtAmount) + ' إلى حـ/ مصلحة الضرائب - خصم وتحصيل (' + whtRate + '% تورد في نموذج 41)\n' +
+        '  ' + formatMoney(netCashTransfer) + ' إلى حـ/ البنك أو الموردين (الصافي المسدد للمورد)';
+    } else {
+      journalText =
+        'من مذكورين:\n' +
+        '  ' + formatMoney(netCashTransfer) + ' من حـ/ البنك أو الخزينة (المبلغ المحصل فعلياً)\n' +
+        '  ' + formatMoney(whtAmount) + ' من حـ/ ضرائب مستقطعة مننا عند المنبع (' + whtRate + '% رصيد لنا يُخصم في إقرار الدخل)\n' +
+        'إلى مذكورين:\n' +
+        '  ' + formatMoney(net) + ' إلى حـ/ إيرادات المبيعات / الخدمات\n' +
+        '  ' + formatMoney(vatAmount) + ' إلى حـ/ ضريبة القيمة المضافة - مخرجات (تُدرج في نموذج 10)';
+    }
+
+    document.getElementById('invResultsPanel').innerHTML =
+      '<p class="result-headline">الصافي الواجب تحويله بعد استقطاع الخصم من المنبع</p>' +
+      '<p class="result-big"><span class="num-tabular">' + formatMoney(netCashTransfer) + '</span> ج</p>' +
+      '<dl class="dl-ledger">' +
+        '<div class="dl-row"><dt class="dl-term">صافي الفاتورة قبل الضريبة</dt><dd class="dl-val num-tabular">' + formatMoney(net) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">ضريبة القيمة المضافة (' + vatRate + '%)</dt><dd class="dl-val num-tabular">+ ' + formatMoney(vatAmount) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">إجمالي الفاتورة الإلكترونية</dt><dd class="dl-val num-tabular">' + formatMoney(grossInvoice) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">الخصم تحت حساب الضريبة (' + whtRate + '% على الصافي)</dt><dd class="dl-val num-tabular" style="color:var(--status-urgent);">- ' + formatMoney(whtAmount) + ' ج</dd></div>' +
+      '</dl>' +
+      '<div style="margin-top:14px;">' +
+        '<label class="field-label">قيد اليومية المحاسبي الجاهز للدفاتر:</label>' +
+        '<pre style="background:var(--surface-subtle); padding:10px 12px; border-radius:6px; font-family:Tajawal,sans-serif; font-size:0.86rem; white-space:pre-wrap; margin:0; border-right:3px solid var(--accent-brass);">' + escapeHtml(journalText) + '</pre>' +
+      '</div>';
+  }
+
+  function runPayrollCalculator() {
+    const gross = Number(document.getElementById('payGrossMonthly').value) || 0;
+    let insWage = Number(document.getElementById('payInsWage').value) || 0;
+    if (insWage > 16700) insWage = 16700;
+    if (insWage > 0 && insWage < 2700) insWage = 2700;
+
+    const empInsMonthly = Math.round(insWage * 0.11 * 100) / 100;
+    const compInsMonthly = Math.round(insWage * 0.1875 * 100) / 100;
+    const netMonthlyBeforeTax = Math.max(0, gross - empInsMonthly);
+    const annualized = netMonthlyBeforeTax * 12;
+    const taxableAnnualRaw = Math.max(0, annualized - 20000);
+    const taxableAnnualRounded = Math.floor(taxableAnnualRaw / 10) * 10;
+
+    const annualTax = calcLaw91IndividualTax(taxableAnnualRounded);
+    const monthlyTax = Math.round((annualTax / 12) * 100) / 100;
+    const martyrsFund = Math.round(gross * 0.0005 * 100) / 100;
+    const netTakeHome = Math.round((gross - empInsMonthly - monthlyTax - martyrsFund) * 100) / 100;
+
+    document.getElementById('payResultsPanel').innerHTML =
+      '<p class="result-headline">ضريبة كسب العمل الشهرية (<span class="num-tabular">ZMCF_PAYROLL</span>)</p>' +
+      '<p class="result-big"><span class="num-tabular">' + formatMoney(monthlyTax) + '</span> ج / شهرياً</p>' +
+      '<dl class="dl-ledger">' +
+        '<div class="dl-row"><dt class="dl-term">حصة العامل في التأمينات (11%)</dt><dd class="dl-val num-tabular">' + formatMoney(empInsMonthly) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">حصة الشركة في التأمينات (18.75%)</dt><dd class="dl-val num-tabular">' + formatMoney(compInsMonthly) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">الوعاء السنوي الصافي بعد الإعفاء الشخصي (20 ألف)</dt><dd class="dl-val num-tabular">' + formatMoney(taxableAnnualRounded) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">الضريبة السنوية (بعد الشريحة الصفرية 40 ألف)</dt><dd class="dl-val num-tabular">' + formatMoney(annualTax) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">صندوق تكريم الشهداء (5 ج لكل 10,000 ج)</dt><dd class="dl-val num-tabular">' + formatMoney(martyrsFund) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term" style="font-weight:800; color:var(--ink-primary);">صافي المرتب الشهري للموظف</dt><dd class="dl-val num-tabular" style="color:var(--status-safe);">' + formatMoney(netTakeHome) + ' ج</dd></div>' +
+      '</dl>';
+  }
+
+  function runRealEstateCalculator() {
+    const val = Number(document.getElementById('reSaleValue').value) || 0;
+    const margin = Number(document.getElementById('reProfitMargin').value) || 15;
+    const dispTax = Math.round(val * 0.025);
+    const estProfit = Math.round(val * (margin / 100));
+    const commTax = calcLaw91IndividualTax(estProfit);
+
+    document.getElementById('reResultsPanel').innerHTML =
+      '<p class="result-headline">ضريبة التصرفات العقارية القطعية (2.5% - المادة 42)</p>' +
+      '<p class="result-big"><span class="num-tabular">' + formatMoney(dispTax) + '</span> ج</p>' +
+      '<dl class="dl-ledger">' +
+        '<div class="dl-row"><dt class="dl-term">قيمة عقد البيع</dt><dd class="dl-val num-tabular">' + formatMoney(val) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">ضريبة التصرفات العقارية (2.5% مقطوعة)</dt><dd class="dl-val num-tabular">' + formatMoney(dispTax) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">لو تحول لملف «استثمار عقاري» (ربح تقديري ' + margin + '%)</dt><dd class="dl-val num-tabular" style="color:var(--status-urgent);">' + formatMoney(commTax) + ' ج</dd></div>' +
+      '</dl>' +
+      '<p style="margin:12px 0 0 0; font-size:0.86rem; color:var(--ink-secondary);">تنبيه المكتب: لو الممول فاتح ملف «استثمار عقاري» وبيتحاسب تجارياً، يُمنع محاسبته بـ 2.5% تصرفات عقارية على نفس العقارات منعاً للازدواج الضريبي.</p>';
+  }
+
+  function generateLegalMemo() {
+    const clientId = document.getElementById('memoClientSelect').value;
+    const type = document.getElementById('memoTemplateType').value;
+    const formNum = document.getElementById('memoFormNum').value || '.......';
+    const client = appState.clients.find(c => c.id === clientId) || appState.clients[0];
+    if (!client) return;
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const noticeDate = client.noticeDate || todayStr;
+    let text = '';
+
+    if (type === 'APPEAL_19' || type === 'APPEAL_15') {
+      const formLabel = type === 'APPEAL_19' ? 'نموذج (19 ضرائب دخل)' : 'نموذج (15 ضريبة قيمة مضافة)';
+      text =
+        'السيد الأستاذ / رئيس ' + (client.office || 'مأمورية الضرائب المختصة') + '\n' +
+        'تحية طيبة وبعد،،،\n\n' +
+        'مقدمه لسيادتكم / ' + client.name + ' (أو وكيله الرسمي بالتفويض)، نشاط: (' + client.activity + ').\n' +
+        'الموضوع: طعن قانوني على ' + formLabel + ' رقم صادر (' + formNum + ') بتاريخ (' + noticeDate + ').\n\n' +
+        'حيث أُعلن الممول بالنموذج المشار إليه، فإنه يطعن عليه في الميعاد القانوني المقرر (خلال 30 يوماً طبقاً للمادة 54 من قانون الإجراءات الضريبية الموحد رقم 206 لسنة 2020) للأسباب الآتية:\n' +
+        '1. من الناحية الشكلية: قبول الطعن شكلاً لتقديمه في الميعاد، مع الدفع ببطلان النموذج لخلوه من بيان عناصر وأسس الفحص والتقدير التفصيلية.\n' +
+        '2. الدفع بالتقادم الخمسي: يتمسك الممول بسقوط حق المصلحة في الفحص والمطالبة عن السنوات التي مضى عليها خمس سنوات طبقاً للمادة (91) من القانون 91 لسنة 2005 لعدم وجود إجراء قاطع للتقادم.\n' +
+        '3. من الناحية الموضوعية: المغالاة الشديدة في تقدير الإيراد اليومي وعدد أيام العمل ونسبة صافي الربح الحكمية دون مراعاة الطبيعة الفعلية للنشاط، وإغفال خصم التكاليف اللازمة للنشاط (م 22) والمبالغ المخصومة والمسددة تحت حساب الضريبة (' + client.problem + ').\n\n' +
+        'لذلك: يلتمس الممول قبول الطعن شكلاً، وفي الموضوع بإلغاء التقديرات الواردة بالنموذج وإحالة الملف للجنة الداخلية للمحاسبة على الأسس الفعلية (أو تطبيق المادة الثالثة من القانون رقم 30 لسنة 2023).';
+    } else if (type === 'ARTICLE_3') {
+      text =
+        'السيد الأستاذ / رئيس ' + (client.office || 'مأمورية الضرائب المختصة / رئيس اللجنة الداخلية') + '\n' +
+        'تحية طيبة وبعد،،،\n\n' +
+        'مقدمه لسيادتكم الممول / ' + client.name + ' — نشاط: (' + client.activity + ').\n' +
+        'الموضوع: طلب المحاسبة وتعديل الربط وفقاً لأحكام المادة الثالثة من القانون رقم 30 لسنة 2023 (وقانون التسهيلات رقم 6 لسنة 2025).\n\n' +
+        'يتشرف الممول بطلب تطبيق أحكام المادة الثالثة من القانون رقم 30 لسنة 2023 على ملفه الضريبي عن سنوات الفحص، حيث إن رقم الأعمال السنوي للمنشأة يقع ضمن الشرائح المقررة بالمادة الثالثة ولا يتجاوز الحد القانوني، مع تعديل الربط الضريبي وأوراد التحصيل على هذا الأساس وخصم كافة المبالغ المسددة تحت حساب الضريبة.';
+    } else if (type === 'TAX_POSITION') {
+      text =
+        'السيد الأستاذ / رئيس ' + (client.office || 'مأمورية الضرائب المختصة') + '\n' +
+        'تحية طيبة وبعد،،،\n\n' +
+        'مقدمه لسيادتكم الممول / ' + client.name + '.\n' +
+        'الموضوع: طلب استخراج شهادة موقف ضريبي تسلسلي لإثبات توقف النشاط وحفظ ملف القيمة المضافة.\n\n' +
+        'برجاء التكرم بالموافقة على إصدار بيان موقف ضريبي يوضح التسلسل التاريخي الكامل للملف الضريبي (' + client.problem + ')، وإثبات تاريخ التوقف الفعلي والمحاسبة النهائية، وذلك لتقديمه إلى مأمورية القيمة المضافة لحفظ الملف نهائياً ورفع أي التزامات غير مستحقة.';
+    } else if (type === 'SEIZURE_APPEAL') {
+      text =
+        'السيد الأستاذ / رئيس ' + (client.office || 'مأمورية الضرائب المختصة - شعبة الحجز والتحصيل') + '\n' +
+        'تحية طيبة وبعد،،،\n\n' +
+        'مقدمه لسيادتكم الممول / ' + client.name + '.\n' +
+        'الموضوع: طعن ومنازعة في محضر الحجز الإداري المؤرخ (' + todayStr + ') وطلب فتح باب الطعن في أصل الربط الضريبي.\n\n' +
+        'حيث تم توقيع محضر الحجز الإداري، فإن الممول يطعن على محضر الحجز وينازع في أصل الدين الضريبي لعدم صحة إعلانه بنموذج الربط (نموذج 19) على النحو المقرر قانوناً، ويلتمس فتح باب الطعن الموضوعي في عناصر التقدير وإحالة الملف إلى اللجنة الداخلية للمحاسبة على الأسس الفعلية.';
+    }
+
+    document.getElementById('memoOutputArea').value = text;
+  }
+
+  function renderReferenceList() {
+    const q = (document.getElementById('refSearchInput').value || '').trim().toLowerCase();
+    const cat = document.getElementById('refCategorySelect').value;
+    const container = document.getElementById('referenceListContainer');
+
+    const filtered = REFERENCE_ITEMS.filter(item => {
+      if (cat !== 'ALL' && item.category !== cat) return false;
+      if (q) {
+        const hay = (item.title + ' ' + item.legal + ' ' + item.balady + ' ' + item.category).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div style="padding:28px 20px; text-align:center; color:var(--ink-secondary);">لا توجد نتائج مطابقة في الدليل.</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(item => {
+      return '<div class="ref-item">' +
+        '<h3 class="ref-title">' +
+          '<span>' + escapeHtml(item.title) + '</span>' +
+          '<span class="tag-inline brass">' + escapeHtml(item.category) + '</span>' +
+        '</h3>' +
+        '<p class="ref-legal"><strong>النص / القاعدة الرسمية:</strong> ' + escapeHtml(item.legal) + '</p>' +
+        '<p class="ref-balady"><strong>الشرح بالبلدي في المكتب:</strong> ' + escapeHtml(item.balady) + '</p>' +
+      '</div>';
+    }).join('');
+  }
+
+  function getBackupPayloadString() {
+    return JSON.stringify(appState, null, 2);
+  }
+
+  function downloadBackupFile() {
+    const dataStr = getBackupPayloadString();
+    const blob = new Blob([dataStr], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const datePart = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = 'tax_office_backup_' + datePart + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    showToast('تم تحميل ملف النسخة الاحتياطية (.json) على جهازك');
+  }
+
+  async function shareBackupFile() {
+    const dataStr = getBackupPayloadString();
+    const datePart = new Date().toISOString().slice(0, 10);
+    const fileName = 'tax_office_backup_' + datePart + '.json';
+    try {
+      const file = new File([dataStr], fileName, { type: 'application/json' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'نسخة احتياطية - دفتر المكتب الضريبي',
+          text: 'نسخة احتياطية لملفات الممولين والمهام الضريبية (' + datePart + ')',
+          files: [file]
+        });
+        showToast('تمت مشاركة ملف النسخة الاحتياطية');
+        return;
+      }
+    } catch (e) {}
+    downloadBackupFile();
+  }
+
+  function copyTextToClipboard(text, msg) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => showToast(msg)).catch(() => fallbackCopy(text, msg));
+    } else {
+      fallbackCopy(text, msg);
+    }
+  }
+
+  function fallbackCopy(text, msg) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast(msg); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  function previewRestoreJson(rawText) {
+    const previewEl = document.getElementById('restorePreviewBox');
+    if (!rawText || !rawText.trim()) {
+      previewEl.textContent = '';
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(rawText);
+      if (!parsed || !Array.isArray(parsed.clients) || !Array.isArray(parsed.tasks)) {
+        previewEl.style.color = 'var(--status-urgent)';
+        previewEl.textContent = 'ملف غير صالح: يجب أن يحتوي على مصفوفة الممولين (clients) والمهام (tasks).';
+        return null;
+      }
+      previewEl.style.color = 'var(--status-safe)';
+      previewEl.textContent = 'الملف جاهز للاسترجاع: يحتوي على (' + parsed.clients.length + ' ممول) و (' + parsed.tasks.length + ' مهمة).';
+      return parsed;
+    } catch (err) {
+      previewEl.style.color = 'var(--status-urgent)';
+      previewEl.textContent = 'خطأ في صيغة ملف JSON. تأكد من اختيار ملف النسخة الاحتياطية الصحيح.';
+      return null;
+    }
+  }
+
+  async function executeRestore() {
+    const rawText = document.getElementById('restoreJsonTextarea').value;
+    const parsed = previewRestoreJson(rawText);
+    if (!parsed) return;
+
+    const mode = document.getElementById('restoreModeSelect').value;
+    if (mode === 'REPLACE') {
+      appState.clients = parsed.clients;
+      appState.tasks = parsed.tasks;
+    } else {
+      const clientMap = new Map(appState.clients.map(c => [c.id, c]));
+      parsed.clients.forEach(c => {
+        if (c && c.id) clientMap.set(c.id, c);
+      });
+      appState.clients = Array.from(clientMap.values());
+
+      const taskMap = new Map(appState.tasks.map(t => [t.id, t]));
+      parsed.tasks.forEach(t => {
+        if (t && t.id) taskMap.set(t.id, t);
+      });
+      appState.tasks = Array.from(taskMap.values());
+    }
+
+    await saveState(true);
+    renderClients();
+    renderTasks();
+    document.getElementById('backupModalBackdrop').classList.remove('open');
+    showToast('تم استرجاع النسخة الاحتياطية بنجاح (' + appState.clients.length + ' ممول)');
+  }
+
+  function exportClientsCsv() {
+    const headers = ['الاسم', 'المأمورية', 'النشاط', 'القسم', 'الحالة', 'تاريخ النموذج', 'تفاصيل المشكلة', 'الإجراء المطلوب'];
+    const rows = appState.clients.map(c => [
+      c.name, c.office, c.activity, c.category, c.status, c.noticeDate || '', c.problem, c.action
+    ].map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(','));
+    const csv = '\uFEFF' + headers.join(',') + '\n' + rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'office_clients_cases.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('تم تحميل جدول العملاء بصيغة CSV');
+  }
+
+  function openClientModal(clientId) {
+    const modal = document.getElementById('clientModalBackdrop');
+    const delBtn = document.getElementById('btnDeleteClientInModal');
+    if (clientId) {
+      const c = appState.clients.find(item => item.id === clientId);
+      if (!c) return;
+      document.getElementById('clientModalTitle').textContent = 'تعديل ملف: ' + c.name;
+      document.getElementById('clientFormId').value = c.id;
+      document.getElementById('clientFormName').value = c.name;
+      document.getElementById('clientFormOffice').value = c.office || '';
+      document.getElementById('clientFormActivity').value = c.activity || '';
+      document.getElementById('clientFormCategory').value = c.category || 'فحص ولجان وطعون';
+      document.getElementById('clientFormStatus').value = c.status || 'قيد المتابعة';
+      document.getElementById('clientFormNoticeDate').value = c.noticeDate || '';
+      document.getElementById('clientFormProblem').value = c.problem || '';
+      document.getElementById('clientFormAction').value = c.action || '';
+      delBtn.style.display = 'inline-flex';
+    } else {
+      document.getElementById('clientModalTitle').textContent = 'إضافة ملف ممول جديد';
+      document.getElementById('clientForm').reset();
+      document.getElementById('clientFormId').value = '';
+      delBtn.style.display = 'none';
+    }
+    modal.classList.add('open');
+  }
+
+  function switchMainTab(targetId) {
+    document.querySelectorAll('.nav-tab').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-tab') === targetId);
+    });
+    document.querySelectorAll('.view-section').forEach(sec => {
+      sec.classList.toggle('active', sec.id === targetId);
+    });
+  }
+
+  function initEventListeners() {
+    document.querySelectorAll('.nav-tab').forEach(btn => {
+      btn.addEventListener('click', () => switchMainTab(btn.getAttribute('data-tab')));
+    });
+
+    document.getElementById('clientSearchInput').addEventListener('input', renderClients);
+    document.getElementById('clientCategoryFilter').addEventListener('change', renderClients);
+    document.getElementById('clientStatusFilter').addEventListener('change', renderClients);
+    document.getElementById('btnResetFilters').addEventListener('click', () => {
+      document.getElementById('clientSearchInput').value = '';
+      document.getElementById('clientCategoryFilter').value = 'ALL';
+      document.getElementById('clientStatusFilter').value = 'ALL';
+      renderClients();
+    });
+    document.getElementById('btnExportClientsCsv').addEventListener('click', exportClientsCsv);
+
+    document.getElementById('btnQuickAddClient').addEventListener('click', () => openClientModal(null));
+    document.getElementById('btnCloseClientModal').addEventListener('click', () => {
+      document.getElementById('clientModalBackdrop').classList.remove('open');
+    });
+
+    document.getElementById('clientForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('clientFormId').value;
+      const record = {
+        id: id || ('c_' + Date.now()),
+        name: document.getElementById('clientFormName').value.trim(),
+        office: document.getElementById('clientFormOffice').value.trim(),
+        activity: document.getElementById('clientFormActivity').value.trim(),
+        category: document.getElementById('clientFormCategory').value,
+        status: document.getElementById('clientFormStatus').value,
+        noticeDate: document.getElementById('clientFormNoticeDate').value,
+        problem: document.getElementById('clientFormProblem').value.trim(),
+        action: document.getElementById('clientFormAction').value.trim()
+      };
+      if (id) {
+        const idx = appState.clients.findIndex(c => c.id === id);
+        if (idx !== -1) appState.clients[idx] = record;
+      } else {
+        appState.clients.unshift(record);
+      }
+      await saveState(false);
+      renderClients();
+      document.getElementById('clientModalBackdrop').classList.remove('open');
+    });
+
+    document.getElementById('btnDeleteClientInModal').addEventListener('click', async () => {
+      const id = document.getElementById('clientFormId').value;
+      if (!id) return;
+      appState.clients = appState.clients.filter(c => c.id !== id);
+      await saveState(false);
+      renderClients();
+      document.getElementById('clientModalBackdrop').classList.remove('open');
+      showToast('تم حذف ملف الممول');
+    });
+
+    document.getElementById('clientsListContainer').addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const action = btn.getAttribute('data-action');
+      const id = btn.getAttribute('data-id');
+      const client = appState.clients.find(c => c.id === id);
+      if (!client) return;
+
+      if (action === 'edit-client') {
+        openClientModal(id);
+      } else if (action === 'client-to-task') {
+        const newTask = {
+          id: 't_' + Date.now(),
+          title: client.action || ('متابعة ملف ' + client.name),
+          clientId: client.id,
+          clientName: client.name,
+          type: client.category,
+          due: new Date().toISOString().slice(0, 10),
+          priority: client.status === 'عاجل / طعن' ? 'عاجل' : 'عادي',
+          done: false
+        };
+        appState.tasks.unshift(newTask);
+        await saveState(true);
+        renderTasks();
+        switchMainTab('view-tasks');
+        showToast('تمت إضافة إجراء (' + client.name + ') إلى الأجندة');
+      } else if (action === 'client-to-memo') {
+        switchMainTab('view-reference');
+        const memoSelect = document.getElementById('memoClientSelect');
+        memoSelect.value = client.id;
+        generateLegalMemo();
+        showToast('تم تجهيز المذكرة القانونية لملف: ' + client.name);
+      }
+    });
+
+    document.getElementById('btnAddTask').addEventListener('click', async () => {
+      const titleInput = document.getElementById('newTaskTitle');
+      const title = titleInput.value.trim();
+      if (!title) {
+        showToast('اكتب عنوان المهمة أولاً');
+        return;
+      }
+      const clientId = document.getElementById('newTaskClient').value;
+      const clientObj = appState.clients.find(c => c.id === clientId);
+      const task = {
+        id: 't_' + Date.now(),
+        title: title,
+        clientId: clientId,
+        clientName: clientObj ? clientObj.name : '',
+        type: document.getElementById('newTaskType').value,
+        due: document.getElementById('newTaskDue').value || new Date().toISOString().slice(0, 10),
+        priority: document.getElementById('newTaskPriority').value,
+        done: false
+      };
+      appState.tasks.unshift(task);
+      titleInput.value = '';
+      await saveState(false);
+      renderTasks();
+    });
+
+    document.querySelectorAll('.task-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        appState.taskFilter = btn.getAttribute('data-filter');
+        document.querySelectorAll('.task-filter-btn').forEach(b => b.classList.remove('btn-dark'));
+        btn.classList.add('btn-dark');
+        renderTasks();
+      });
+    });
+
+    document.getElementById('tasksListContainer').addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const action = btn.getAttribute('data-action');
+      const id = btn.getAttribute('data-id');
+      if (action === 'toggle-task') {
+        const t = appState.tasks.find(item => item.id === id);
+        if (t) {
+          t.done = !t.done;
+          await saveState(true);
+          renderTasks();
+        }
+      } else if (action === 'delete-task') {
+        appState.tasks = appState.tasks.filter(item => item.id !== id);
+        await saveState(true);
+        renderTasks();
+        showToast('تم حذف المهمة');
+      }
+    });
+
+    document.querySelectorAll('.calc-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-mode');
+        document.querySelectorAll('.calc-mode-btn').forEach(b => b.classList.remove('btn-dark'));
+        btn.classList.add('btn-dark');
+        document.querySelectorAll('.calc-pane').forEach(p => {
+          p.style.display = (p.id === target) ? 'block' : 'none';
+        });
+      });
+    });
+
+    ['inspInputMethod', 'inspEntityType', 'inspDailyRev', 'inspWorkDays', 'inspTurnover', 'inspProfitMargin', 'inspReturnTax', 'inspWhtPaid'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', runInspectionCalculator);
+        el.addEventListener('change', runInspectionCalculator);
+      }
+    });
+
+    document.getElementById('btnPresetAudio1').addEventListener('click', () => {
+      document.getElementById('inspInputMethod').value = 'DIRECT';
+      document.getElementById('inspTurnover').value = '4561230';
+      document.getElementById('inspProfitMargin').value = '20';
+      document.getElementById('inspReturnTax').value = '0';
+      runInspectionCalculator();
+    });
+    document.getElementById('btnPresetAudio2').addEventListener('click', () => {
+      document.getElementById('inspInputMethod').value = 'DIRECT';
+      document.getElementById('inspTurnover').value = '4561230';
+      document.getElementById('inspProfitMargin').value = '5';
+      document.getElementById('inspReturnTax').value = '0';
+      runInspectionCalculator();
+    });
+    document.getElementById('btnPresetAudio3').addEventListener('click', () => {
+      document.getElementById('inspInputMethod').value = 'DAILY';
+      document.getElementById('inspDailyRev').value = '1000';
+      document.getElementById('inspWorkDays').value = '310';
+      document.getElementById('inspProfitMargin').value = '20';
+      document.getElementById('inspReturnTax').value = '5000';
+      runInspectionCalculator();
+    });
+
+    ['invNetAmount', 'invVatRate', 'invWhtRate', 'invRole'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', runInvoiceCalculator);
+        el.addEventListener('change', runInvoiceCalculator);
+      }
+    });
+
+    ['payGrossMonthly', 'payInsWage'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', runPayrollCalculator);
+    });
+
+    ['reSaleValue', 'reProfitMargin'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', runRealEstateCalculator);
+    });
+
+    ['memoClientSelect', 'memoTemplateType', 'memoFormNum'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('change', generateLegalMemo);
+        el.addEventListener('input', generateLegalMemo);
+      }
+    });
+    document.getElementById('btnCopyMemo').addEventListener('click', () => {
+      copyTextToClipboard(document.getElementById('memoOutputArea').value, 'تم نسخ نص المذكرة القانونية للحافظة');
+    });
+    document.getElementById('refSearchInput').addEventListener('input', renderReferenceList);
+    document.getElementById('refCategorySelect').addEventListener('change', renderReferenceList);
+
+    document.getElementById('btnOpenBackupModal').addEventListener('click', () => {
+      document.getElementById('backupModalBackdrop').classList.add('open');
+    });
+    document.getElementById('btnCloseBackupModal').addEventListener('click', () => {
+      document.getElementById('backupModalBackdrop').classList.remove('open');
+    });
+    document.getElementById('btnDownloadBackupFile').addEventListener('click', downloadBackupFile);
+    document.getElementById('btnShareBackupFile').addEventListener('click', shareBackupFile);
+    document.getElementById('btnCopyBackupJson').addEventListener('click', () => {
+      copyTextToClipboard(getBackupPayloadString(), 'تم نسخ كود النسخة الاحتياطية بالكامل');
+    });
+
+    document.getElementById('restoreFileInput').addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const content = evt.target.result;
+        document.getElementById('restoreJsonTextarea').value = content;
+        previewRestoreJson(content);
+      };
+      reader.readAsText(file, 'UTF-8');
+    });
+
+    document.getElementById('restoreJsonTextarea').addEventListener('input', (e) => {
+      previewRestoreJson(e.target.value);
+    });
+
+    document.getElementById('btnExecuteRestore').addEventListener('click', executeRestore);
+
+    document.getElementById('btnResetToDefaultData').addEventListener('click', async () => {
+      appState.clients = JSON.parse(JSON.stringify(DEFAULT_CLIENTS));
+      appState.tasks = JSON.parse(JSON.stringify(DEFAULT_TASKS));
+      await saveState(true);
+      renderClients();
+      renderTasks();
+      document.getElementById('backupModalBackdrop').classList.remove('open');
+      showToast('تمت استعادة قائمة الـ 20 عميلاً والمهام الأصلية من الريكورد');
+    });
+
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const installBtn = document.getElementById('btnInstallPwa');
+      if (installBtn) installBtn.style.display = 'inline-flex';
+    });
+
+    document.getElementById('btnInstallPwa').addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      document.getElementById('btnInstallPwa').style.display = 'none';
+    });
+  }
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    await loadState();
+    initEventListeners();
+    renderClients();
+    renderTasks();
+    runInspectionCalculator();
+    runInvoiceCalculator();
+    runPayrollCalculator();
+    runRealEstateCalculator();
+    renderReferenceList();
+    updateHeaderSaveTime();
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  });
+})();
+</script>
+</body>
+</html>
