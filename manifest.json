@@ -1,0 +1,21 @@
+{
+  "name": "دفتر المكتب الضريبي المصري (SAP & Tax Office)",
+  "short_name": "المكتب الضريبي",
+  "description": "تطبيق إدارة ملفات الممولين، المهام والطعون، حاسبة الفحص والضرائب، ومرجع القوانين والنماذج الضريبية (يعمل أوفلاين بالكامل)",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#FAF8F5",
+  "theme_color": "#18181B",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
