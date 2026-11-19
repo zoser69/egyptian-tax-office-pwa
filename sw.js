@@ -1,9 +1,12 @@
-const CACHE_NAME = 'egyptian-tax-office-pwa-v2';
+const CACHE_NAME = 'egyptian-tax-office-pwa-v3';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './icon.svg'
+  './icon.svg',
+  './styles.css',
+  './data.js',
+  './app.js'
 ];
 
 self.addEventListener('install', (event) => {
