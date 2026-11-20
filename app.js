@@ -6,8 +6,6 @@
   const DB_NAME = 'EgyptianTaxOfficeDB';
   const DB_STORE = 'app_state';
 
-
-
   let appState = {
     version: 2,
     lastSaved: new Date().toISOString(),
@@ -16,7 +14,6 @@
     taskFilter: 'OPEN'
   };
 
-  // Theme Manager (Light / Dark)
   function applyTheme(themeName) {
     const t = (themeName === 'dark') ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', t);
@@ -28,7 +25,7 @@
       moon.style.display = (t === 'dark') ? 'none' : 'block';
     }
     if (metaTheme) {
-      metaTheme.setAttribute('content', t === 'dark' ? '#09090B' : '#FAFAFA');
+      metaTheme.setAttribute('content', t === 'dark' ? '#111214' : '#1E3A5F');
     }
     try { window.localStorage.setItem(THEME_KEY, t); } catch (e) {}
   }
@@ -186,39 +183,57 @@
     });
 
     if (filtered.length === 0) {
-      container.innerHTML = '<div style="padding:32px 20px; text-align:center; color:var(--ink-secondary);">لا توجد ملفات مطابقة للبحث الحالي. اضغط «مسح الفلتر» أو أضف ممولاً جديداً.</div>';
+      container.innerHTML = '<div class="ledger-panel" style="padding:32px 20px; text-align:center; color:var(--ink-secondary);">لا توجد ملفات مطابقة للبحث الحالي. اضغط «مسح الفلتر» أو أضف ممولاً جديداً.</div>';
       return;
     }
 
     container.innerHTML = filtered.map((c, idx) => {
       let statusClass = 'brass';
-      if (c.status === 'عاجل / طعن') statusClass = 'urgent';
-      else if (c.status === 'منتهي') statusClass = 'safe';
-      const delay = Math.min(idx * 22, 220);
+      let cardStateClass = '';
+      if (c.status === 'عاجل / طعن') {
+        statusClass = 'urgent';
+        cardStateClass = 'status-urgent';
+      } else if (c.status === 'منتهي') {
+        statusClass = 'safe';
+        cardStateClass = 'status-safe';
+      }
+      const delay = Math.min(idx * 20, 200);
+      const isLongProblem = (c.problem || '').length > 140;
 
-      return '<div class="ledger-row" style="animation-delay:' + delay + 'ms;" data-client-id="' + escapeHtml(c.id) + '">' +
-        '<div>' +
-          '<h3 class="client-name">' +
-            '<span>' + escapeHtml(c.name) + '</span>' +
-            '<span class="tag-inline ' + statusClass + '">' + escapeHtml(c.status) + '</span>' +
-          '</h3>' +
-          '<p class="client-sub">' + escapeHtml(c.activity) + '</p>' +
-          '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
+      return '<article class="client-card ' + cardStateClass + '" style="animation-delay:' + delay + 'ms;" data-client-id="' + escapeHtml(c.id) + '">' +
+        '<div class="client-card-top">' +
+          '<div>' +
+            '<h3 class="client-name">' +
+              '<span>' + escapeHtml(c.name) + '</span>' +
+              '<span class="tag-inline ' + statusClass + '">' + escapeHtml(c.status) + '</span>' +
+            '</h3>' +
+            '<p class="client-sub">' + escapeHtml(c.activity) + '</p>' +
+          '</div>' +
+          '<div class="client-tags">' +
             (c.office ? '<span class="tag-inline">' + escapeHtml(c.office) + '</span>' : '') +
             '<span class="tag-inline">' + escapeHtml(c.category) + '</span>' +
             getAppealBadgeHtml(c.noticeDate) +
           '</div>' +
         '</div>' +
-        '<div>' +
-          '<p class="case-problem">' + escapeHtml(c.problem) + '</p>' +
+        '<div class="case-problem-wrap">' +
+          '<p class="case-problem ' + (isLongProblem ? 'clamped' : '') + '">' + escapeHtml(c.problem) + '</p>' +
+          (isLongProblem ? '<button type="button" class="read-more-btn" data-action="toggle-problem" data-id="' + escapeHtml(c.id) + '">عرض المزيد</button>' : '') +
+        '</div>' +
+        '<div class="case-action-box">' +
           '<p class="case-action">المطلوب: ' + escapeHtml(c.action) + '</p>' +
         '</div>' +
-        '<div class="row-actions">' +
-          '<button type="button" class="btn btn-sm" data-action="edit-client" data-id="' + escapeHtml(c.id) + '">تعديل</button>' +
-          '<button type="button" class="btn btn-sm" data-action="client-to-task" data-id="' + escapeHtml(c.id) + '">+ مهمة</button>' +
-          '<button type="button" class="btn btn-sm btn-primary" data-action="client-to-memo" data-id="' + escapeHtml(c.id) + '">صياغة طعن/طلب</button>' +
+        '<div class="client-card-footer">' +
+          '<div class="row-actions-secondary">' +
+            '<button type="button" class="btn btn-icon" data-action="edit-client" data-id="' + escapeHtml(c.id) + '" title="تعديل بيانات الممول" aria-label="تعديل بيانات الممول">' +
+              '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+            '</button>' +
+            '<button type="button" class="btn btn-icon" data-action="client-to-task" data-id="' + escapeHtml(c.id) + '" title="تحويل لمهمة في الأجندة" aria-label="تحويل لمهمة في الأجندة">' +
+              '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' +
+            '</button>' +
+          '</div>' +
+          '<button type="button" class="btn btn-sm btn-soft" data-action="client-to-memo" data-id="' + escapeHtml(c.id) + '">صياغة طعن/طلب</button>' +
         '</div>' +
-      '</div>';
+      '</article>';
     }).join('');
 
     populateClientDropdowns();
@@ -228,7 +243,7 @@
     const taskSelect = document.getElementById('newTaskClient');
     const memoSelect = document.getElementById('memoClientSelect');
     const opts = appState.clients.map(c => '<option value="' + escapeHtml(c.id) + '">' + escapeHtml(c.name) + ' (' + escapeHtml(c.activity) + ')</option>').join('');
-    if (taskSelect) taskSelect.innerHTML = '<option value="">-- بدون ربط أو اختر الممول --</option>' + opts;
+    if (taskSelect) taskSelect.innerHTML = '<option value="">بدون ربط أو اختر الممول</option>' + opts;
     if (memoSelect) {
       const currentVal = memoSelect.value;
       memoSelect.innerHTML = opts;
@@ -281,7 +296,9 @@
             '</div>' +
           '</div>' +
         '</div>' +
-        '<button type="button" class="btn btn-sm btn-danger" data-action="delete-task" data-id="' + escapeHtml(t.id) + '">حذف</button>' +
+        '<button type="button" class="btn btn-icon btn-danger" data-action="delete-task" data-id="' + escapeHtml(t.id) + '" title="حذف المهمة" aria-label="حذف المهمة">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+        '</button>' +
       '</div>';
     }).join('');
   }
@@ -366,21 +383,28 @@
 
     candidates.sort((a, b) => a.val - b.val);
     const best = candidates[0];
+    const highestVal = candidates[candidates.length - 1].val;
     const effectiveTax = Math.max(best.val, returnTax);
     const netPayable = Math.max(0, effectiveTax - whtPaid);
     const maxVal = Math.max(law91Tax, art3.tax || 0, law6.tax || 0, returnTax, 1);
 
     let trapAlertHtml = '';
     if (returnTax > best.val) {
-      trapAlertHtml = '<div style="margin-top:12px; padding:10px 12px; background:var(--status-urgent-bg); border-right:3px solid var(--status-urgent); color:var(--status-urgent); font-size:0.88rem; font-weight:700; border-radius:4px;">' +
-        'تنبيه فخ الإقرار: ضريبة الإقرار المرفوعة (' + formatMoney(returnTax) + ' ج) أكبر من ضريبة ' + best.name + ' (' + formatMoney(best.val) + ' ج). المأمورية ستعتمد ضريبة الإقرار الأكبر لأن الإقرار لا رجعة فيه!' +
+      trapAlertHtml = '<div style="margin-top:12px; padding:12px; background:var(--status-urgent-bg); border-right:3px solid var(--status-urgent); color:var(--status-urgent); font-size:0.88rem; font-weight:700; border-radius:8px;">' +
+        'تنبيه فخ الإقرار: ضريبة الإقرار المرفوعة (' + formatMoney(returnTax) + ' ج) أكبر من ضريبة ' + best.name + ' (' + formatMoney(best.val) + ' ج). المأمورية ستعتمد ضريبة الإقرار الأكبر لأن الإقرار لا رجعة فيه.' +
       '</div>';
     }
 
+    const barClass91 = (best.name.indexOf('91') !== -1) ? 'best' : (law91Tax === highestVal && candidates.length > 1 ? 'high' : '');
+    const barClassArt3 = (best.name.indexOf('المادة 3') !== -1) ? 'best' : (art3.tax === highestVal && candidates.length > 1 ? 'high' : '');
+
     const panel = document.getElementById('inspResultsPanel');
     panel.innerHTML =
-      '<p class="result-headline">الاختيار الأوفر قانونياً للممول</p>' +
-      '<p class="result-big">' + escapeHtml(best.name) + ' — <span class="num-tabular">' + formatMoney(best.val) + '</span> ج</p>' +
+      '<div class="result-hero">' +
+        '<p class="result-headline">الاختيار الأوفر قانونياً للممول</p>' +
+        '<p class="result-big"><span class="num-tabular">' + formatMoney(best.val) + '</span> ج</p>' +
+        '<span class="result-subtag">' + escapeHtml(best.name) + '</span>' +
+      '</div>' +
       '<dl class="dl-ledger">' +
         '<div class="dl-row"><dt class="dl-term">إجمالي رقم الأعمال السنوي</dt><dd class="dl-val num-tabular">' + formatMoney(turnover) + ' ج</dd></div>' +
         '<div class="dl-row"><dt class="dl-term">صافي الربح التقديري (' + margin + '%)</dt><dd class="dl-val num-tabular">' + formatMoney(netProfit) + ' ج</dd></div>' +
@@ -388,18 +412,18 @@
         '<div class="dl-row"><dt class="dl-term">2. الضريبة على المادة 3 (' + art3.label + ')</dt><dd class="dl-val num-tabular">' + (art3.tax !== null ? formatMoney(art3.tax) + ' ج' : 'غير خاضع') + '</dd></div>' +
         '<div class="dl-row"><dt class="dl-term">3. الضريبة على قانون 6/2025 (' + law6.label + ')</dt><dd class="dl-val num-tabular">' + (law6.tax !== null ? formatMoney(law6.tax) + ' ج' : 'غير خاضع') + '</dd></div>' +
         '<div class="dl-row"><dt class="dl-term">مبالغ مخصومة تحت حساب الضريبة (نموذج 41)</dt><dd class="dl-val num-tabular">- ' + formatMoney(whtPaid) + ' ج</dd></div>' +
-        '<div class="dl-row"><dt class="dl-term" style="color:var(--ink-primary); font-weight:800;">الصافي النهائي واجب السداد بعد الخصم</dt><dd class="dl-val num-tabular" style="color:var(--status-safe); font-size:1.1rem;">' + formatMoney(netPayable) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term" style="color:var(--ink-primary); font-weight:800;">الصافي النهائي واجب السداد</dt><dd class="dl-val num-tabular" style="color:var(--status-safe); font-size:1.1rem;">' + formatMoney(netPayable) + ' ج</dd></div>' +
       '</dl>' +
       trapAlertHtml +
       '<div class="tufte-chart">' +
         '<div class="tufte-bar-group">' +
           '<div class="tufte-bar-label"><span>قانون 91 لسنة 2005</span><span class="num-tabular">' + formatMoney(law91Tax) + ' ج</span></div>' +
-          '<div class="tufte-bar-track"><div class="tufte-bar-fill ' + (best.name.indexOf('91') !== -1 ? 'focal' : '') + '" style="width:' + Math.min(100, Math.round((law91Tax / maxVal) * 100)) + '%"></div></div>' +
+          '<div class="tufte-bar-track"><div class="tufte-bar-fill ' + barClass91 + '" style="width:' + Math.min(100, Math.round((law91Tax / maxVal) * 100)) + '%"></div></div>' +
         '</div>' +
         (art3.tax !== null ? (
           '<div class="tufte-bar-group">' +
             '<div class="tufte-bar-label"><span>المادة 3 (قانون 30/2023)</span><span class="num-tabular">' + formatMoney(art3.tax) + ' ج</span></div>' +
-            '<div class="tufte-bar-track"><div class="tufte-bar-fill ' + (best.name.indexOf('المادة 3') !== -1 ? 'focal' : '') + '" style="width:' + Math.min(100, Math.round((art3.tax / maxVal) * 100)) + '%"></div></div>' +
+            '<div class="tufte-bar-track"><div class="tufte-bar-fill ' + barClassArt3 + '" style="width:' + Math.min(100, Math.round((art3.tax / maxVal) * 100)) + '%"></div></div>' +
           '</div>'
         ) : '') +
       '</div>';
@@ -421,9 +445,9 @@
       journalText =
         'من مذكورين:\n' +
         '  ' + formatMoney(net) + ' من حـ/ المشتريات أو المصروفات (بالصافي)\n' +
-        '  ' + formatMoney(vatAmount) + ' من حـ/ ضريبة القيمة المضافة - مدخلات (تُخصم في نموذج 10)\n' +
+        '  ' + formatMoney(vatAmount) + ' من حـ/ ضريبة القيمة المضافة | مدخلات (تُخصم في نموذج 10)\n' +
         'إلى مذكورين:\n' +
-        '  ' + formatMoney(whtAmount) + ' إلى حـ/ مصلحة الضرائب - خصم وتحصيل (' + whtRate + '% تورد في نموذج 41)\n' +
+        '  ' + formatMoney(whtAmount) + ' إلى حـ/ مصلحة الضرائب | خصم وتحصيل (' + whtRate + '% تورد في نموذج 41)\n' +
         '  ' + formatMoney(netCashTransfer) + ' إلى حـ/ البنك أو الموردين (الصافي المسدد للمورد)';
     } else {
       journalText =
@@ -432,21 +456,23 @@
         '  ' + formatMoney(whtAmount) + ' من حـ/ ضرائب مستقطعة مننا عند المنبع (' + whtRate + '% رصيد لنا يُخصم في إقرار الدخل)\n' +
         'إلى مذكورين:\n' +
         '  ' + formatMoney(net) + ' إلى حـ/ إيرادات المبيعات / الخدمات\n' +
-        '  ' + formatMoney(vatAmount) + ' إلى حـ/ ضريبة القيمة المضافة - مخرجات (تُدرج في نموذج 10)';
+        '  ' + formatMoney(vatAmount) + ' إلى حـ/ ضريبة القيمة المضافة | مخرجات (تُدرج في نموذج 10)';
     }
 
     document.getElementById('invResultsPanel').innerHTML =
-      '<p class="result-headline">الصافي الواجب تحويله بعد استقطاع الخصم من المنبع</p>' +
-      '<p class="result-big"><span class="num-tabular">' + formatMoney(netCashTransfer) + '</span> ج</p>' +
+      '<div class="result-hero">' +
+        '<p class="result-headline">الصافي الواجب تحويله بعد الخصم</p>' +
+        '<p class="result-big"><span class="num-tabular">' + formatMoney(netCashTransfer) + '</span> ج</p>' +
+      '</div>' +
       '<dl class="dl-ledger">' +
         '<div class="dl-row"><dt class="dl-term">صافي الفاتورة قبل الضريبة</dt><dd class="dl-val num-tabular">' + formatMoney(net) + ' ج</dd></div>' +
         '<div class="dl-row"><dt class="dl-term">ضريبة القيمة المضافة (' + vatRate + '%)</dt><dd class="dl-val num-tabular">+ ' + formatMoney(vatAmount) + ' ج</dd></div>' +
         '<div class="dl-row"><dt class="dl-term">إجمالي الفاتورة الإلكترونية</dt><dd class="dl-val num-tabular">' + formatMoney(grossInvoice) + ' ج</dd></div>' +
         '<div class="dl-row"><dt class="dl-term">الخصم تحت حساب الضريبة (' + whtRate + '% على الصافي)</dt><dd class="dl-val num-tabular" style="color:var(--status-urgent);">- ' + formatMoney(whtAmount) + ' ج</dd></div>' +
       '</dl>' +
-      '<div style="margin-top:14px;">' +
-        '<label class="field-label">قيد اليومية المحاسبي الجاهز للدفاتر:</label>' +
-        '<pre style="background:var(--surface-muted); padding:10px 12px; border-radius:6px; font-family:Tajawal,sans-serif; font-size:0.86rem; white-space:pre-wrap; margin:0; border-right:3px solid var(--accent-focal);">' + escapeHtml(journalText) + '</pre>' +
+      '<div style="margin-top:16px;">' +
+        '<label class="field-label">قيد اليومية المحاسبي الجاهز:</label>' +
+        '<pre style="background:var(--surface-muted); padding:12px; border-radius:8px; font-family:Tajawal,sans-serif; font-size:0.86rem; white-space:pre-wrap; margin:0; border-right:3px solid var(--accent-primary);">' + escapeHtml(journalText) + '</pre>' +
       '</div>';
   }
 
@@ -469,14 +495,17 @@
     const netTakeHome = Math.round((gross - empInsMonthly - monthlyTax - martyrsFund) * 100) / 100;
 
     document.getElementById('payResultsPanel').innerHTML =
-      '<p class="result-headline">ضريبة كسب العمل الشهرية (<span class="num-tabular">ZMCF_PAYROLL</span>)</p>' +
-      '<p class="result-big"><span class="num-tabular">' + formatMoney(monthlyTax) + '</span> ج / شهرياً</p>' +
+      '<div class="result-hero">' +
+        '<p class="result-headline">ضريبة كسب العمل الشهرية</p>' +
+        '<p class="result-big"><span class="num-tabular">' + formatMoney(monthlyTax) + '</span> ج</p>' +
+        '<span class="result-subtag">صافي المرتب: ' + formatMoney(netTakeHome) + ' ج شهرياً</span>' +
+      '</div>' +
       '<dl class="dl-ledger">' +
         '<div class="dl-row"><dt class="dl-term">حصة العامل في التأمينات (11%)</dt><dd class="dl-val num-tabular">' + formatMoney(empInsMonthly) + ' ج</dd></div>' +
         '<div class="dl-row"><dt class="dl-term">حصة الشركة في التأمينات (18.75%)</dt><dd class="dl-val num-tabular">' + formatMoney(compInsMonthly) + ' ج</dd></div>' +
-        '<div class="dl-row"><dt class="dl-term">الوعاء السنوي الصافي بعد الإعفاء الشخصي (20 ألف)</dt><dd class="dl-val num-tabular">' + formatMoney(taxableAnnualRounded) + ' ج</dd></div>' +
-        '<div class="dl-row"><dt class="dl-term">الضريبة السنوية (بعد الشريحة الصفرية 40 ألف)</dt><dd class="dl-val num-tabular">' + formatMoney(annualTax) + ' ج</dd></div>' +
-        '<div class="dl-row"><dt class="dl-term">صندوق تكريم الشهداء (5 ج لكل 10,000 ج)</dt><dd class="dl-val num-tabular">' + formatMoney(martyrsFund) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">الوعاء السنوي الصافي بعد الإعفاء (20 ألف)</dt><dd class="dl-val num-tabular">' + formatMoney(taxableAnnualRounded) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">الضريبة السنوية (شريحة صفرية 40 ألف)</dt><dd class="dl-val num-tabular">' + formatMoney(annualTax) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">صندوق تكريم الشهداء (0.05%)</dt><dd class="dl-val num-tabular">' + formatMoney(martyrsFund) + ' ج</dd></div>' +
         '<div class="dl-row"><dt class="dl-term" style="font-weight:800; color:var(--ink-primary);">صافي المرتب الشهري للموظف</dt><dd class="dl-val num-tabular" style="color:var(--status-safe);">' + formatMoney(netTakeHome) + ' ج</dd></div>' +
       '</dl>';
   }
@@ -489,14 +518,16 @@
     const commTax = calcLaw91IndividualTax(estProfit);
 
     document.getElementById('reResultsPanel').innerHTML =
-      '<p class="result-headline">ضريبة التصرفات العقارية القطعية (2.5% - المادة 42)</p>' +
-      '<p class="result-big"><span class="num-tabular">' + formatMoney(dispTax) + '</span> ج</p>' +
+      '<div class="result-hero">' +
+        '<p class="result-headline">ضريبة التصرفات العقارية القطعية (2.5%)</p>' +
+        '<p class="result-big"><span class="num-tabular">' + formatMoney(dispTax) + '</span> ج</p>' +
+      '</div>' +
       '<dl class="dl-ledger">' +
         '<div class="dl-row"><dt class="dl-term">قيمة عقد البيع</dt><dd class="dl-val num-tabular">' + formatMoney(val) + ' ج</dd></div>' +
         '<div class="dl-row"><dt class="dl-term">ضريبة التصرفات العقارية (2.5% مقطوعة)</dt><dd class="dl-val num-tabular">' + formatMoney(dispTax) + ' ج</dd></div>' +
-        '<div class="dl-row"><dt class="dl-term">لو تحول لملف «استثمار عقاري» (ربح تقديري ' + margin + '%)</dt><dd class="dl-val num-tabular" style="color:var(--status-urgent);">' + formatMoney(commTax) + ' ج</dd></div>' +
+        '<div class="dl-row"><dt class="dl-term">لو تحول لاستثمار عقاري (ربح ' + margin + '%)</dt><dd class="dl-val num-tabular" style="color:var(--status-urgent);">' + formatMoney(commTax) + ' ج</dd></div>' +
       '</dl>' +
-      '<p style="margin:12px 0 0 0; font-size:0.86rem; color:var(--ink-secondary);">تنبيه المكتب: لو الممول فاتح ملف «استثمار عقاري» وبيتحاسب تجارياً، يُمنع محاسبته بـ 2.5% تصرفات عقارية على نفس العقارات منعاً للازدواج الضريبي.</p>';
+      '<p style="margin:12px 0 0 0; font-size:0.86rem; color:var(--ink-secondary);">تنبيه: لو الممول فاتح ملف استثمار عقاري، يُمنع محاسبته بـ 2.5% تصرفات عقارية على نفس العقارات منعاً للازدواج الضريبي.</p>';
   }
 
   function generateLegalMemo() {
@@ -526,7 +557,7 @@
       text =
         'السيد الأستاذ / رئيس ' + (client.office || 'مأمورية الضرائب المختصة / رئيس اللجنة الداخلية') + '\n' +
         'تحية طيبة وبعد،،،\n\n' +
-        'مقدمه لسيادتكم الممول / ' + client.name + ' — نشاط: (' + client.activity + ').\n' +
+        'مقدمه لسيادتكم الممول / ' + client.name + ' | نشاط: (' + client.activity + ').\n' +
         'الموضوع: طلب المحاسبة وتعديل الربط وفقاً لأحكام المادة الثالثة من القانون رقم 30 لسنة 2023 (وقانون التسهيلات رقم 6 لسنة 2025).\n\n' +
         'يتشرف الممول بطلب تطبيق أحكام المادة الثالثة من القانون رقم 30 لسنة 2023 على ملفه الضريبي عن سنوات الفحص، حيث إن رقم الأعمال السنوي للمنشأة يقع ضمن الشرائح المقررة بالمادة الثالثة ولا يتجاوز الحد القانوني، مع تعديل الربط الضريبي وأوراد التحصيل على هذا الأساس وخصم كافة المبالغ المسددة تحت حساب الضريبة.';
     } else if (type === 'TAX_POSITION') {
@@ -563,20 +594,26 @@
     });
 
     if (filtered.length === 0) {
-      container.innerHTML = '<div style="padding:28px 20px; text-align:center; color:var(--ink-secondary);">لا توجد نتائج مطابقة في الدليل.</div>';
+      container.innerHTML = '<div class="ledger-panel" style="padding:28px 20px; text-align:center; color:var(--ink-secondary);">لا توجد نتائج مطابقة في الدليل.</div>';
       return;
     }
 
     container.innerHTML = filtered.map((item, idx) => {
-      const delay = Math.min(idx * 20, 180);
-      return '<div class="ref-item" style="animation-delay:' + delay + 'ms;">' +
-        '<h3 class="ref-title">' +
+      const delay = Math.min(idx * 20, 160);
+      const isOpenAttr = (idx === 0 || q.length > 0) ? ' open' : '';
+      return '<details class="ref-card" style="animation-delay:' + delay + 'ms;"' + isOpenAttr + '>' +
+        '<summary class="ref-summary">' +
           '<span>' + escapeHtml(item.title) + '</span>' +
-          '<span class="tag-inline brass">' + escapeHtml(item.category) + '</span>' +
-        '</h3>' +
-        '<p class="ref-legal"><strong>النص / القاعدة الرسمية:</strong> ' + escapeHtml(item.legal) + '</p>' +
-        '<p class="ref-balady"><strong>الشرح بالبلدي في المكتب:</strong> ' + escapeHtml(item.balady) + '</p>' +
-      '</div>';
+          '<span class="ref-summary-meta">' +
+            '<span class="tag-inline brass">' + escapeHtml(item.category) + '</span>' +
+            '<svg class="ref-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>' +
+          '</span>' +
+        '</summary>' +
+        '<div class="ref-body">' +
+          '<blockquote class="ref-legal"><strong>النص / القاعدة الرسمية:</strong> ' + escapeHtml(item.legal) + '</blockquote>' +
+          '<p class="ref-balady"><strong>الشرح بالبلدي في المكتب:</strong> ' + escapeHtml(item.balady) + '</p>' +
+        '</div>' +
+      '</details>';
     }).join('');
   }
 
@@ -738,10 +775,10 @@
     document.querySelectorAll('.view-section').forEach(sec => {
       sec.classList.toggle('active', sec.id === targetId);
     });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function initEventListeners() {
-    // Theme toggle
     document.getElementById('btnToggleTheme').addEventListener('click', () => {
       const curr = document.documentElement.getAttribute('data-theme');
       const next = (curr === 'dark') ? 'light' : 'dark';
@@ -749,7 +786,6 @@
       showToast(next === 'dark' ? 'تم تفعيل الوضع الليلي' : 'تم تفعيل الوضع النهاري');
     });
 
-    // Desktop keyboard shortcuts (Ctrl+K to search, Esc to close modals)
     document.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
@@ -764,6 +800,15 @@
     document.querySelectorAll('.nav-tab').forEach(btn => {
       btn.addEventListener('click', () => switchMainTab(btn.getAttribute('data-tab')));
     });
+
+    const toggleFiltersBtn = document.getElementById('btnToggleFilters');
+    const filterDrawer = document.getElementById('filterDrawer');
+    if (toggleFiltersBtn && filterDrawer) {
+      toggleFiltersBtn.addEventListener('click', () => {
+        const isOpen = filterDrawer.classList.toggle('open');
+        toggleFiltersBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+    }
 
     document.getElementById('clientSearchInput').addEventListener('input', renderClients);
     document.getElementById('clientCategoryFilter').addEventListener('change', renderClients);
@@ -821,6 +866,17 @@
       if (!btn) return;
       const action = btn.getAttribute('data-action');
       const id = btn.getAttribute('data-id');
+
+      if (action === 'toggle-problem') {
+        const card = btn.closest('.client-card');
+        const p = card && card.querySelector('.case-problem');
+        if (p) {
+          const isClamped = p.classList.toggle('clamped');
+          btn.textContent = isClamped ? 'عرض المزيد' : 'عرض أقل';
+        }
+        return;
+      }
+
       const client = appState.clients.find(c => c.id === id);
       if (!client) return;
 
