@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-<meta name="theme-color" content="#09090B" id="metaThemeColor">
+<meta name="theme-color" content="#1E3A5F" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="المكتب الضريبي">
-<title>دفتر المكتب الضريبي المصري | Modern Zinc SaaS</title>
+<title>دفتر المكتب الضريبي</title>
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -26,11 +26,11 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/></svg>
       </div>
       <div>
-        <h1 class="brand-title">دفتر المكتب الضريبي المصري (SAP &amp; Tax Companion)</h1>
+        <h1 class="brand-title">دفتر المكتب الضريبي</h1>
         <p class="brand-meta">
-          <span id="storageStatusBadge" class="tag-inline safe">محفوظ تلقائياً (IndexedDB + الجهاز)</span>
+          <span id="storageStatusBadge" class="tag-inline safe">محفوظ تلقائياً</span>
           <span id="lastSavedText">آخر حفظ: الآن</span>
-          <span class="kbd-hint">Ctrl+K للبحث</span>
+          <span class="kbd-hint">Ctrl+K</span>
         </p>
       </div>
     </div>
@@ -40,72 +40,82 @@
         <svg id="iconSun" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         <svg id="iconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
-      <button type="button" class="btn" id="btnInstallPwa" style="display:none;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        <span>تثبيت على الجهاز</span>
+      <button type="button" class="btn btn-mobile-icon" id="btnInstallPwa" style="display:none;" title="تثبيت على الجهاز" aria-label="تثبيت على الجهاز">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span class="btn-label">تثبيت</span>
       </button>
-      <button type="button" class="btn btn-dark" id="btnOpenBackupModal">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        <span>النسخ الاحتياطي والاسترجاع</span>
+      <button type="button" class="btn btn-dark btn-mobile-icon" id="btnOpenBackupModal" title="النسخ الاحتياطي والاسترجاع" aria-label="النسخ الاحتياطي والاسترجاع">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span class="btn-label">نسخة احتياطية</span>
       </button>
       <button type="button" class="btn btn-primary" id="btnQuickAddClient">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        <span>إضافة ممول</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span><span class="hide-mobile">إضافة </span>ممول</span>
       </button>
     </div>
   </header>
 
-  <!-- Primary Navigation -->
+  <!-- Primary Navigation (Top on Desktop, Fixed Bottom on Mobile) -->
   <div class="nav-scroller" role="navigation" aria-label="أقسام التطبيق">
     <div class="nav-tabs">
       <button type="button" class="nav-tab active" data-tab="view-clients">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <span>الممولين والحالات</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>الممولين</span>
         <span class="tab-count" id="navClientsCount">20</span>
       </button>
       <button type="button" class="nav-tab" data-tab="view-tasks">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        <span>الأجندة والمهام</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <span>الأجندة</span>
         <span class="tab-count" id="navTasksCount">0</span>
       </button>
       <button type="button" class="nav-tab" data-tab="view-calc">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
-        <span>حاسبة الضرائب والفحص</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+        <span>الحاسبة</span>
       </button>
       <button type="button" class="nav-tab" data-tab="view-reference">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        <span>القوانين والنماذج ومولّد الطعون</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>المراجع والطعون</span>
       </button>
     </div>
   </div>
 
   <!-- VIEW 1: CLIENTS & CASES -->
   <section id="view-clients" class="view-section active">
-    <div class="summary-strip">
-      <div class="summary-metrics">
-        <div class="metric-inline">
+    <div class="summary-header-row">
+      <div class="summary-cards-grid">
+        <div class="stat-card">
           <span class="metric-value num-tabular" id="statTotalClients">20</span>
-          <span class="metric-label">إجمالي ملفات الممولين</span>
+          <span class="metric-label">إجمالي الممولين</span>
         </div>
-        <div class="metric-inline">
+        <div class="stat-card urgent-card">
           <span class="metric-value urgent num-tabular" id="statUrgentClients">0</span>
-          <span class="metric-label">ملفات طعون ولجان عاجلة</span>
+          <span class="metric-label">ملفات عاجلة / طعن</span>
         </div>
-        <div class="metric-inline">
+        <div class="stat-card">
           <span class="metric-value num-tabular" id="statRealEstateClients">0</span>
-          <span class="metric-label">ملفات عقارات (استثمار / تصرفات / ثروة)</span>
+          <span class="metric-label">ملفات العقارات</span>
         </div>
       </div>
-      <div>
-        <button type="button" class="btn btn-sm" id="btnExportClientsCsv">تصدير جدول العملاء (CSV)</button>
+      <div class="summary-export-wrap">
+        <button type="button" class="btn btn-sm" id="btnExportClientsCsv">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>تصدير CSV</span>
+        </button>
       </div>
     </div>
 
-    <div class="controls-grid">
-      <div>
-        <label class="field-label" for="clientSearchInput">بحث بالاسم، النشاط، المأمورية، أو رقم النموذج</label>
-        <input type="search" id="clientSearchInput" class="input-field" placeholder="ابحث عن محمد صلاح، عزيزة، كليم، بنها أول، نموذج 19...">
+    <div class="search-bar-row">
+      <div class="search-input-wrap">
+        <label class="field-label" for="clientSearchInput">بحث بالاسم، النشاط، المأمورية، أو النموذج</label>
+        <input type="search" id="clientSearchInput" class="input-field" placeholder="ابحث عن محمد صلاح، عزيزة، نموذج 19...">
       </div>
+      <button type="button" class="btn filter-toggle-btn" id="btnToggleFilters" aria-expanded="false" aria-controls="filterDrawer">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        <span>تصفية</span>
+      </button>
+    </div>
+
+    <div class="filter-drawer" id="filterDrawer">
       <div>
         <label class="field-label" for="clientCategoryFilter">قسم الملفات</label>
         <select id="clientCategoryFilter" class="select-field">
@@ -129,32 +139,32 @@
       </div>
     </div>
 
-    <div class="ledger-panel" id="clientsListContainer"></div>
+    <div class="clients-cards-list" id="clientsListContainer"></div>
   </section>
 
   <!-- VIEW 2: TASKS & AGENDA -->
   <section id="view-tasks" class="view-section">
-    <div class="summary-strip">
-      <div class="summary-metrics">
-        <div class="metric-inline">
+    <div class="summary-header-row">
+      <div class="summary-cards-grid">
+        <div class="stat-card">
           <span class="metric-value num-tabular" id="statOpenTasks">0</span>
-          <span class="metric-label">مهام مفتوحة في الأجندة</span>
+          <span class="metric-label">مهام مفتوحة</span>
         </div>
-        <div class="metric-inline">
+        <div class="stat-card urgent-card">
           <span class="metric-value urgent num-tabular" id="statHighPriorityTasks">0</span>
-          <span class="metric-label">مهام عاجلة (طعون 30 يوم ومحاضر حجز)</span>
+          <span class="metric-label">مهام عاجلة</span>
         </div>
-        <div class="metric-inline">
+        <div class="stat-card">
           <span class="metric-value num-tabular" id="statCompletedTasks">0</span>
           <span class="metric-label">مهام منجزة</span>
         </div>
       </div>
     </div>
 
-    <div class="ledger-panel" style="padding: 18px; margin-bottom: 18px;">
+    <div class="ledger-panel" style="padding: 16px 20px; margin-bottom: 16px;">
       <div class="form-grid-2">
         <div>
-          <label class="field-label" for="newTaskTitle">المهمة أو الإجراء المطلوب في المأمورية / الساب</label>
+          <label class="field-label" for="newTaskTitle">المهمة أو الإجراء المطلوب</label>
           <input type="text" id="newTaskTitle" class="input-field" placeholder="مثال: تقديم صحيفة طعن نموذج 19 أو استخراج موقف ضريبي...">
         </div>
         <div>
@@ -174,7 +184,7 @@
           </select>
         </div>
         <div>
-          <label class="field-label" for="newTaskDue">تاريخ الاستحقاق / الجلسة</label>
+          <label class="field-label" for="newTaskDue">تاريخ الاستحقاق</label>
           <input type="date" id="newTaskDue" class="input-field">
         </div>
         <div>
@@ -190,7 +200,7 @@
       </div>
     </div>
 
-    <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+    <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
       <button type="button" class="btn btn-sm btn-primary task-filter-btn" data-filter="OPEN">قيد التنفيذ</button>
       <button type="button" class="btn btn-sm task-filter-btn" data-filter="URGENT">عاجل فقط</button>
       <button type="button" class="btn btn-sm task-filter-btn" data-filter="DONE">المكتملة</button>
@@ -202,19 +212,19 @@
 
   <!-- VIEW 3: TAX & INSPECTION CALCULATOR -->
   <section id="view-calc" class="view-section">
-    <div class="calc-subnav">
-      <button type="button" class="btn btn-primary calc-mode-btn" data-mode="calc-inspection">1. مقارنة الفحص (قانون 91 vs المادة 3 vs قانون 6/2025)</button>
-      <button type="button" class="btn calc-mode-btn" data-mode="calc-invoice">2. حاسبة الفاتورة والخصم (41) وقيد اليومية</button>
-      <button type="button" class="btn calc-mode-btn" data-mode="calc-payroll">3. حاسبة كسب العمل والتأمينات 2026</button>
-      <button type="button" class="btn calc-mode-btn" data-mode="calc-realestate">4. حاسبة التصرفات العقارية (2.5%)</button>
+    <div class="calc-subnav" role="tablist" aria-label="أنواع الحاسبات">
+      <button type="button" class="calc-mode-btn btn-primary" data-mode="calc-inspection">1. مقارنة الفحص</button>
+      <button type="button" class="calc-mode-btn" data-mode="calc-invoice">2. الفاتورة والخصم (41)</button>
+      <button type="button" class="calc-mode-btn" data-mode="calc-payroll">3. كسب العمل 2026</button>
+      <button type="button" class="calc-mode-btn" data-mode="calc-realestate">4. التصرفات العقارية</button>
     </div>
 
     <div id="calc-inspection" class="calc-pane">
       <div class="calc-layout">
         <div class="ledger-panel" style="padding: 20px;">
-          <h2 style="margin:0 0 10px 0; font-size:1.12rem;">حاسبة الفحص التقديري والمقارنة بين القوانين</h2>
+          <h2 style="margin:0 0 8px 0; font-size:1.1rem;">حاسبة الفحص التقديري والمقارنة</h2>
           <p style="margin:0 0 16px 0; font-size:0.88rem; color:var(--ink-secondary);">
-            احسب رقم الأعمال بمعادلة المأمور (<span class="num-tabular">اليومية &times; 310 &times; النسبة</span>) أو أدخل رقم الأعمال السنوي مباشرة (مثال الريكورد: <span class="num-tabular">4,561,230</span> جنيه) لتعرف أي قانون أوفر للممول وتكتشف فخ «ضريبة الإقرار الأكبر».
+            قارن بين قانون 91 والمادة 3 (ق 30/2023) وقانون 6/2025 واكتشف فخ ضريبة الإقرار الأكبر.
           </p>
 
           <div class="form-grid-2">
@@ -226,10 +236,10 @@
               </select>
             </div>
             <div>
-              <label class="field-label" for="inspEntityType">نوع الكيان الضريبي (في قانون 91)</label>
+              <label class="field-label" for="inspEntityType">نوع الكيان (قانون 91)</label>
               <select id="inspEntityType" class="select-field">
-                <option value="INDIVIDUAL">منشأة فردية / أشخاص طبيعيين (شرائح ق 7/2024)</option>
-                <option value="CORP">شركة أشخاص / أموال (سعر ثابت 22.5%)</option>
+                <option value="INDIVIDUAL">منشأة فردية (شرائح ق 7/2024)</option>
+                <option value="CORP">شركة أشخاص / أموال (22.5%)</option>
               </select>
             </div>
           </div>
@@ -237,40 +247,40 @@
           <div id="inspDailyFields" class="form-grid-2" style="display:none;">
             <div>
               <label class="field-label" for="inspDailyRev">الإيراد اليومي التقديري (جنيه)</label>
-              <input type="number" id="inspDailyRev" class="input-field" value="1000" min="0" step="50">
+              <input type="number" inputmode="decimal" id="inspDailyRev" class="input-field" value="1000" min="0" step="50">
             </div>
             <div>
-              <label class="field-label" for="inspWorkDays">عدد أيام العمل في السنة (المعتاد 310)</label>
-              <input type="number" id="inspWorkDays" class="input-field" value="310" min="1" max="366">
+              <label class="field-label" for="inspWorkDays">عدد أيام العمل السنوية</label>
+              <input type="number" inputmode="numeric" id="inspWorkDays" class="input-field" value="310" min="1" max="366">
             </div>
           </div>
 
           <div class="form-grid-2">
             <div id="inspTurnoverBox">
               <label class="field-label" for="inspTurnover">إجمالي رقم الأعمال السنوي (جنيه)</label>
-              <input type="number" id="inspTurnover" class="input-field" value="4561230" min="0" step="1000">
+              <input type="number" inputmode="decimal" id="inspTurnover" class="input-field" value="4561230" min="0" step="1000">
             </div>
             <div>
-              <label class="field-label" for="inspProfitMargin">نسبة صافي الربح الحكمية للنشاط (%)</label>
-              <input type="number" id="inspProfitMargin" class="input-field" value="20" min="1" max="100" step="0.5">
+              <label class="field-label" for="inspProfitMargin">نسبة صافي الربح الحكمية (%)</label>
+              <input type="number" inputmode="decimal" id="inspProfitMargin" class="input-field" value="20" min="1" max="100" step="0.5">
             </div>
           </div>
 
           <div class="form-grid-2">
             <div>
-              <label class="field-label" for="inspReturnTax">ضريبة الإقرار المرفوعة على الساب (إن وجدت)</label>
-              <input type="number" id="inspReturnTax" class="input-field" value="0" min="0" step="100">
+              <label class="field-label" for="inspReturnTax">ضريبة الإقرار المرفوعة (إن وجدت)</label>
+              <input type="number" inputmode="decimal" id="inspReturnTax" class="input-field" value="0" min="0" step="100">
             </div>
             <div>
-              <label class="field-label" for="inspWhtPaid">مبالغ مخصومة تحت حساب الضريبة (نموذج 41)</label>
-              <input type="number" id="inspWhtPaid" class="input-field" value="1400" min="0" step="100">
+              <label class="field-label" for="inspWhtPaid">المخصوم تحت حساب الضريبة (نموذج 41)</label>
+              <input type="number" inputmode="decimal" id="inspWhtPaid" class="input-field" value="1400" min="0" step="100">
             </div>
           </div>
 
           <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
-            <button type="button" class="btn btn-sm" id="btnPresetAudio1">مثال الريكورد (4.56 مليون @ 20%)</button>
-            <button type="button" class="btn btn-sm" id="btnPresetAudio2">مثال الريكورد (4.56 مليون @ 5%)</button>
-            <button type="button" class="btn btn-sm" id="btnPresetAudio3">مثال فحص تقديري (1000 &times; 310 &times; 20%)</button>
+            <button type="button" class="btn btn-sm" id="btnPresetAudio1">4.56 مليون @ 20%</button>
+            <button type="button" class="btn btn-sm" id="btnPresetAudio2">4.56 مليون @ 5%</button>
+            <button type="button" class="btn btn-sm" id="btnPresetAudio3">يومية 1000 &times; 310</button>
           </div>
         </div>
 
@@ -281,19 +291,19 @@
     <div id="calc-invoice" class="calc-pane" style="display:none;">
       <div class="calc-layout">
         <div class="ledger-panel" style="padding: 20px;">
-          <h2 style="margin:0 0 10px 0; font-size:1.12rem;">حاسبة الفاتورة والخصم (نموذج 41) ومولّد القيد اليومي</h2>
+          <h2 style="margin:0 0 8px 0; font-size:1.1rem;">حاسبة الفاتورة والخصم (نموذج 41)</h2>
           <p style="margin:0 0 16px 0; font-size:0.88rem; color:var(--ink-secondary);">
-            تذكّر القاعدة الذهبية: الخصم تحت حساب الضريبة (1% أو 3% أو 5%) يُحسب دائماً على <strong>صافي القيمة قبل ضريبة القيمة المضافة</strong>.
+            الخصم تحت حساب الضريبة يُحسب دائماً على صافي القيمة قبل ضريبة القيمة المضافة.
           </p>
           <div class="form-grid-2">
             <div>
               <label class="field-label" for="invNetAmount">صافي قيمة الفاتورة قبل الضريبة (جنيه)</label>
-              <input type="number" id="invNetAmount" class="input-field" value="10000" min="0" step="100">
+              <input type="number" inputmode="decimal" id="invNetAmount" class="input-field" value="10000" min="0" step="100">
             </div>
             <div>
-              <label class="field-label" for="invVatRate">فئة ضريبة القيمة المضافة</label>
+              <label class="field-label" for="invVatRate">ضريبة القيمة المضافة</label>
               <select id="invVatRate" class="select-field">
-                <option value="14">14% (السعر العام والمقاولات الجديدة ق 157/2025)</option>
+                <option value="14">14% (السعر العام والمقاولات ق 157/2025)</option>
                 <option value="5">5% (آلات ومعدات إنتاجية)</option>
                 <option value="0">0% (تصدير أو معفى)</option>
               </select>
@@ -301,20 +311,20 @@
           </div>
           <div class="form-grid-2">
             <div>
-              <label class="field-label" for="invWhtRate">نسبة الخصم تحت حساب الضريبة (نموذج 41)</label>
+              <label class="field-label" for="invWhtRate">نسبة الخصم (نموذج 41)</label>
               <select id="invWhtRate" class="select-field">
-                <option value="1">1% (توريدات، مشتريات، مقاولات &gt; 300 ج)</option>
-                <option value="3">3% (خدمات، صيانة، نقل، تسويق &gt; 300 ج)</option>
-                <option value="5">5% (أتعاب مهن حرة &gt; 100 ج / عمولة وسمسرة)</option>
-                <option value="20">20% (ضريبة مستقطعة لغير المقيمين - المادة 56)</option>
-                <option value="0">0% (منضم لقانون 6/2025 أو دفعات مقدمة م 60)</option>
+                <option value="1">1% (توريدات ومقاولات &gt; 300 ج)</option>
+                <option value="3">3% (خدمات وصيانة ونقل &gt; 300 ج)</option>
+                <option value="5">5% (مهن حرة &gt; 100 ج / عمولة)</option>
+                <option value="20">20% (غير مقيمين - المادة 56)</option>
+                <option value="0">0% (قانون 6/2025 أو دفعات مقدمة)</option>
               </select>
             </div>
             <div>
               <label class="field-label" for="invRole">موقع العميل في المعاملة</label>
               <select id="invRole" class="select-field">
-                <option value="BUYER">نحن المشتري (ندفع للمورد ونخصم منه)</option>
-                <option value="SELLER">نحن البائع (العميل يخصم مننا تحت حساب الضريبة)</option>
+                <option value="BUYER">نحن المشتري (نخصم من المورد)</option>
+                <option value="SELLER">نحن البائع (العميل يخصم مننا)</option>
               </select>
             </div>
           </div>
@@ -326,18 +336,18 @@
     <div id="calc-payroll" class="calc-pane" style="display:none;">
       <div class="calc-layout">
         <div class="ledger-panel" style="padding: 20px;">
-          <h2 style="margin:0 0 10px 0; font-size:1.12rem;">حاسبة ضريبة كسب العمل والتأمينات الاجتماعية (معايير 2026)</h2>
+          <h2 style="margin:0 0 8px 0; font-size:1.1rem;">حاسبة كسب العمل والتأمينات 2026</h2>
           <p style="margin:0 0 16px 0; font-size:0.88rem; color:var(--ink-secondary);">
-            تطبق حدود التأمينات لعام 2026 (الحد الأدنى <span class="num-tabular">2,700</span> والأقصى <span class="num-tabular">16,700</span> جنيه، حصة العامل 11% والشركة 18.75%)، والإعفاء الشخصي <span class="num-tabular">20,000</span> جنيه، والشريحة الصفرية <span class="num-tabular">40,000</span> جنيه (قانون 7 لسنة 2024).
+            حدود التأمينات <span class="num-tabular">2,700</span> إلى <span class="num-tabular">16,700</span> جنيه، والإعفاء الشخصي <span class="num-tabular">20,000</span> جنيه، والشريحة الصفرية <span class="num-tabular">40,000</span> جنيه.
           </p>
           <div class="form-grid-2">
             <div>
               <label class="field-label" for="payGrossMonthly">إجمالي المرتب الشهري الخاضع (جنيه)</label>
-              <input type="number" id="payGrossMonthly" class="input-field" value="25000" min="0" step="500">
+              <input type="number" inputmode="decimal" id="payGrossMonthly" class="input-field" value="25000" min="0" step="500">
             </div>
             <div>
-              <label class="field-label" for="payInsWage">أجر الاشتراك التأميني الشهري (أقصى 16,700)</label>
-              <input type="number" id="payInsWage" class="input-field" value="16700" min="0" step="100">
+              <label class="field-label" for="payInsWage">أجر الاشتراك التأميني (أقصى 16,700)</label>
+              <input type="number" inputmode="decimal" id="payInsWage" class="input-field" value="16700" min="0" step="100">
             </div>
           </div>
         </div>
@@ -348,18 +358,18 @@
     <div id="calc-realestate" class="calc-pane" style="display:none;">
       <div class="calc-layout">
         <div class="ledger-panel" style="padding: 20px;">
-          <h2 style="margin:0 0 10px 0; font-size:1.12rem;">حاسبة التصرفات العقارية (2.5%) ومقارنتها بالاستثمار العقاري</h2>
+          <h2 style="margin:0 0 8px 0; font-size:1.1rem;">حاسبة التصرفات العقارية (2.5%)</h2>
           <p style="margin:0 0 16px 0; font-size:0.88rem; color:var(--ink-secondary);">
-            توضح الفرق الضريبي بين محاسبة العميل كـ «تصرف عقاري عادي» (2.5% مقطوعة بنص المادة 42) وبين تحويله لملف «استثمار عقاري» عند تكرار البيع وظهور أحكام صحة التوقيع.
+            مقارنة ضريبة التصرف العقاري المقطوعة (2.5%) بتحويل الملف لاستثمار عقاري عند تكرار البيع.
           </p>
           <div class="form-grid-2">
             <div>
-              <label class="field-label" for="reSaleValue">إجمالي قيمة عقد بيع العقار / الشقة (جنيه)</label>
-              <input type="number" id="reSaleValue" class="input-field" value="1500000" min="0" step="50000">
+              <label class="field-label" for="reSaleValue">إجمالي قيمة عقد بيع العقار (جنيه)</label>
+              <input type="number" inputmode="decimal" id="reSaleValue" class="input-field" value="1500000" min="0" step="50000">
             </div>
             <div>
-              <label class="field-label" for="reProfitMargin">نسبة صافي الربح التقديرية لو تحول لاستثمار عقاري (%)</label>
-              <input type="number" id="reProfitMargin" class="input-field" value="15" min="1" max="100">
+              <label class="field-label" for="reProfitMargin">نسبة الربح لو تحول لاستثمار (%)</label>
+              <input type="number" inputmode="decimal" id="reProfitMargin" class="input-field" value="15" min="1" max="100">
             </div>
           </div>
         </div>
@@ -370,12 +380,12 @@
 
   <!-- VIEW 4: LAWS, FORMS & MEMO GENERATOR -->
   <section id="view-reference" class="view-section">
-    <div class="ledger-panel" style="padding: 20px; margin-bottom: 22px;">
-      <h2 style="margin:0 0 6px 0; font-size:1.14rem;">مولّد صحف الطعن والطلبات الجاهزة (يسحب بيانات العميل أوتوماتيك)</h2>
-      <p style="margin:0 0 14px 0; font-size:0.88rem; color:var(--ink-secondary);">
-        اختر أي ممول من القائمة ونوع المذكرة القانونية (صحيفة طعن على نموذج 19 دخل أو نموذج 15 قيمة مضافة، أو طلب تطبيق المادة 3، أو طلب شهادة موقف ضريبي تسلسلي) لنسخ النص جاهزاً للساب أو الطباعة.
+    <div class="ledger-panel" style="padding: 20px; margin-bottom: 24px;">
+      <h2 style="margin:0 0 6px 0; font-size:1.12rem;">مولّد صحف الطعن والطلبات الجاهزة</h2>
+      <p style="margin:0 0 16px 0; font-size:0.88rem; color:var(--ink-secondary);">
+        اختر الممول ونوع المذكرة القانونية لسحب بياناته تلقائياً وتجهيز النص للنسخ أو الطباعة.
       </p>
-      <div class="controls-grid" style="margin-bottom: 12px;">
+      <div class="memo-controls-grid">
         <div>
           <label class="field-label" for="memoClientSelect">اختر الممول</label>
           <select id="memoClientSelect" class="select-field"></select>
@@ -394,31 +404,34 @@
           <label class="field-label" for="memoFormNum">رقم الصادر / النموذج</label>
           <input type="text" id="memoFormNum" class="input-field" placeholder="مثال: 151/2025">
         </div>
-        <div>
-          <button type="button" class="btn btn-primary" id="btnCopyMemo">نسخ نص المذكرة</button>
-        </div>
       </div>
-      <textarea id="memoOutputArea" class="textarea-field" style="min-height: 155px; font-family: 'Noto Naskh Arabic', serif; font-size: 0.98rem;"></textarea>
+      <textarea id="memoOutputArea" class="textarea-field memo-textarea"></textarea>
+      <div class="memo-footer-actions">
+        <button type="button" class="btn btn-primary" id="btnCopyMemo">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span>نسخ نص المذكرة</span>
+        </button>
+      </div>
     </div>
 
     <div class="controls-grid" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);">
       <div>
-        <label class="field-label" for="refSearchInput">ابحث في القوانين، النماذج (19، 15، 16 مكرر)، وتصنيفات الساب الـ 20</label>
-        <input type="search" id="refSearchInput" class="input-field" placeholder="ابحث عن نموذج 19، نموذج 15، المادة 22، التقادم، محضر حجز، Active To، وثيقة جديدة...">
+        <label class="field-label" for="refSearchInput">ابحث في القوانين والنماذج (19، 15، 16 مكرر)</label>
+        <input type="search" id="refSearchInput" class="input-field" placeholder="ابحث عن نموذج 19، المادة 22، التقادم، محضر حجز، Active To...">
       </div>
       <div>
         <label class="field-label" for="refCategorySelect">تصنيف الدليل</label>
         <select id="refCategorySelect" class="select-field">
           <option value="ALL">كل المراجع والقوانين والنماذج</option>
-          <option value="النماذج والورق الضريبي">1. دليل الورق والنماذج الضريبية (19 و15 وعيلتهم)</option>
-          <option value="القوانين والمواد الحاكمة">2. نصوص مواد القوانين وشرحها بالبلدي</option>
-          <option value="تريكات الفحص واللجان والعقارات">3. تريكات الفحص واللجان والتقادم والعقارات</option>
-          <option value="تصنيفات الساب وحلول البورتال">4. تصنيفات الساب الـ 20 وحلول الفاتورة الإلكترونية</option>
+          <option value="النماذج والورق الضريبي">1. دليل الورق والنماذج الضريبية</option>
+          <option value="القوانين والمواد الحاكمة">2. نصوص مواد القوانين وشرحها</option>
+          <option value="تريكات الفحص واللجان والعقارات">3. تريكات الفحص واللجان والعقارات</option>
+          <option value="تصنيفات الساب وحلول البورتال">4. تصنيفات الساب وحلول البورتال</option>
         </select>
       </div>
     </div>
 
-    <div class="ledger-panel" id="referenceListContainer"></div>
+    <div class="ref-cards-list" id="referenceListContainer"></div>
   </section>
 </div>
 
@@ -427,7 +440,7 @@
   <div class="modal-sheet">
     <div class="modal-header">
       <h2 class="modal-title" id="clientModalTitle">إضافة / تعديل ملف ممول</h2>
-      <button type="button" class="btn btn-sm" id="btnCloseClientModal">إغلاق (Esc)</button>
+      <button type="button" class="btn btn-sm" id="btnCloseClientModal">إغلاق</button>
     </div>
     <form id="clientForm">
       <input type="hidden" id="clientFormId">
@@ -465,7 +478,7 @@
           </select>
         </div>
         <div>
-          <label class="field-label" for="clientFormNoticeDate">تاريخ استلام نموذج 19 أو 15 (لحساب مهلة الـ 30 يوم)</label>
+          <label class="field-label" for="clientFormNoticeDate">تاريخ استلام نموذج 19 أو 15 (مهلة 30 يوم)</label>
           <input type="date" id="clientFormNoticeDate" class="input-field">
         </div>
       </div>
@@ -475,7 +488,7 @@
       </div>
       <div style="margin-bottom: 16px;">
         <label class="field-label" for="clientFormAction">الإجراء المطلوب في المكتب *</label>
-        <input type="text" id="clientFormAction" class="input-field" required placeholder="مثال: تقديم طعن على محضر الحجز / مطابقة عقود الشقة بمذكرة الفحص">
+        <input type="text" id="clientFormAction" class="input-field" required placeholder="مثال: تقديم طعن على محضر الحجز / مطابقة عقود الشقة">
       </div>
       <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
         <button type="submit" class="btn btn-primary">حفظ بيانات الممول</button>
@@ -489,45 +502,45 @@
 <div class="modal-backdrop" id="backupModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="backupModalTitle">
   <div class="modal-sheet">
     <div class="modal-header">
-      <h2 class="modal-title" id="backupModalTitle">النسخ الاحتياطي واسترجاع البيانات من ملف</h2>
-      <button type="button" class="btn btn-sm" id="btnCloseBackupModal">إغلاق (Esc)</button>
+      <h2 class="modal-title" id="backupModalTitle">النسخ الاحتياطي واسترجاع البيانات</h2>
+      <button type="button" class="btn btn-sm" id="btnCloseBackupModal">إغلاق</button>
     </div>
 
     <div style="margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--border-subtle);">
-      <h3 style="margin:0 0 6px 0; font-size:1.03rem;">1. حفظ نسخة احتياطية كاملة على الكمبيوتر أو الموبايل</h3>
+      <h3 style="margin:0 0 6px 0; font-size:1.02rem;">1. حفظ نسخة احتياطية كاملة</h3>
       <p style="margin:0 0 12px 0; font-size:0.87rem; color:var(--ink-secondary);">
-        التطبيق بيحفظ كل تعديل أوتوماتيك في مكانين (<span class="num-tabular">IndexedDB + localStorage</span>). وتقدر تنزل ملف النسخة الاحتياطية (<span class="num-tabular">.json</span>) لنقل البيانات بين جهاز المكتب والموبايل في ثانية:
+        التطبيق بيحفظ كل تعديل أوتوماتيك في مكانين (<span class="num-tabular">IndexedDB + localStorage</span>). وتقدر تنزل ملف النسخة الاحتياطية (<span class="num-tabular">.json</span>) لنقل البيانات بين جهاز المكتب والموبايل:
       </p>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <button type="button" class="btn btn-primary" id="btnDownloadBackupFile">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>تحميل ملف النسخة الاحتياطية (.json)</span>
+          <span>تحميل ملف (.json)</span>
         </button>
-        <button type="button" class="btn" id="btnShareBackupFile">مشاركة الملف (واتساب / درايف)</button>
-        <button type="button" class="btn" id="btnCopyBackupJson">نسخ كود النسخة كنص</button>
+        <button type="button" class="btn" id="btnShareBackupFile">مشاركة الملف</button>
+        <button type="button" class="btn" id="btnCopyBackupJson">نسخ كود النسخة</button>
       </div>
     </div>
 
     <div style="margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--border-subtle);">
-      <h3 style="margin:0 0 6px 0; font-size:1.03rem;">2. استرجاع النسخة الاحتياطية من ملف (.json)</h3>
+      <h3 style="margin:0 0 6px 0; font-size:1.02rem;">2. استرجاع النسخة الاحتياطية من ملف (.json)</h3>
       <p style="margin:0 0 12px 0; font-size:0.87rem; color:var(--ink-secondary);">
-        اختر ملف النسخة الاحتياطية من جهازك (أو الصق محتواه في الصندوق بالأسفل)، وحدد طريقة الاسترجاع:
+        اختر ملف النسخة الاحتياطية من جهازك (أو الصق محتواه بالأسفل)، وحدد طريقة الاسترجاع:
       </p>
       <div class="form-grid-2">
         <div>
-          <label class="field-label" for="restoreFileInput">اختر ملف النسخة الاحتياطية (.json)</label>
-          <input type="file" id="restoreFileInput" class="input-field" accept=".json,application/json" style="padding: 6px;">
+          <label class="field-label" for="restoreFileInput">اختر ملف (.json)</label>
+          <input type="file" id="restoreFileInput" class="input-field" accept=".json,application/json" style="padding: 8px;">
         </div>
         <div>
           <label class="field-label" for="restoreModeSelect">طريقة الاسترجاع</label>
           <select id="restoreModeSelect" class="select-field">
-            <option value="MERGE">دمج وتحديث مع البيانات الحالية (آمن - لا يحذف الجديد)</option>
+            <option value="MERGE">دمج وتحديث مع البيانات الحالية (آمن)</option>
             <option value="REPLACE">استبدال كامل بالنسخة الاحتياطية</option>
           </select>
         </div>
       </div>
       <div style="margin-bottom: 10px;">
-        <label class="field-label" for="restoreJsonTextarea">أو الصق كود النسخة الاحتياطية هنا مباشرة</label>
+        <label class="field-label" for="restoreJsonTextarea">أو الصق كود النسخة الاحتياطية هنا</label>
         <textarea id="restoreJsonTextarea" class="textarea-field" placeholder='{"version": 2, "clients": [...], "tasks": [...]}' style="min-height: 75px; font-size:0.84rem;"></textarea>
       </div>
       <div id="restorePreviewBox" style="font-size:0.86rem; color:var(--status-safe); font-weight:700; margin-bottom:10px;"></div>
@@ -535,9 +548,9 @@
     </div>
 
     <div>
-      <h3 style="margin:0 0 6px 0; font-size:1rem; color:var(--status-urgent);">3. استعادة البيانات الأصلية للـ 20 عميلاً من الريكورد</h3>
+      <h3 style="margin:0 0 6px 0; font-size:1rem; color:var(--status-urgent);">3. استعادة البيانات الأصلية للـ 20 عميلاً</h3>
       <p style="margin:0 0 10px 0; font-size:0.85rem; color:var(--ink-secondary);">
-        لو حابب ترجع القائمة الافتراضية للـ 20 عميلاً والمهام الأساسية اللي اتشرحت في الريكورد مع الأستاذ:
+        إعادة تحميل القائمة الافتراضية للـ 20 عميلاً والمهام الأساسية:
       </p>
       <button type="button" class="btn btn-danger btn-sm" id="btnResetToDefaultData">إعادة تحميل بيانات الريكورد الأصلية</button>
     </div>
