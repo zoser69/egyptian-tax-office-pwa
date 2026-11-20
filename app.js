@@ -25,7 +25,7 @@
       moon.style.display = (t === 'dark') ? 'none' : 'block';
     }
     if (metaTheme) {
-      metaTheme.setAttribute('content', t === 'dark' ? '#111214' : '#1E3A5F');
+      metaTheme.setAttribute('content', t === 'dark' ? '#000000' : '#1E3A5F');
     }
     try { window.localStorage.setItem(THEME_KEY, t); } catch (e) {}
   }
@@ -35,7 +35,6 @@
     try {
       const s = window.localStorage.getItem(THEME_KEY);
       if (s === 'dark' || s === 'light') saved = s;
-      else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) saved = 'dark';
     } catch (e) {}
     applyTheme(saved);
   }
@@ -199,28 +198,28 @@
       }
       const delay = Math.min(idx * 20, 200);
       const isLongProblem = (c.problem || '').length > 140;
+      const appealBadge = getAppealBadgeHtml(c.noticeDate);
+      const metaLine = [c.office, c.category].filter(Boolean).map(escapeHtml).join(' · ');
 
       return '<article class="client-card ' + cardStateClass + '" style="animation-delay:' + delay + 'ms;" data-client-id="' + escapeHtml(c.id) + '">' +
         '<div class="client-card-top">' +
           '<div>' +
             '<h3 class="client-name">' +
+              (c.status === 'عاجل / طعن' ? '<span class="urgent-dot" aria-hidden="true"></span>' : '') +
               '<span>' + escapeHtml(c.name) + '</span>' +
               '<span class="tag-inline ' + statusClass + '">' + escapeHtml(c.status) + '</span>' +
             '</h3>' +
             '<p class="client-sub">' + escapeHtml(c.activity) + '</p>' +
+            (metaLine ? '<p class="client-meta-line">' + metaLine + '</p>' : '') +
           '</div>' +
-          '<div class="client-tags">' +
-            (c.office ? '<span class="tag-inline">' + escapeHtml(c.office) + '</span>' : '') +
-            '<span class="tag-inline">' + escapeHtml(c.category) + '</span>' +
-            getAppealBadgeHtml(c.noticeDate) +
-          '</div>' +
+          (appealBadge ? '<div class="client-tags">' + appealBadge + '</div>' : '') +
         '</div>' +
         '<div class="case-problem-wrap">' +
           '<p class="case-problem ' + (isLongProblem ? 'clamped' : '') + '">' + escapeHtml(c.problem) + '</p>' +
           (isLongProblem ? '<button type="button" class="read-more-btn" data-action="toggle-problem" data-id="' + escapeHtml(c.id) + '">عرض المزيد</button>' : '') +
         '</div>' +
         '<div class="case-action-box">' +
-          '<p class="case-action">المطلوب: ' + escapeHtml(c.action) + '</p>' +
+          '<p class="case-action"><span class="case-action-label">المطلوب:</span> ' + escapeHtml(c.action) + '</p>' +
         '</div>' +
         '<div class="client-card-footer">' +
           '<div class="row-actions-secondary">' +
@@ -241,9 +240,11 @@
 
   function populateClientDropdowns() {
     const taskSelect = document.getElementById('newTaskClient');
+    const taskFormSelect = document.getElementById('taskFormClient');
     const memoSelect = document.getElementById('memoClientSelect');
     const opts = appState.clients.map(c => '<option value="' + escapeHtml(c.id) + '">' + escapeHtml(c.name) + ' (' + escapeHtml(c.activity) + ')</option>').join('');
     if (taskSelect) taskSelect.innerHTML = '<option value="">بدون ربط أو اختر الممول</option>' + opts;
+    if (taskFormSelect) taskFormSelect.innerHTML = '<option value="">بدون ربط أو اختر الممول</option>' + opts;
     if (memoSelect) {
       const currentVal = memoSelect.value;
       memoSelect.innerHTML = opts;
@@ -279,6 +280,11 @@
 
     container.innerHTML = filtered.map((t, idx) => {
       const delay = Math.min(idx * 20, 200);
+      const metaParts = [];
+      if (t.clientName) metaParts.push(escapeHtml(t.clientName));
+      metaParts.push(escapeHtml(t.type || 'إجراء ضريبي'));
+      if (t.due) metaParts.push('<span class="num-tabular">' + escapeHtml(t.due) + '</span>');
+
       return '<div class="task-row ' + (t.done ? 'done' : '') + '" style="animation-delay:' + delay + 'ms;">' +
         '<div class="task-main">' +
           '<button type="button" class="task-check-btn" data-action="toggle-task" data-id="' + escapeHtml(t.id) + '" aria-label="تغيير حالة المهمة">' +
@@ -288,17 +294,20 @@
           '</button>' +
           '<div>' +
             '<h3 class="task-title">' + escapeHtml(t.title) + '</h3>' +
-            '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
-              (t.clientName ? '<span class="tag-inline brass">الممول: ' + escapeHtml(t.clientName) + '</span>' : '') +
-              '<span class="tag-inline">' + escapeHtml(t.type || 'إجراء ضريبي') + '</span>' +
+            '<div class="task-meta-row">' +
               (t.priority === 'عاجل' ? '<span class="tag-inline urgent">عاجل</span>' : '') +
-              (t.due ? '<span class="tag-inline num-tabular">' + escapeHtml(t.due) + '</span>' : '') +
+              '<span class="task-meta-line">' + metaParts.join(' · ') + '</span>' +
             '</div>' +
           '</div>' +
         '</div>' +
-        '<button type="button" class="btn btn-icon btn-danger" data-action="delete-task" data-id="' + escapeHtml(t.id) + '" title="حذف المهمة" aria-label="حذف المهمة">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
-        '</button>' +
+        '<div class="row-actions-secondary">' +
+          '<button type="button" class="btn btn-icon" data-action="edit-task" data-id="' + escapeHtml(t.id) + '" title="تعديل المهمة" aria-label="تعديل المهمة">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+          '</button>' +
+          '<button type="button" class="btn btn-icon btn-danger" data-action="delete-task" data-id="' + escapeHtml(t.id) + '" title="حذف المهمة" aria-label="حذف المهمة">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+          '</button>' +
+        '</div>' +
       '</div>';
     }).join('');
   }
@@ -390,7 +399,7 @@
 
     let trapAlertHtml = '';
     if (returnTax > best.val) {
-      trapAlertHtml = '<div style="margin-top:12px; padding:12px; background:var(--status-urgent-bg); border-right:3px solid var(--status-urgent); color:var(--status-urgent); font-size:0.88rem; font-weight:700; border-radius:8px;">' +
+      trapAlertHtml = '<div style="margin-top:12px; padding:12px; background:var(--status-urgent-bg); border:1px solid var(--status-urgent-border); color:var(--status-urgent); font-size:0.88rem; font-weight:700; border-radius:8px;">' +
         'تنبيه فخ الإقرار: ضريبة الإقرار المرفوعة (' + formatMoney(returnTax) + ' ج) أكبر من ضريبة ' + best.name + ' (' + formatMoney(best.val) + ' ج). المأمورية ستعتمد ضريبة الإقرار الأكبر لأن الإقرار لا رجعة فيه.' +
       '</div>';
     }
@@ -472,7 +481,7 @@
       '</dl>' +
       '<div style="margin-top:16px;">' +
         '<label class="field-label">قيد اليومية المحاسبي الجاهز:</label>' +
-        '<pre style="background:var(--surface-muted); padding:12px; border-radius:8px; font-family:Tajawal,sans-serif; font-size:0.86rem; white-space:pre-wrap; margin:0; border-right:3px solid var(--accent-primary);">' + escapeHtml(journalText) + '</pre>' +
+        '<pre style="background:var(--surface-muted); padding:12px; border-radius:8px; font-family:Tajawal,sans-serif; font-size:0.86rem; white-space:pre-wrap; margin:0; border:1px solid var(--border-subtle);">' + escapeHtml(journalText) + '</pre>' +
       '</div>';
   }
 
@@ -768,6 +777,29 @@
     modal.classList.add('open');
   }
 
+  function openTaskModal(taskId) {
+    const t = appState.tasks.find(item => item.id === taskId);
+    if (!t) return;
+    document.getElementById('taskFormId').value = t.id;
+    document.getElementById('taskFormTitle').value = t.title || '';
+    document.getElementById('taskFormClient').value = t.clientId || '';
+
+    const typeSelect = document.getElementById('taskFormType');
+    const taskType = t.type || 'طعن 30 يوم / نموذج 19 و15';
+    const hasOption = Array.from(typeSelect.options).some(opt => opt.value === taskType);
+    if (!hasOption) {
+      const opt = document.createElement('option');
+      opt.value = taskType;
+      opt.textContent = taskType;
+      typeSelect.appendChild(opt);
+    }
+    typeSelect.value = taskType;
+
+    document.getElementById('taskFormDue').value = t.due || '';
+    document.getElementById('taskFormPriority').value = t.priority || 'عادي';
+    document.getElementById('taskModalBackdrop').classList.add('open');
+  }
+
   function switchMainTab(targetId) {
     document.querySelectorAll('.nav-tab').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-tab') === targetId);
@@ -794,6 +826,7 @@
       } else if (e.key === 'Escape') {
         document.getElementById('clientModalBackdrop').classList.remove('open');
         document.getElementById('backupModalBackdrop').classList.remove('open');
+        document.getElementById('taskModalBackdrop').classList.remove('open');
       }
     });
 
@@ -883,6 +916,18 @@
       if (action === 'edit-client') {
         openClientModal(id);
       } else if (action === 'client-to-task') {
+        const targetClientId = client.id;
+        const existingOpen = appState.tasks.find(t => !t.done && t.clientId === targetClientId);
+        if (existingOpen) {
+          appState.taskFilter = 'OPEN';
+          document.querySelectorAll('.task-filter-btn').forEach(b => {
+            b.classList.toggle('btn-primary', b.getAttribute('data-filter') === 'OPEN');
+          });
+          renderTasks();
+          switchMainTab('view-tasks');
+          showToast('يوجد بالفعل مهمة مفتوحة لهذا الممول في الأجندة (يمكنك تعديلها من هنا)');
+          return;
+        }
         const newTask = {
           id: 't_' + Date.now(),
           title: client.action || ('متابعة ملف ' + client.name),
@@ -915,6 +960,20 @@
         return;
       }
       const clientId = document.getElementById('newTaskClient').value;
+      if (clientId) {
+        const targetClientId = clientId;
+        const existingOpen = appState.tasks.find(t => !t.done && t.clientId === targetClientId);
+        if (existingOpen) {
+          appState.taskFilter = 'OPEN';
+          document.querySelectorAll('.task-filter-btn').forEach(b => {
+            b.classList.toggle('btn-primary', b.getAttribute('data-filter') === 'OPEN');
+          });
+          renderTasks();
+          switchMainTab('view-tasks');
+          showToast('يوجد بالفعل مهمة مفتوحة لهذا الممول في الأجندة (يمكنك تعديلها من هنا)');
+          return;
+        }
+      }
       const clientObj = appState.clients.find(c => c.id === clientId);
       const task = {
         id: 't_' + Date.now(),
@@ -953,12 +1012,36 @@
           await saveState(true);
           renderTasks();
         }
+      } else if (action === 'edit-task') {
+        openTaskModal(id);
       } else if (action === 'delete-task') {
         appState.tasks = appState.tasks.filter(item => item.id !== id);
         await saveState(true);
         renderTasks();
         showToast('تم حذف المهمة');
       }
+    });
+
+    document.getElementById('btnCloseTaskModal').addEventListener('click', () => {
+      document.getElementById('taskModalBackdrop').classList.remove('open');
+    });
+
+    document.getElementById('taskForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('taskFormId').value;
+      const t = appState.tasks.find(item => item.id === id);
+      if (!t) return;
+      const clientId = document.getElementById('taskFormClient').value;
+      const clientObj = appState.clients.find(c => c.id === clientId);
+      t.title = document.getElementById('taskFormTitle').value.trim();
+      t.clientId = clientId;
+      t.clientName = clientObj ? clientObj.name : '';
+      t.type = document.getElementById('taskFormType').value;
+      t.due = document.getElementById('taskFormDue').value;
+      t.priority = document.getElementById('taskFormPriority').value;
+      await saveState(false);
+      renderTasks();
+      document.getElementById('taskModalBackdrop').classList.remove('open');
     });
 
     document.querySelectorAll('.calc-mode-btn').forEach(btn => {
