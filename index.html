@@ -89,7 +89,7 @@
         </div>
         <div class="stat-card urgent-card">
           <span class="metric-value urgent num-tabular" id="statUrgentClients">0</span>
-          <span class="metric-label">ملفات عاجلة / طعن</span>
+          <span class="metric-label"><span class="urgent-dot" aria-hidden="true"></span><span>ملفات عاجلة / طعن</span></span>
         </div>
         <div class="stat-card">
           <span class="metric-value num-tabular" id="statRealEstateClients">0</span>
@@ -554,6 +554,55 @@
       </p>
       <button type="button" class="btn btn-danger btn-sm" id="btnResetToDefaultData">إعادة تحميل بيانات الريكورد الأصلية</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL 3: EDIT TASK -->
+<div class="modal-backdrop" id="taskModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h2 class="modal-title" id="taskModalTitle">تعديل مهمة في الأجندة</h2>
+      <button type="button" class="btn btn-sm" id="btnCloseTaskModal">إغلاق</button>
+    </div>
+    <form id="taskForm">
+      <input type="hidden" id="taskFormId">
+      <div class="form-grid-2">
+        <div>
+          <label class="field-label" for="taskFormTitle">المهمة أو الإجراء المطلوب *</label>
+          <input type="text" id="taskFormTitle" class="input-field" required>
+        </div>
+        <div>
+          <label class="field-label" for="taskFormClient">الممول المرتبط بالمهمة</label>
+          <select id="taskFormClient" class="select-field"></select>
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div>
+          <label class="field-label" for="taskFormType">نوع الإجراء</label>
+          <select id="taskFormType" class="select-field">
+            <option value="طعن 30 يوم / نموذج 19 و15">طعن 30 يوم / نموذج 19 و15</option>
+            <option value="لجنة داخلية / مختصة / فض منازعات">لجنة داخلية / مختصة / فض منازعات</option>
+            <option value="محضر حجز إداري وفتح باب الطعن">محضر حجز إداري وفتح باب الطعن</option>
+            <option value="شهادة موقف ضريبي / تسوية / حفظ">شهادة موقف ضريبي / تسوية / حفظ</option>
+            <option value="إقرار ضريبي / اعتماد محاسب">إقرار ضريبي / اعتماد محاسب</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="taskFormDue">تاريخ الاستحقاق</label>
+          <input type="date" id="taskFormDue" class="input-field">
+        </div>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label class="field-label" for="taskFormPriority">الأولوية</label>
+        <select id="taskFormPriority" class="select-field">
+          <option value="عاجل">عاجل (ميعاد حتمي)</option>
+          <option value="عادي">عادي</option>
+        </select>
+      </div>
+      <div style="display:flex; justify-content:flex-start; gap:10px;">
+        <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+      </div>
+    </form>
   </div>
 </div>
 
