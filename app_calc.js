@@ -28,11 +28,12 @@ function runInspectionCalculator() {
     const daily = Number(document.getElementById('inspDailyRev').value) || 0;
     const days = Number(document.getElementById('inspWorkDays').value) || 0;
     turnover = daily * days;
-    turnoverInput.value = turnover;
+    turnoverInput.value = turnover > 0 ? String(turnover) : '';
     turnoverInput.readOnly = true;
   } else {
     dailyFields.style.display = 'none';
     turnoverInput.readOnly = false;
+    if (turnoverInput.value === '0') turnoverInput.value = '';
   }
   const margin = Number(document.getElementById('inspProfitMargin').value) || 0;
   const returnTax = Number(document.getElementById('inspReturnTax').value) || 0;
@@ -326,7 +327,10 @@ function runRealEstateCalculator() {
       '<div class="dl-row"><dt class="dl-term">ضريبة التصرفات العقارية (2.5% مقطوعة)</dt><dd class="dl-val num-tabular">' + formatMoney(dispTax) + ' ج</dd></div>' +
       '<div class="dl-row"><dt class="dl-term">لو تحول لاستثمار عقاري (ربح ' + margin + '%)</dt><dd class="dl-val num-tabular" style="color:var(--status-urgent);">' + formatMoney(commTax) + ' ج</dd></div>' +
     '</dl>' +
-    '<p style="margin:12px 0 0 0; font-size:0.86rem; color:var(--ink-secondary);">تنبيه: لو الممول فاتح ملف استثمار عقاري، يُمنع محاسبته بـ 2.5% تصرفات عقارية على نفس العقارات منعاً للازدواج الضريبي.</p>';
+    '<div class="calc-alert-box calc-alert-info">' +
+      '<strong>تنبيه مهلة الـ 60 يوماً (قانون 151 لسنة 2026):</strong> يجب سداد الـ 2.5% خلال <strong>60 يوماً</strong> من تاريخ التصرف (للتصرفات من 29 يوليو 2026 بدلاً من 30 يوماً)، وتُعتمد قيمة العقد ما لم تثبت المصلحة خلافها.<br>' +
+      '<strong>الاستثناءات:</strong> تُعفى عقارات وأراضي القرى، والبيع أو الهبة أو الوصية للأصول أو الفروع أو الأزواج، وتقديم العقار كحصة عينية في شركة مساهمة (بشرط عدم التصرف في الأسهم 5 سنوات). ولو الممول فاتح ملف استثمار عقاري، يُمنع محاسبته بـ 2.5% منعاً للازدواج الضريبي.' +
+    '</div>';
 }
 
 function initCalcYearMonthOptions() {
@@ -371,4 +375,42 @@ function resetInspectionCalculator() {
   const entityEl = document.getElementById('inspEntityType');
   if (entityEl) entityEl.value = 'INDIVIDUAL';
   runInspectionCalculator();
+}
+
+function resetInvoiceCalculator() {
+  const netEl = document.getElementById('invNetAmount');
+  if (netEl) netEl.value = '';
+  const vatEl = document.getElementById('invVatRate');
+  if (vatEl) vatEl.value = '14';
+  const whtEl = document.getElementById('invWhtRate');
+  if (whtEl) whtEl.value = '1';
+  const roleEl = document.getElementById('invRole');
+  if (roleEl) roleEl.value = 'BUYER';
+  runInvoiceCalculator();
+}
+
+function resetPayrollCalculator() {
+  ['payGrossMonthly', 'payInsWage'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  runPayrollCalculator();
+}
+
+function resetRealEstateCalculator() {
+  ['reSaleValue', 'reProfitMargin'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  runRealEstateCalculator();
+}
+
+function resetPenaltyCalculator() {
+  ['penTaxAmount', 'penDelayMonths', 'penCbeRate', 'penReturnTax'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const stageEl = document.getElementById('penStage');
+  if (stageEl) stageEl.value = 'INTERNAL_COMMITTEE';
+  runPenaltyCalculator();
 }
