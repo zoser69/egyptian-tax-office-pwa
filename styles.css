@@ -1877,3 +1877,50 @@ html, body {
     min-width: 180px;
   }
 }
+/* Historical Tax Year & Bracket Breakdown Table */
+.calc-year-period-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.85fr) minmax(0, 0.85fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.bracket-table-wrap {
+  margin-top: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  overflow-x: auto;
+}
+
+.bracket-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+}
+
+.bracket-table th,
+.bracket-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.bracket-table thead th {
+  background-color: var(--surface-muted);
+  color: var(--ink-secondary);
+  font-weight: 800;
+}
+
+.bracket-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+@media (max-width: 768px) {
+  .calc-year-period-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .calc-year-period-grid > div:first-child {
+    grid-column: 1 / -1;
+  }
+}

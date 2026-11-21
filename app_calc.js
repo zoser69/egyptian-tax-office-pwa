@@ -1,39 +1,5 @@
 'use strict';
 
-function calcLaw91IndividualTax(netProfit) {
-  if (netProfit <= 0) return 0;
-  let tax = 0;
-  if (netProfit <= 600000) {
-    if (netProfit > 40000) tax += Math.min(netProfit - 40000, 15000) * 0.10;
-    if (netProfit > 55000) tax += Math.min(netProfit - 55000, 15000) * 0.15;
-    if (netProfit > 70000) tax += Math.min(netProfit - 70000, 130000) * 0.20;
-    if (netProfit > 200000) tax += Math.min(netProfit - 200000, 200000) * 0.225;
-    if (netProfit > 400000) tax += (netProfit - 400000) * 0.25;
-  } else {
-    if (netProfit <= 700000) {
-      tax += Math.min(netProfit, 55000) * 0.10;
-      if (netProfit > 55000) tax += Math.min(netProfit - 55000, 15000) * 0.15;
-      if (netProfit > 70000) tax += Math.min(netProfit - 70000, 130000) * 0.20;
-      if (netProfit > 200000) tax += Math.min(netProfit - 200000, 200000) * 0.225;
-      if (netProfit > 400000) tax += (netProfit - 400000) * 0.25;
-    } else if (netProfit <= 1200000) {
-      tax = netProfit * 0.225;
-    } else {
-      tax = 1200000 * 0.25 + (netProfit - 1200000) * 0.275;
-    }
-  }
-  return Math.round(tax);
-}
-function calcArticle3Law30Tax(turnover) {
-  if (turnover <= 0) return { tax: 0, label: '0' };
-  if (turnover < 250000) return { tax: 1000, label: 'أقل من 250 ألف (1,000 ج قطعية)' };
-  if (turnover < 500000) return { tax: 2500, label: '250 إلى 500 ألف (2,500 ج قطعية)' };
-  if (turnover < 1000000) return { tax: 5000, label: '500 ألف إلى مليون (5,000 ج قطعية)' };
-  if (turnover < 2000000) return { tax: Math.round(turnover * 0.005), label: 'مليون إلى 2 مليون (0.5% من رقم الأعمال)' };
-  if (turnover < 3000000) return { tax: Math.round(turnover * 0.0075), label: '2 إلى 3 مليون (0.75% من رقم الأعمال)' };
-  if (turnover <= 10000000) return { tax: Math.round(turnover * 0.01), label: '3 إلى 10 مليون (1% من رقم الأعمال)' };
-  return { tax: null, label: 'تجاوز 10 مليون (خارج سقف المادة 3 ق 30/2023)' };
-}
 function calcLaw6Of2025Tax(turnover) {
   if (turnover <= 0) return { tax: 0, label: '0' };
   if (turnover < 500000) return { tax: Math.round(turnover * 0.004), label: 'أقل من 500 ألف (0.4% من رقم الأعمال)' };
@@ -43,7 +9,15 @@ function calcLaw6Of2025Tax(turnover) {
   if (turnover <= 20000000) return { tax: Math.round(turnover * 0.015), label: 'أكثر من 10 حتى 20 مليون (1.5%)' };
   return { tax: null, label: 'تجاوز 20 مليون (خارج سقف قانون 6 لسنة 2025)' };
 }
+
 function runInspectionCalculator() {
+  const year = Number(document.getElementById('inspTaxYear') ? document.getElementById('inspTaxYear').value : 2026) || 2026;
+  const mFrom = Number(document.getElementById('inspMonthFrom') ? document.getElementById('inspMonthFrom').value : 1) || 1;
+  let mTo = Number(document.getElementById('inspMonthTo') ? document.getElementById('inspMonthTo').value : 12) || 12;
+  if (mTo < mFrom) mTo = mFrom;
+  const months = mTo - mFrom + 1;
+  const noExemption = Boolean(document.getElementById('inspNoExemption') && document.getElementById('inspNoExemption').checked);
+
   const method = document.getElementById('inspInputMethod').value;
   const entity = document.getElementById('inspEntityType').value;
   const dailyFields = document.getElementById('inspDailyFields');
@@ -64,10 +38,54 @@ function runInspectionCalculator() {
   const returnTax = Number(document.getElementById('inspReturnTax').value) || 0;
   const whtPaid = Number(document.getElementById('inspWhtPaid').value) || 0;
   const netProfit = Math.round(turnover * (margin / 100));
-  const law91Tax = entity === 'CORP' ? Math.round(netProfit * 0.225) : calcLaw91IndividualTax(netProfit);
-  const art3 = calcArticle3Law30Tax(turnover);
-  const law6 = calcLaw6Of2025Tax(turnover);
-  const candidates = [{ name: 'قانون 91 لسنة 2005', val: law91Tax }];
+
+  let law91Detail;
+  let law91Tax;
+  if (entity === 'CORP') {
+    const corpBase = Math.floor(netProfit / 10) * 10;
+    let corpRows = [];
+    if (year >= 2011 && year <= 2012) {
+      const slice1 = Math.min(corpBase, 10000000);
+      const slice2 = Math.max(0, corpBase - 10000000);
+      const t1 = Math.round(slice1 * 0.20);
+      const t2 = Math.round(slice2 * 0.25);
+      law91Tax = t1 + t2;
+      if (slice1 > 0) corpRows.push({ label: 'وعاء الشركات حتى 10 مليون (ق 51/2011)', amount: slice1, ratePct: 20, tax: t1 });
+      if (slice2 > 0) corpRows.push({ label: 'ما زاد عن 10 مليون (ق 51/2011)', amount: slice2, ratePct: 25, tax: t2 });
+      if (corpRows.length === 0) corpRows.push({ label: 'وعاء الشخص الاعتباري', amount: 0, ratePct: 20, tax: 0 });
+    } else {
+      const corpRate = (year >= 2013 && year <= 2014) ? 0.25 : (year >= 2015 ? 0.225 : 0.20);
+      law91Tax = Math.round(corpBase * corpRate);
+      corpRows.push({ label: 'وعاء الشخص الاعتباري', amount: corpBase, ratePct: +(corpRate * 100).toFixed(1), tax: law91Tax });
+    }
+    law91Detail = {
+      year, months, noExemption: true, annualBase: corpBase, annualTax: law91Tax, tax: law91Tax,
+      lawLabel: 'شركات (' + year + ')', exemptAmount: 0, taxCreditRate: 0, taxCreditAmount: 0,
+      rows: corpRows
+    };
+  } else {
+    law91Detail = calcLaw91Detailed(netProfit, { year, months, noExemption });
+    law91Tax = law91Detail.tax;
+  }
+
+  const turnoverLabelEl = document.getElementById('inspTurnoverLabel');
+  if (turnoverLabelEl) {
+    turnoverLabelEl.textContent = months < 12
+      ? 'إجمالي رقم الأعمال عن الفترة (' + months + ' شهر) (جنيه)'
+      : 'إجمالي رقم الأعمال السنوي (جنيه)';
+  }
+  const annualTurnoverForCompare = months < 12 ? Math.round(turnover * (12 / months)) : turnover;
+  const art3Raw = calcArticle3Law30Tax(annualTurnoverForCompare);
+  const law6Raw = calcLaw6Of2025Tax(annualTurnoverForCompare);
+  const art3 = {
+    tax: art3Raw.tax !== null ? (months < 12 ? Math.round(art3Raw.tax * (months / 12)) : art3Raw.tax) : null,
+    label: art3Raw.label + (months < 12 && art3Raw.tax !== null ? ' · عن ' + months + ' شهر' : '')
+  };
+  const law6 = {
+    tax: law6Raw.tax !== null ? (months < 12 ? Math.round(law6Raw.tax * (months / 12)) : law6Raw.tax) : null,
+    label: law6Raw.label + (months < 12 && law6Raw.tax !== null ? ' · عن ' + months + ' شهر' : '')
+  };
+  const candidates = [{ name: 'قانون 91 (' + year + ' - ' + law91Detail.lawLabel + ')', val: law91Tax }];
   if (art3.tax !== null) candidates.push({ name: 'المادة 3 (قانون 30 لسنة 2023)', val: art3.tax });
   if (law6.tax !== null) candidates.push({ name: 'قانون 6 لسنة 2025 (التسهيلات)', val: law6.tax });
   candidates.sort((a, b) => a.val - b.val);
@@ -76,34 +94,58 @@ function runInspectionCalculator() {
   const effectiveTax = Math.max(best.val, returnTax);
   const netPayable = Math.max(0, effectiveTax - whtPaid);
   const maxVal = Math.max(law91Tax, art3.tax || 0, law6.tax || 0, returnTax, 1);
+
   let trapAlertHtml = '';
   if (returnTax > best.val) {
     trapAlertHtml = '<div style="margin-top:12px; padding:12px; background:var(--status-urgent-bg); border:1px solid var(--status-urgent-border); color:var(--status-urgent); font-size:0.88rem; font-weight:700; border-radius:8px;">' +
       'تنبيه فخ الإقرار: ضريبة الإقرار المرفوعة (' + formatMoney(returnTax) + ' ج) أكبر من ضريبة ' + best.name + ' (' + formatMoney(best.val) + ' ج). المأمورية ستعتمد ضريبة الإقرار الأكبر لأن الإقرار لا رجعة فيه.' +
     '</div>';
   }
-  const barClass91 = (best.name.indexOf('91') !== -1) ? 'best' : (law91Tax === highestVal && candidates.length > 1 ? 'high' : '');
+
+  const barClass91 = (best.name.indexOf('قانون 91') !== -1) ? 'best' : (law91Tax === highestVal && candidates.length > 1 ? 'high' : '');
   const barClassArt3 = (best.name.indexOf('المادة 3') !== -1) ? 'best' : (art3.tax === highestVal && candidates.length > 1 ? 'high' : '');
+  const barClassLaw6 = (best.name.indexOf('قانون 6') !== -1) ? 'best' : (law6.tax === highestVal && candidates.length > 1 ? 'high' : '');
+
+  const bracketRowsHtml = law91Detail.rows.map(r =>
+    '<tr>' +
+      '<td>' + escapeHtml(r.label) + '</td>' +
+      '<td class="num-tabular">' + formatMoney(r.amount) + '</td>' +
+      '<td class="num-tabular">' + r.ratePct + '%</td>' +
+      '<td class="num-tabular" style="font-weight:700;">' + formatMoney(Math.round(r.tax)) + '</td>' +
+    '</tr>'
+  ).join('');
+
+  const creditRowHtml = law91Detail.taxCreditAmount > 0
+    ? '<tr><td colspan="3" style="color:var(--status-safe); font-weight:700;">خصم ضريبي (' + Math.round(law91Detail.taxCreditRate * 100) + '% طبقاً للسنة ' + year + ')</td><td class="num-tabular" style="color:var(--status-safe); font-weight:700;">- ' + formatMoney(law91Detail.taxCreditAmount) + '</td></tr>'
+    : '';
+
   const panel = document.getElementById('inspResultsPanel');
   panel.innerHTML =
     '<div class="result-hero">' +
-      '<p class="result-headline">الاختيار الأوفر قانونياً للممول</p>' +
+      '<p class="result-headline">الاختيار الأوفر قانونياً للممول (سنة ' + year + ' · ' + months + ' شهر)</p>' +
       '<p class="result-big"><span class="num-tabular">' + formatMoney(best.val) + '</span> ج</p>' +
       '<span class="result-subtag">' + escapeHtml(best.name) + '</span>' +
     '</div>' +
     '<dl class="dl-ledger">' +
-      '<div class="dl-row"><dt class="dl-term">إجمالي رقم الأعمال السنوي</dt><dd class="dl-val num-tabular">' + formatMoney(turnover) + ' ج</dd></div>' +
+      '<div class="dl-row"><dt class="dl-term">إجمالي رقم الأعمال</dt><dd class="dl-val num-tabular">' + formatMoney(turnover) + ' ج</dd></div>' +
       '<div class="dl-row"><dt class="dl-term">صافي الربح التقديري (' + margin + '%)</dt><dd class="dl-val num-tabular">' + formatMoney(netProfit) + ' ج</dd></div>' +
-      '<div class="dl-row"><dt class="dl-term">1. الضريبة على قانون 91 لسنة 2005</dt><dd class="dl-val num-tabular">' + formatMoney(law91Tax) + ' ج</dd></div>' +
+      (months < 12 && entity !== 'CORP' ? '<div class="dl-row"><dt class="dl-term">رد الوعاء لسنة كاملة (' + months + ' شهر)</dt><dd class="dl-val num-tabular">' + formatMoney(law91Detail.annualBase) + ' ج</dd></div>' : '') +
+      '<div class="dl-row"><dt class="dl-term">1. الضريبة على قانون 91 (' + year + ')</dt><dd class="dl-val num-tabular">' + formatMoney(law91Tax) + ' ج</dd></div>' +
       '<div class="dl-row"><dt class="dl-term">2. الضريبة على المادة 3 (' + art3.label + ')</dt><dd class="dl-val num-tabular">' + (art3.tax !== null ? formatMoney(art3.tax) + ' ج' : 'غير خاضع') + '</dd></div>' +
       '<div class="dl-row"><dt class="dl-term">3. الضريبة على قانون 6/2025 (' + law6.label + ')</dt><dd class="dl-val num-tabular">' + (law6.tax !== null ? formatMoney(law6.tax) + ' ج' : 'غير خاضع') + '</dd></div>' +
       '<div class="dl-row"><dt class="dl-term">مبالغ مخصومة تحت حساب الضريبة (نموذج 41)</dt><dd class="dl-val num-tabular">- ' + formatMoney(whtPaid) + ' ج</dd></div>' +
       '<div class="dl-row"><dt class="dl-term" style="color:var(--ink-primary); font-weight:800;">الصافي النهائي واجب السداد</dt><dd class="dl-val num-tabular" style="color:var(--status-safe); font-size:1.1rem;">' + formatMoney(netPayable) + ' ج</dd></div>' +
     '</dl>' +
     trapAlertHtml +
+    '<div class="bracket-table-wrap">' +
+      '<table class="bracket-table">' +
+        '<thead><tr><th>تفصيل شرائح قانون 91 (' + year + ')</th><th>القيمة</th><th>%</th><th>الضريبة</th></tr></thead>' +
+        '<tbody>' + bracketRowsHtml + creditRowHtml + '</tbody>' +
+      '</table>' +
+    '</div>' +
     '<div class="tufte-chart">' +
       '<div class="tufte-bar-group">' +
-        '<div class="tufte-bar-label"><span>قانون 91 لسنة 2005</span><span class="num-tabular">' + formatMoney(law91Tax) + ' ج</span></div>' +
+        '<div class="tufte-bar-label"><span>قانون 91 لسنة 2005 (' + year + ')</span><span class="num-tabular">' + formatMoney(law91Tax) + ' ج</span></div>' +
         '<div class="tufte-bar-track"><div class="tufte-bar-fill ' + barClass91 + '" style="width:' + Math.min(100, Math.round((law91Tax / maxVal) * 100)) + '%"></div></div>' +
       '</div>' +
       (art3.tax !== null ? (
@@ -112,8 +154,68 @@ function runInspectionCalculator() {
           '<div class="tufte-bar-track"><div class="tufte-bar-fill ' + barClassArt3 + '" style="width:' + Math.min(100, Math.round((art3.tax / maxVal) * 100)) + '%"></div></div>' +
         '</div>'
       ) : '') +
+      (law6.tax !== null ? (
+        '<div class="tufte-bar-group">' +
+          '<div class="tufte-bar-label"><span>قانون 6 لسنة 2025 (التسهيلات)</span><span class="num-tabular">' + formatMoney(law6.tax) + ' ج</span></div>' +
+          '<div class="tufte-bar-track"><div class="tufte-bar-fill ' + barClassLaw6 + '" style="width:' + Math.min(100, Math.round((law6.tax / maxVal) * 100)) + '%"></div></div>' +
+        '</div>'
+      ) : '') +
     '</div>';
 }
+
+function runPenaltyCalculator() {
+  const taxEl = document.getElementById('penTaxAmount');
+  const monthsEl = document.getElementById('penDelayMonths');
+  const cbeEl = document.getElementById('penCbeRate');
+  const retEl = document.getElementById('penReturnTax');
+  const settledEl = document.getElementById('penSettledBeforeAppeal');
+  const panel = document.getElementById('penResultsPanel');
+  if (!taxEl || !panel) return;
+
+  const principal = Math.max(0, Number(taxEl.value) || 0);
+  const months = Math.max(0, Math.floor(Number(monthsEl.value) || 0));
+  const cbeRate = Math.max(0, Number(cbeEl.value) || 0);
+  const returnTax = Math.max(0, Number(retEl.value) || 0);
+  const settled = Boolean(settledEl && settledEl.checked);
+
+  const annualPenaltyRate = (cbeRate + 2) / 100;
+  const rawDelayPenalty = principal * annualPenaltyRate * (months / 12);
+  const cappedDelayPenalty = Math.round(Math.min(rawDelayPenalty, principal));
+  const isCapped = rawDelayPenalty > principal && principal > 0;
+
+  let art87Rate = 0;
+  let art87Label = 'لا توجد فروق (الإقرار مطابق)';
+  const diff = Math.max(0, principal - returnTax);
+  if (principal > 0 && diff > 0) {
+    if (returnTax === 0) {
+      art87Rate = settled ? 0.20 : 0.40;
+      art87Label = settled ? 'عدم تقديم إقرار + اتفاق قبل الطعن (20%)' : 'عدم تقديم إقرار (40% من النهائية)';
+    } else if ((diff / principal) >= 0.5) {
+      art87Rate = settled ? 0.20 : 0.40;
+      art87Label = settled ? 'فروق >= 50% + اتفاق قبل الطعن (20%)' : 'فروق >= 50% (40% من الفرق)';
+    } else {
+      art87Rate = settled ? 0.10 : 0.20;
+      art87Label = settled ? 'فروق < 50% + اتفاق قبل الطعن (10%)' : 'فروق < 50% (20% من الفرق)';
+    }
+  }
+  const art87Base = returnTax === 0 ? principal : diff;
+  const art87Amount = Math.round(art87Base * art87Rate);
+  const grandTotal = principal + cappedDelayPenalty + art87Amount;
+
+  panel.innerHTML =
+    '<div class="result-hero">' +
+      '<p class="result-headline">إجمالي مقابل التأخير والضريبة الإضافية</p>' +
+      '<p class="result-big"><span class="num-tabular">' + formatMoney(cappedDelayPenalty + art87Amount) + '</span> ج</p>' +
+      '<span class="result-subtag">' + (isCapped ? 'مقيد بالسقف القانوني 100% من أصل الضريبة (ق 7/2025)' : 'معدل سنوي ' + (cbeRate + 2).toFixed(2) + '%') + '</span>' +
+    '</div>' +
+    '<dl class="dl-ledger">' +
+      '<div class="dl-row"><dt class="dl-term">أصل الضريبة النهائية</dt><dd class="dl-val num-tabular">' + formatMoney(principal) + ' ج</dd></div>' +
+      '<div class="dl-row"><dt class="dl-term">مقابل التأخير (' + months + ' شهر)</dt><dd class="dl-val num-tabular" style="color:var(--status-urgent);">+ ' + formatMoney(cappedDelayPenalty) + ' ج</dd></div>' +
+      '<div class="dl-row"><dt class="dl-term">المبلغ الإضافي م 87 مكرراً (' + art87Label + ')</dt><dd class="dl-val num-tabular">+ ' + formatMoney(art87Amount) + ' ج</dd></div>' +
+      '<div class="dl-row"><dt class="dl-term" style="font-weight:800; color:var(--ink-primary);">الإجمالي الكلي واجب السداد</dt><dd class="dl-val num-tabular" style="color:var(--status-safe); font-size:1.1rem;">' + formatMoney(grandTotal) + ' ج</dd></div>' +
+    '</dl>';
+}
+
 function runInvoiceCalculator() {
   const net = Number(document.getElementById('invNetAmount').value) || 0;
   const vatRate = Number(document.getElementById('invVatRate').value) || 0;
@@ -168,10 +270,19 @@ function runPayrollCalculator() {
   const annualized = netMonthlyBeforeTax * 12;
   const taxableAnnualRaw = Math.max(0, annualized - 20000);
   const taxableAnnualRounded = Math.floor(taxableAnnualRaw / 10) * 10;
-  const annualTax = calcLaw91IndividualTax(taxableAnnualRounded);
+  const payrollDetail = calcLaw91Detailed(taxableAnnualRounded, { year: 2026, months: 12, noExemption: false });
+  const annualTax = payrollDetail.tax;
   const monthlyTax = Math.round((annualTax / 12) * 100) / 100;
   const martyrsFund = Math.round(gross * 0.0005 * 100) / 100;
   const netTakeHome = Math.round((gross - empInsMonthly - monthlyTax - martyrsFund) * 100) / 100;
+  const payRowsHtml = payrollDetail.rows.map(r =>
+    '<tr>' +
+      '<td>' + escapeHtml(r.label) + '</td>' +
+      '<td class="num-tabular">' + formatMoney(r.amount) + '</td>' +
+      '<td class="num-tabular">' + r.ratePct + '%</td>' +
+      '<td class="num-tabular" style="font-weight:700;">' + formatMoney(Math.round(r.tax)) + '</td>' +
+    '</tr>'
+  ).join('');
   document.getElementById('payResultsPanel').innerHTML =
     '<div class="result-hero">' +
       '<p class="result-headline">ضريبة كسب العمل الشهرية</p>' +
@@ -185,7 +296,15 @@ function runPayrollCalculator() {
       '<div class="dl-row"><dt class="dl-term">الضريبة السنوية (شريحة صفرية 40 ألف)</dt><dd class="dl-val num-tabular">' + formatMoney(annualTax) + ' ج</dd></div>' +
       '<div class="dl-row"><dt class="dl-term">صندوق تكريم الشهداء (0.05%)</dt><dd class="dl-val num-tabular">' + formatMoney(martyrsFund) + ' ج</dd></div>' +
       '<div class="dl-row"><dt class="dl-term" style="font-weight:800; color:var(--ink-primary);">صافي المرتب الشهري للموظف</dt><dd class="dl-val num-tabular" style="color:var(--status-safe);">' + formatMoney(netTakeHome) + ' ج</dd></div>' +
-    '</dl>';
+    '</dl>' +
+    (payRowsHtml ? (
+      '<div class="bracket-table-wrap">' +
+        '<table class="bracket-table">' +
+          '<thead><tr><th>شرائح كسب العمل السنوية (2026)</th><th>القيمة</th><th>%</th><th>الضريبة</th></tr></thead>' +
+          '<tbody>' + payRowsHtml + '</tbody>' +
+        '</table>' +
+      '</div>'
+    ) : '');
 }
 function runRealEstateCalculator() {
   const val = Number(document.getElementById('reSaleValue').value) || 0;
@@ -205,200 +324,27 @@ function runRealEstateCalculator() {
     '</dl>' +
     '<p style="margin:12px 0 0 0; font-size:0.86rem; color:var(--ink-secondary);">تنبيه: لو الممول فاتح ملف استثمار عقاري، يُمنع محاسبته بـ 2.5% تصرفات عقارية على نفس العقارات منعاً للازدواج الضريبي.</p>';
 }
-function generateLegalMemo() {
-  const clientSelectEl = document.getElementById('memoClientSelect');
-  const typeSelectEl = document.getElementById('memoTemplateType');
-  const formNumEl = document.getElementById('memoFormNum');
-  const outputEl = document.getElementById('memoOutputArea');
-  if (!clientSelectEl || !typeSelectEl || !outputEl) return;
-  const clientId = clientSelectEl.value;
-  const type = typeSelectEl.value;
-  const rawFormNum = (formNumEl ? formNumEl.value : '').trim();
-  const formNum = rawFormNum || 'المقيد بالملف';
-  const client = appState.clients.find(c => c.id === clientId) || appState.clients[0];
-  if (!client) return;
-  const clientDates = normalizeClientDates(client);
-  const todayStr = new Date().toISOString().slice(0, 10);
-  function pickBestDateEntryForMemo(keywords) {
-    const kwList = Array.isArray(keywords) ? keywords : (keywords ? [keywords] : []);
-    for (let i = 0; i < kwList.length; i++) {
-      const kw = kwList[i];
-      const matched = clientDates.find(d => d.date && (d.label || '').indexOf(kw) !== -1);
-      if (matched) {
-        return {
-          date: matched.date,
-          label: matched.label || 'تاريخ الإخطار المقيد'
-        };
-      }
-    }
-    const appealEntry = clientDates.find(d => d.date && d.hasAppeal30);
-    if (appealEntry) {
-      return {
-        date: appealEntry.date,
-        label: appealEntry.label || 'تاريخ الإعلان بالنموذج'
-      };
-    }
-    const firstEntry = clientDates.find(d => d.date);
-    if (firstEntry) {
-      return {
-        date: firstEntry.date,
-        label: firstEntry.label || 'تاريخ الملف المقيد'
-      };
-    }
-    if (client.noticeDate) {
-      return {
-        date: client.noticeDate,
-        label: 'تاريخ الإخطار المقيد'
-      };
-    }
-    return {
-      date: todayStr,
-      label: 'تاريخ تقديم الطلب'
-    };
+
+function initCalcYearMonthOptions() {
+  const yEl = document.getElementById('inspTaxYear');
+  if (yEl && yEl.options.length <= 1) {
+    let opts = '';
+    for (let y = 2026; y >= 2005; y--) opts += '<option value="' + y + '">' + y + '</option>';
+    yEl.innerHTML = opts;
+    yEl.value = '2026';
   }
-  const datesSummaryLine = clientDates.length > 0
-    ? 'بيان التواريخ والمواعيد المقيدة بملف الممول: ' + clientDates.map(d => (d.label || 'تاريخ ملف') + ' (' + (d.date || 'غير محدد') + ')').join(' | ') + '.\n\n'
-    : '';
-  const officeName = client.office || 'مأمورية الضرائب المختصة';
-  const activityName = client.activity || 'نشاط تجاري / مهني';
-  const problemText = client.problem || 'وفقاً للوقائع والمستندات الثابتة بالملف الضريبي';
-  const actionText = client.action || 'إعادة الفحص والمحاسبة على الأسس الفعلية القانونية';
-  let text = '';
-  if (type === 'APPEAL_19') {
-    const dEntry = pickBestDateEntryForMemo(['19', 'نموذج 19', 'استلام', 'ربط']);
-    text =
-      'السيد الأستاذ / رئيس ' + officeName + '\n' +
-      'تحية طيبة وبعد،،،\n\n' +
-      'مقدمه لسيادتكم الممول / ' + client.name + ' (أو وكيله الرسمي بموجب توكيل / تفويض معتمد)، بشأن نشاط: (' + activityName + ').\n' +
-      'الموضوع: صحيفة طعن قانوني على نموذج (19 ضرائب دخل - إخطار عناصر ربط الضريبة وقيمتها) رقم (' + formNum + ') والمرتبط ببيان (' + dEntry.label + ': ' + dEntry.date + ').\n\n' +
-      datesSummaryLine +
-      'حيث أُعلن الممول بالنموذج المشار إليه، فإنه يطعن عليه في الميعاد القانوني المقرر (خلال ثلاثين يوماً من تاريخ الإعلان طبقاً لنص المادة 54 من قانون الإجراءات الضريبية الموحد رقم 206 لسنة 2020) للأسباب والأسانيد القانونية الآتية:\n\n' +
-      'أولاً - من الناحية الشكلية وبطلان النموذج: قبول الطعن شكلاً لتقديمه في الميعاد القانوني، مع الدفع ببطلان نموذج (19 ضرائب دخل) لخلوه من بيان عناصر وأسس الفحص والتقدير التفصيلية التي تمكن الممول من الوقوف على كيفية احتساب الوعاء الضريبي بالمخالفة لأحكام القانون المستقرة ومبادئ محكمة النقض.\n\n' +
-      'ثانياً - الدفع الأصلي بسقوط الضريبة بالتقادم الخمسي: يتمسك الممول بسقوط حق المصلحة في الفحص والتقدير والمطالبة عن السنوات الضريبية التي انقضت عليها خمس سنوات طبقاً لنص المادة (91) من قانون الضريبة على الدخل رقم 91 لسنة 2005 والمادة (377) من القانون المدني، لخلو الأوراق من أي إجراء قاطع للتقادم معلن للممول إعلاناً قانونياً صحيحاً.\n\n' +
-      'ثالثاً - من الناحية الموضوعية والمحاسبية: يعترض الممول كلياً على التقديرات الجزافية الواردة بالنموذج للمغالاة الشديدة في تقدير الإيراد اليومي وعدد أيام العمل السنوية ونسبة صافي الربح الحكمية دون معاينة فعلية أو مراعاة لظروف النشاط، فضلاً عن إغفال خصم التكاليف والمصروفات اللازمة لمزاولة النشاط طبقاً للمادتين (22 و23) من القانون رقم 91 لسنة 2005 والمادة (28) من لائحته التنفيذية (بما فيها المصروفات النثرية في حدود 7%)، وعدم خصم المبالغ المستقطعة والمسددة تحت حساب الضريبة (نموذج 41).\n\n' +
-      'رابعاً - الوقائع الخاصة بملف الممول: (' + problemText + ')، مع التمسك بـ: (' + actionText + ').\n\n' +
-      'بناءً عليه (الطلبات الختامية):\n' +
-      'يلتمس الممول:\n' +
-      '1. بصفة أصلية: قبول الطعن شكلاً، وفي الموضوع بإلغاء التقديرات الواردة بنموذج (19 ضرائب دخل) وإحالة الملف إلى اللجنة الداخلية المختصة لإعادة المحاسبة على الأسس الفعلية المؤيدة بالمستندات، وإعمال أحكام التقادم الخمسي عن السنوات الساقطة قانوناً.\n' +
-      '2. بصفة احتياطية: تطبيق المعاملة الضريبية المبسطة المقررة بالمادة الثالثة من القانون رقم 30 لسنة 2023 (أو أحكام قانون الحوافز والتسهيلات الضريبية رقم 6 لسنة 2025 بحسب الفترة الضريبية) متى كان ذلك أوفر للممول، مع خصم كافة المبالغ المسددة والمستقطعة تحت حساب الضريبة.';
-  } else if (type === 'APPEAL_15') {
-    const dEntry = pickBestDateEntryForMemo(['15', 'نموذج 15', 'قيمة مضافة', 'استلام']);
-    text =
-      'السيد الأستاذ / رئيس ' + officeName + ' (مأمورية ضريبة القيمة المضافة)\n' +
-      'تحية طيبة وبعد،،،\n\n' +
-      'مقدمه لسيادتكم المسجل / ' + client.name + ' (أو وكيله الرسمي بموجب توكيل / تفويض معتمد)، بشأن نشاط: (' + activityName + ').\n' +
-      'الموضوع: صحيفة طعن قانوني على نموذج (15 ضريبة قيمة مضافة - إخطار تعديل الإقرار / تقدير الضريبة) رقم (' + formNum + ') والمرتبط ببيان (' + dEntry.label + ': ' + dEntry.date + ').\n\n' +
-      datesSummaryLine +
-      'حيث أُخطر المسجل بالنموذج المشار إليه، فإنه يطعن عليه خلال الميعاد القانوني المقرر (ثلاثين يوماً من تاريخ الإعلان طبقاً لنص المادة 54 من قانون الإجراءات الضريبية الموحد رقم 206 لسنة 2020 والمادة 14 من قانون الضريبة على القيمة المضافة رقم 67 لسنة 2016) للأسباب الآتية:\n\n' +
-      'أولاً - من الناحية الشكلية: قبول الطعن شكلاً لتقديمه في الميعاد القانوني، والدفع ببطلان التقدير الوارد بالنموذج لابتنائه على أسس تقديرية واحتمالية غير مؤيدة بمستندات فعلية.\n\n' +
-      'ثانياً - من الناحية الموضوعية والمحاسبية: يعترض المسجل كلياً على فروق الفحص والتعديلات التي أجرتها المأمورية على إقرارات ضريبة القيمة المضافة الشهرية (نموذج 10)، ويتمسك بحجية الإقرارات المقدمة والفواتير الإلكترونية المسجلة على المنظومة، وبأحقيته القانونية الكاملة في خصم ضريبة المدخلات السابق سدادها على المشتريات ومستلزمات النشاط طبقاً للمادة (22) من القانون رقم 67 لسنة 2016 وتعديلاته (بما فيها القانون رقم 157 لسنة 2025)، مع استبعاد أية فترات توقف عن النشاط أو معاملات غير خاضعة.\n\n' +
-      'ثالثاً - الوقائع الخاصة بملف المسجل: (' + problemText + ')، والإجراء المطلوب إثباته: (' + actionText + ').\n\n' +
-      'بناءً عليه (الطلبات الختامية):\n' +
-      'يلتمس المسجل قبول الطعن شكلاً، وفي الموضوع بإلغاء التعديلات والفروق الواردة بنموذج (15 ضريبة قيمة مضافة) واعتبار إقرارات المسجل الشهرية (نموذج 10) هي الأساس الصحيح للمحاسبة، وإحالة الملف إلى اللجنة الداخلية المختصة لمطابقة الفواتير الإلكترونية واعتماد خصم ضريبة المدخلات.';
-  } else if (type === 'ARTICLE_3') {
-    const dEntry = pickBestDateEntryForMemo(['لجنة', 'فحص', '19', 'طلب']);
-    text =
-      'السيد الأستاذ / رئيس ' + officeName + ' / رئيس اللجنة الداخلية المختصة\n' +
-      'تحية طيبة وبعد،،،\n\n' +
-      'مقدمه لسيادتكم الممول / ' + client.name + ' (أو وكيله الرسمي بالتفويض)، بشأن نشاط: (' + activityName + ').\n' +
-      'الموضوع: طلب المحاسبة الضريبية المبسطة وتعديل الربط وأوراد التحصيل وفقاً لأحكام المادة الثالثة من القانون رقم 30 لسنة 2023 والقانون رقم 6 لسنة 2025، والمرتبط ببيان (' + dEntry.label + ': ' + dEntry.date + ') ورقم المرجع (' + formNum + ').\n\n' +
-      datesSummaryLine +
-      'أولاً - السند التشريعي للمحاسبة المبسطة: نصت المادة الثالثة من القانون رقم 30 لسنة 2023 (وكذلك القانون رقم 6 لسنة 2025 بشأن بعض الحوافز والتسهيلات الضريبية للمشروعات التي لا يتجاوز حجم أعمالها السنوي عشرين مليون جنيه) على أحقية الممول في المحاسبة الضريبية المبسطة (ضريبة قطعية أو نسبية مقطوعة من رقم الأعمال السنوي تتدرج من 1,000 جنيه أو 0.4% وحتى 1.5% بحسب الشريحة) دون الدخول في فحص تقديري للمصروفات أو نسب صافي الربح الحكمية متى كان ذلك أوفر للممول.\n\n' +
-      'ثانياً - انطباق الشروط القانونية على ملف الممول: حيث إن رقم الأعمال السنوي للمنشأة عن سنوات الفحص يقع ضمن الشرائح القانونية المقررة لتطبيق هذا النظام المبسط ولا يتجاوز الحد الأقصى المقرر قانوناً، وذلك وفقاً لوقائع الملف: (' + problemText + ')، وما يترتب عليه من: (' + actionText + ').\n\n' +
-      'بناءً عليه (الطلبات الختامية):\n' +
-      'يلتمس الممول التكرم بالموافقة على:\n' +
-      '1. تطبيق أحكام المادة الثالثة من القانون رقم 30 لسنة 2023 (أو أحكام القانون رقم 6 لسنة 2025 بحسب السنوات محل المحاسبة) على ملف الممول عن سنوات الفحص.\n' +
-      '2. إعادة احتساب الضريبة المستحقة وتعديل الربط الضريبي وأوراد التحصيل الصادرة على هذا الأساس، مع خصم كافة المبالغ السابق سدادها أو استقطاعها تحت حساب الضريبة (نموذج 41) وتسوية مقابل التأخير تبعاً لذلك.';
-  } else if (type === 'TAX_POSITION') {
-    const dEntry = pickBestDateEntryForMemo(['موقف', 'توقف', 'تسوية', 'حفظ']);
-    text =
-      'السيد الأستاذ / رئيس ' + officeName + '\n' +
-      'تحية طيبة وبعد،،،\n\n' +
-      'مقدمه لسيادتكم الممول / ' + client.name + ' (أو وكيله الرسمي بالتفويض)، بشأن نشاط: (' + activityName + ').\n' +
-      'الموضوع: طلب استخراج شهادة موقف ضريبي تسلسلي وإثبات حالة التوقف / التسوية لحفظ الملف ورفع الالتزامات، والمرتبط ببيان (' + dEntry.label + ': ' + dEntry.date + ') ورقم المرجع (' + formNum + ').\n\n' +
-      datesSummaryLine +
-      'أولاً - السند القانوني للطلب: استناداً إلى أحكام المادتين (29 و70) من قانون الإجراءات الضريبية الموحد رقم 206 لسنة 2020، يتشرف الممول بطلب استخراج شهادة رسمية بالموقف الضريبي التسلسلي توضح التاريخ الفعلي لبداية النشاط، وسنوات المحاسبة الضريبية المنتهية، وتاريخ التوقف الفعلي أو التسوية الضريبية على منظومة (SAP) والملف الورقي.\n\n' +
-      'ثانياً - بيان الحالة التفصيلية للملف: (' + problemText + ')، والغرض الإجرائي من استخراج الشهادة: (' + actionText + ').\n\n' +
-      'بناءً عليه (الطلبات الختامية):\n' +
-      'يلتمس الممول التكرم بالموافقة على إصدار شهادة موقف ضريبي تسلسلي معتمدة توضح التسلسل التاريخي الكامل للمحاسبة والتوقف الفعلي للملف، وذلك لتقديمها إلى الجهة المختصة (مأمورية القيمة المضافة / شعبة الحصر والإقرارات / منظومة الساب) لحفظ الملف نهائياً ورفع أية التزامات أو مطالبات آلية غير مستحقة.';
-  } else if (type === 'SEIZURE_APPEAL') {
-    const dEntry = pickBestDateEntryForMemo(['حجز', 'أوراد', 'تنبيه', '19']);
-    text =
-      'السيد الأستاذ / رئيس ' + officeName + ' - شعبة الحجز والتحصيل والشؤون القانونية\n' +
-      'تحية طيبة وبعد،،،\n\n' +
-      'مقدمه لسيادتكم الممول / ' + client.name + ' (أو وكيله الرسمي بالتفويض)، بشأن نشاط: (' + activityName + ').\n' +
-      'الموضوع: مذكرة طعن ومنازعة في محضر الحجز الإداري وأوراد التحصيل رقم (' + formNum + ') والمرتبط ببيان (' + dEntry.label + ': ' + dEntry.date + ') لبطلان الإعلان بسند التنفيذ وطلب فتح باب الطعن الموضوعي في أصل الربط الضريبي.\n\n' +
-      datesSummaryLine +
-      'أولاً - بطلان سند التنفيذ وأوراد التحصيل لانعدام الإعلان القانوني الصحيح بنموذج الربط: استقر قضاء محكمة النقض والمحكمة الإدارية العليا على أن أوراد التحصيل وإجراءات الحجز الإداري المتخذة بالتطبيق للقانون رقم 308 لسنة 1955 والمادة (69) من القانون رقم 206 لسنة 2020 تدور وجوداً وعدماً مع صحة إعلان الممول بنموذج ربط الضريبة (نموذج 19 دخل / نموذج 15 قيمة مضافة) إعلاناً قانونياً منتجاً لآثاره يتحقق به العلم اليقيني. وحيث لم يتحقق علم الممول اليقيني بنموذج الربط قبل فوات ميعاد الثلاثين يوماً المقرر بالمادة (54) من القانون رقم 206 لسنة 2020، فإن الربط لعدم الطعن يكون باطلاً ولا يصلح سنداً تنفيذياً لتوقيع الحجز الإداري.\n\n' +
-      'ثانياً - المنازعة الجدية في أصل الدين الضريبي ومقداره: ينازع الممول منازعة جدية في أصل المديونية الضريبية المحجوز بمقتضاها، وفقاً للوقائع الثابتة بالملف: (' + problemText + ')، وما يقتضيه ذلك من: (' + actionText + ').\n\n' +
-      'ثالثاً - التمسك بالتقادم الخمسي والأسس الفعلية للمحاسبة: يتمسك الممول بسقوط السنوات المنقضية بالتقادم الخمسي طبقاً للمادة (91) من القانون رقم 91 لسنة 2005، وبعدم صحة التقديرات الجزافية للسنوات الأخرى.\n\n' +
-      'بناءً عليه (الطلبات الختامية):\n' +
-      'يلتمس الممول:\n' +
-      '1. وقف كافة إجراءات الحجز الإداري والتنفيذ الجبري وإلغاء أوراد التحصيل الصادرة لبطلان الإعلان بسند التنفيذ، وإصدار خطاب رفع الحجز إن كان موقعاً لدى البنوك.\n' +
-      '2. قبول الطعن شكلاً وفتح باب الطعن الموضوعي في أصل الربط الضريبي (نموذج 19 / 15) وإحالة الملف إلى اللجنة الداخلية المختصة للمحاسبة على الأسس الفعلية أو وفقاً لأحكام المادة الثالثة من القانون رقم 30 لسنة 2023.';
-  } else if (type === 'STOP_NOTICE') {
-    const dEntry = pickBestDateEntryForMemo(['توقف', '16 مكرر', 'قفل', 'غلق']);
-    text =
-      'السيد الأستاذ / رئيس ' + officeName + ' - شعبة الحصر والفحص الضريبي\n' +
-      'تحية طيبة وبعد،،،\n\n' +
-      'مقدمه لسيادتكم الممول / ' + client.name + ' (أو وكيله الرسمي بالتفويض)، بشأن نشاط: (' + activityName + ').\n' +
-      'الموضوع: إخطار رسمي بالتوقف عن مزاولة النشاط (كلي / جزئي) وطلب رفع المحاسبة الضريبية وحفظ الالتزامات عن فترة التوقف (نموذج 16 مكرر حصر رقم: ' + formNum + ')، والمرتبط ببيان (' + dEntry.label + ': ' + dEntry.date + ').\n\n' +
-      datesSummaryLine +
-      'أولاً - السند التشريعي لإخطار التوقف ورفع المحاسبة: عملاً بنص المادتين (58 و59) من قانون الضريبة على الدخل رقم 91 لسنة 2005، والمادة (26) من قانون الإجراءات الضريبية الموحد رقم 206 لسنة 2020، يخطر الممول المأمورية بتوقفه الفعلي عن مزاولة النشاط، ويتمسك بمحاسبته ضريبياً عن الفترة التي زاول فيها النشاط فعلياً فقط حتى تاريخ التوقف دون تحميله بأية أرباح تقديرية عن فترات التوقف التي لم تتحقق فيها أية واقعة منشئة للضريبة.\n\n' +
-      'ثانياً - وقائع التوقف الفعلي والمستندات المؤيدة بالملف: (' + problemText + ')، والإجراء المطلوب تنفيذه: (' + actionText + ')، وذلك استناداً إلى المستندات الرسمية القاطعة المثبتة لتاريخ التوقف الفعلي وعدم تحقيق أية إيرادات بعده.\n\n' +
-      'بناءً عليه (الطلبات الختامية):\n' +
-      'يلتمس الممول:\n' +
-      '1. إثبات واقعة التوقف عن النشاط (كلياً / جزئياً) بسجلات المأمورية وشعبة الحصر وعلى منظومة (SAP) اعتباراً من تاريخ التوقف الفعلي.\n' +
-      '2. استبعاد فترة التوقف بالكامل من وعاء المحاسبة الضريبية ورفع أية مطالبات أو التزامات إقرارية عنها، وإحالة الملف للمحاسبة النهائية حتى تاريخ التوقف الفعلي وحفظ الملف.';
-  } else if (type === 'PRESCRIPTION_MEMO') {
-    const dEntry = pickBestDateEntryForMemo(['19', 'لجنة', 'تقادم', 'استلام']);
-    text =
-      'السيد الأستاذ / رئيس ' + officeName + ' / رئيس اللجنة الداخلية / رئيس لجنة الطعن الضريبي\n' +
-      'تحية طيبة وبعد،،،\n\n' +
-      'مقدمه لسيادتكم الممول / ' + client.name + ' (أو وكيله الرسمي بالتفويض)، بشأن نشاط: (' + activityName + ').\n' +
-      'الموضوع: مذكرة دفاع قانونية بالدفع الأصلي بسقوط حق المصلحة في المطالبة بالضريبة بالتقادم الخمسي طبقاً للمادة (91) من القانون رقم 91 لسنة 2005 والمادة (377) من القانون المدني، بشأن الإخطار / الطعن رقم (' + formNum + ') والمرتبط ببيان (' + dEntry.label + ': ' + dEntry.date + ').\n\n' +
-      datesSummaryLine +
-      'أولاً - السند التشريعي للدفع بالتقادم الخمسي: تنص المادة (91 فقرة 2) من قانون الضريبة على الدخل رقم 91 لسنة 2005 على أنه: «يسقط حق المصلحة في المطالبة بالضريبة أو باقيها بمضي خمس سنوات تبدأ من اليوم التالي لانتهاء الأجل المحدد لتقديم الإقرار المنصوص عليه في المادة 82 من هذا القانون»، وهو ما يتفق مع الأصل العام المقرر بالمادة (377) من القانون المدني بشأن تقادم الضرائب والرسوم بخمس سنوات.\n\n' +
-      'ثانياً - خلو الأوراق من أي إجراء قاطع للتقادم معلن قانوناً: استقرت أحكام محكمة النقض والمحكمة الدستورية العليا على أن الإجراء القاطع لتقادم الضريبة (كإخطار الممول بعناصر ربط الضريبة أو بقيمتها بنموذج 19 أو التنبيه عليه بأدائها أو الإحالة إلى لجان الطعن) لا ينتج أثره في قطع التقادم بمجرد تحريره داخلياً بالمأمورية، بل يشترط إعلانه للممول إعلاناً قانونياً صحيحاً يتحقق به علمه اليقيني قبل اكتمال مدة الخمس سنوات.\n\n' +
-      'ثالثاً - تطبيق الدفع على وقائع ملف الممول وعدم القفز بأساس التقدير للسنوات اللاحقة: وفقاً لوقائع الملف: (' + problemText + ')، يتمسك الممول تمسكاً جازماً بسقوط السنوات المنقضية بالتقادم الخمسي دون تنازل صريح أو ضمني عنها، مع التمسك بعدم اتخاذ السنوات الساقطة بالتقادم ذريعة لرفع أساس التقدير في السنوات اللاحقة غير الساقطة، وفقاً لما هو مطلوب بالملف: (' + actionText + ').\n\n' +
-      'بناءً عليه (الطلبات الختامية):\n' +
-      'يلتمس الممول:\n' +
-      '1. بصفة أصلية: إثبات سقوط حق المصلحة في الفحص والمطالبة بالضريبة عن السنوات التي اكتملت بشأنها مدة التقادم الخمسي المقررة بالمادة (91) من القانون رقم 91 لسنة 2005 ورفعها كلياً من المطالبة.\n' +
-      '2. بالنسبة للسنوات اللاحقة غير الساقطة بالتقادم (إن وجدت): محاسبة الممول عنها على أسس فعلية مستقلة ومنخفضة تتفق مع حقيقة النشاط (أو بتطبيق أحكام المادة الثالثة من القانون رقم 30 لسنة 2023 / القانون رقم 6 لسنة 2025) دون ترحيل أي تدرج حكمي مرتفع من السنوات الساقطة بالتقادم.';
+  const mFrom = document.getElementById('inspMonthFrom');
+  const mTo = document.getElementById('inspMonthTo');
+  if (mFrom && mFrom.options.length <= 1) {
+    let mOpts = '';
+    for (let m = 1; m <= 12; m++) mOpts += '<option value="' + m + '">' + m + '</option>';
+    mFrom.innerHTML = mOpts;
+    mFrom.value = '1';
   }
-  outputEl.value = text;
-}
-function renderReferenceList() {
-  const q = (document.getElementById('refSearchInput').value || '').trim().toLowerCase();
-  const cat = document.getElementById('refCategorySelect').value;
-  const container = document.getElementById('referenceListContainer');
-  const filtered = REFERENCE_ITEMS.filter(item => {
-    if (cat !== 'ALL' && item.category !== cat) return false;
-    if (q) {
-      const hay = (item.title + ' ' + item.legal + ' ' + item.balady + ' ' + item.category).toLowerCase();
-      if (hay.indexOf(q) === -1) return false;
-    }
-    return true;
-  });
-  if (filtered.length === 0) {
-    container.innerHTML = '<div class="ledger-panel" style="padding:28px 20px; text-align:center; color:var(--ink-secondary);">لا توجد نتائج مطابقة في الدليل.</div>';
-    return;
+  if (mTo && mTo.options.length <= 1) {
+    let mOpts = '';
+    for (let m = 1; m <= 12; m++) mOpts += '<option value="' + m + '">' + m + '</option>';
+    mTo.innerHTML = mOpts;
+    mTo.value = '12';
   }
-  container.innerHTML = filtered.map((item, idx) => {
-    const delay = Math.min(idx * 20, 160);
-    const isOpenAttr = (idx === 0 || q.length > 0) ? ' open' : '';
-    return '<details class="ref-card" style="animation-delay:' + delay + 'ms;"' + isOpenAttr + '>' +
-      '<summary class="ref-summary">' +
-        '<span>' + escapeHtml(item.title) + '</span>' +
-        '<span class="ref-summary-meta">' +
-          '<span class="tag-inline brass">' + escapeHtml(item.category) + '</span>' +
-          '<svg class="ref-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>' +
-        '</span>' +
-      '</summary>' +
-      '<div class="ref-body">' +
-        '<blockquote class="ref-legal"><strong>النص / القاعدة الرسمية:</strong> ' + escapeHtml(item.legal) + '</blockquote>' +
-        '<p class="ref-balady"><strong>الشرح بالبلدي في المكتب:</strong> ' + escapeHtml(item.balady) + '</p>' +
-      '</div>' +
-    '</details>';
-  }).join('');
 }

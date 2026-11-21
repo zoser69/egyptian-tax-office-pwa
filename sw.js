@@ -1,4 +1,4 @@
-const CACHE_NAME = 'egyptian-tax-office-pwa-v7';
+const CACHE_NAME = 'egyptian-tax-office-pwa-v8';
 const ASSETS = [
   './',
   './index.html',
@@ -8,7 +8,10 @@ const ASSETS = [
   './data.js',
   './app_core.js',
   './app_views.js',
+  './app_calc_law91.js',
   './app_calc.js',
+  './app_memo.js',
+  './app_events.js',
   './app.js'
 ];
 
