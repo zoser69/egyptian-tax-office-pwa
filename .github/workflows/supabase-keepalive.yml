@@ -1,0 +1,27 @@
+name: Supabase Free Tier Keep-Alive Heartbeat
+
+on:
+  schedule:
+    # يعمل تلقائياً كل 3 أيام الساعة 08:00 صباحاً بتوقيت UTC لمنع إيقاف مشروع Supabase المجاني
+    - cron: '0 8 */3 * *'
+  workflow_dispatch:
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send lightweight REST read & RPC heartbeat to Supabase
+        env:
+          SUPABASE_URL: 'https://ssptmcbkrmgvalffcesp.supabase.co'
+          SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcHRtY2Jrcm1ndmFsZmZjZXNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUyNTQwOTQsImV4cCI6MjExMDgzMDA5NH0.3xAdPzlQtRkSIQJwvtU9LdNS5E7lyJ8LI0FAEkBySY8'
+        run: |
+          echo "Sending keep-alive read request to Supabase REST API..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/tax_office_state?select=id,updated_at&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+          echo "REST status code: ${HTTP_STATUS}"
+          curl -s -X POST "${SUPABASE_URL}/rest/v1/rpc/keep_project_alive" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "Content-Type: application/json" || true
