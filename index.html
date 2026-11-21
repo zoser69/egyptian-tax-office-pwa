@@ -13,10 +13,48 @@
 <link rel="apple-touch-icon" href="./icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+
+<!-- AUTH LOCK SCREEN -->
+<div class="auth-lock-screen" id="authLockScreen" role="dialog" aria-modal="true" aria-labelledby="authLockTitle">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="brand-mark auth-brand-mark" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div>
+        <h2 class="auth-title" id="authLockTitle">دفتر المكتب الضريبي</h2>
+        <p class="auth-subtitle">أدخل كلمة مرور المكتب للوصول إلى ملفات الممولين والأجندة</p>
+      </div>
+    </div>
+    <form id="authLockForm" autocomplete="off">
+      <div class="auth-field-group">
+        <label class="field-label" for="authPasswordInput">كلمة مرور المكتب</label>
+        <div class="auth-pass-wrap">
+          <input type="password" id="authPasswordInput" class="input-field num-tabular" placeholder="••••••••" required autocomplete="current-password" dir="ltr">
+          <button type="button" class="btn btn-icon auth-toggle-btn" id="btnToggleAuthPass" title="إظهار / إخفاء كلمة المرور" aria-label="إظهار / إخفاء كلمة المرور">
+            <svg id="iconPassShow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg id="iconPassHide" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="auth-remember-row">
+        <label class="checkbox-inline-label" for="authRememberCheck">
+          <input type="checkbox" id="authRememberCheck" checked>
+          <span>تذكرني على هذا الجهاز</span>
+        </label>
+      </div>
+      <p class="auth-error-msg" id="authErrorMsg" role="alert" style="display:none;"></p>
+      <button type="submit" class="btn btn-primary auth-submit-btn" id="btnSubmitAuth">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+        <span>فتح الدفتر</span>
+      </button>
+    </form>
+  </div>
+</div>
 
 <div class="app-shell">
   <!-- Header -->
@@ -31,11 +69,24 @@
           <span id="storageStatusBadge" class="tag-inline safe">محفوظ تلقائياً</span>
           <span id="lastSavedText">آخر حفظ: الآن</span>
           <span class="kbd-hint">Ctrl+K</span>
+          <span class="kbd-hint">Ctrl+Z</span>
         </p>
       </div>
     </div>
 
     <div class="header-actions">
+      <button type="button" class="btn btn-icon" id="btnUndoAction" title="تراجع عن آخر خطوة (Ctrl+Z)" aria-label="تراجع عن آخر خطوة (Ctrl+Z)" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+      </button>
+      <button type="button" class="btn btn-icon" id="btnRedoAction" title="إعادة الخطوة (Ctrl+Y)" aria-label="إعادة الخطوة (Ctrl+Y)" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+      </button>
+      <button type="button" class="btn btn-icon" id="btnSyncNow" title="مزامنة سحابية فورية" aria-label="مزامنة سحابية فورية">
+        <svg id="iconSyncCloud" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
+      <button type="button" class="btn btn-icon" id="btnLockApp" title="قفل التطبيق" aria-label="قفل التطبيق">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </button>
       <button type="button" class="btn btn-icon" id="btnToggleTheme" title="تبديل الوضع الليلي والنهاري" aria-label="تبديل الوضع الليلي والنهاري">
         <svg id="iconSun" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         <svg id="iconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -44,7 +95,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         <span class="btn-label">تثبيت</span>
       </button>
-      <button type="button" class="btn btn-dark btn-mobile-icon" id="btnOpenBackupModal" title="النسخ الاحتياطي والاسترجاع" aria-label="النسخ الاحتياطي والاسترجاع">
+      <button type="button" class="btn btn-dark btn-mobile-icon" id="btnOpenBackupModal" title="النسخ الاحتياطي ونقاط الاسترجاع" aria-label="النسخ الاحتياطي ونقاط الاسترجاع">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         <span class="btn-label">نسخة احتياطية</span>
       </button>
@@ -97,6 +148,10 @@
         </div>
       </div>
       <div class="summary-export-wrap">
+        <button type="button" class="btn btn-sm" id="btnPrintOfficeReport" title="طباعة الحالات والمهام الجارية">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          <span>طباعة الحالات والمهام الجارية</span>
+        </button>
         <button type="button" class="btn btn-sm" id="btnExportClientsCsv">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>تصدير CSV</span>
@@ -174,14 +229,23 @@
       </div>
       <div class="controls-grid" style="margin-bottom: 0;">
         <div>
-          <label class="field-label" for="newTaskType">نوع الإجراء</label>
+          <div class="field-label-row">
+            <label class="field-label" for="newTaskType">نوع الإجراء</label>
+            <button type="button" class="btn-inline-custom" data-custom-list="taskTypes" data-target-select="newTaskType">+ مخصص</button>
+          </div>
           <select id="newTaskType" class="select-field">
             <option value="طعن 30 يوم / نموذج 19 و15">طعن 30 يوم / نموذج 19 و15</option>
             <option value="لجنة داخلية / مختصة / فض منازعات">لجنة داخلية / مختصة / فض منازعات</option>
             <option value="محضر حجز إداري وفتح باب الطعن">محضر حجز إداري وفتح باب الطعن</option>
             <option value="شهادة موقف ضريبي / تسوية / حفظ">شهادة موقف ضريبي / تسوية / حفظ</option>
             <option value="إقرار ضريبي / اعتماد محاسب">إقرار ضريبي / اعتماد محاسب</option>
+            <option value="__ADD_CUSTOM__">+ إضافة قيمة جديدة...</option>
           </select>
+          <div class="custom-value-adder" id="customAdder_newTaskType" style="display:none;">
+            <input type="text" class="input-field custom-adder-input" placeholder="اكتب نوع إجراء جديد...">
+            <button type="button" class="btn btn-sm btn-primary custom-adder-save" data-list-key="taskTypes" data-select-id="newTaskType">حفظ</button>
+            <button type="button" class="btn btn-sm custom-adder-cancel" data-select-id="newTaskType">إلغاء</button>
+          </div>
         </div>
         <div>
           <label class="field-label" for="newTaskDue">تاريخ الاستحقاق</label>
@@ -383,7 +447,7 @@
     <div class="ledger-panel" style="padding: 20px; margin-bottom: 24px;">
       <h2 style="margin:0 0 6px 0; font-size:1.12rem;">مولّد صحف الطعن والطلبات الجاهزة</h2>
       <p style="margin:0 0 16px 0; font-size:0.88rem; color:var(--ink-secondary);">
-        اختر الممول ونوع المذكرة القانونية لسحب بياناته تلقائياً وتجهيز النص للنسخ أو الطباعة.
+        اختر الممول ونوع المذكرة القانونية لسحب بياناته وتواريخه تلقائياً وتجهيز النص للنسخ أو الطباعة الرسمية (A4).
       </p>
       <div class="memo-controls-grid">
         <div>
@@ -393,11 +457,13 @@
         <div>
           <label class="field-label" for="memoTemplateType">نوع المذكرة / الطلب</label>
           <select id="memoTemplateType" class="select-field">
-            <option value="APPEAL_19">صحيفة طعن على نموذج 19 ضرائب دخل (م 54 ق 206/2020)</option>
-            <option value="APPEAL_15">صحيفة طعن على نموذج 15 قيمة مضافة</option>
-            <option value="ARTICLE_3">طلب المحاسبة بالمادة الثالثة (ق 30/2023) وتعديل الربط</option>
-            <option value="TAX_POSITION">طلب شهادة موقف ضريبي تسلسلي (لحفظ ملف القيمة المضافة)</option>
-            <option value="SEIZURE_APPEAL">مذكرة طعن على محضر حجز إداري لفتح باب الطعن في الربط</option>
+            <option value="APPEAL_19">1. صحيفة طعن على نموذج 19 ضرائب دخل (م 54 ق 206/2020)</option>
+            <option value="APPEAL_15">2. صحيفة طعن على نموذج 15 ضريبة قيمة مضافة (ق 67/2016 وق 206/2020)</option>
+            <option value="ARTICLE_3">3. طلب المحاسبة بالمادة الثالثة (ق 30/2023) وقانون التسهيلات (6/2025)</option>
+            <option value="TAX_POSITION">4. طلب شهادة موقف ضريبي تسلسلي وإثبات توقف/حفظ ملف</option>
+            <option value="SEIZURE_APPEAL">5. مذكرة طعن ومنازعة في محضر حجز إداري وفتح باب الطعن في أصل الربط</option>
+            <option value="STOP_NOTICE">6. إخطار توقف عن النشاط (كلي/جزئي) وطلب رفع المحاسبة (م 59 ق 91/2005 وم 26 ق 206/2020)</option>
+            <option value="PRESCRIPTION_MEMO">7. مذكرة دفع بسقوط الضريبة بالتقادم الخمسي (م 91 ق 91/2005 وم 377 مدني)</option>
           </select>
         </div>
         <div>
@@ -407,6 +473,10 @@
       </div>
       <textarea id="memoOutputArea" class="textarea-field memo-textarea"></textarea>
       <div class="memo-footer-actions">
+        <button type="button" class="btn" id="btnPrintMemo" title="طباعة المذكرة القانونية مباشرة في ورقة A4 رسمية نظيفة">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          <span>طباعة المذكرة الرسمية</span>
+        </button>
         <button type="button" class="btn btn-primary" id="btnCopyMemo">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           <span>نسخ نص المذكرة</span>
@@ -416,8 +486,8 @@
 
     <div class="controls-grid" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);">
       <div>
-        <label class="field-label" for="refSearchInput">ابحث في القوانين والنماذج (19، 15، 16 مكرر)</label>
-        <input type="search" id="refSearchInput" class="input-field" placeholder="ابحث عن نموذج 19، المادة 22، التقادم، محضر حجز، Active To...">
+        <label class="field-label" for="refSearchInput">ابحث في القوانين والنماذج (19، 15، 16 مكرر، 41، 10، 4 مرتبات)</label>
+        <input type="search" id="refSearchInput" class="input-field" placeholder="ابحث عن نموذج 19، نموذج 41، المادة 22، التقادم، محضر حجز، لجنة الطعن، Active To...">
       </div>
       <div>
         <label class="field-label" for="refCategorySelect">تصنيف الدليل</label>
@@ -434,6 +504,20 @@
     <div class="ref-cards-list" id="referenceListContainer"></div>
   </section>
 </div>
+
+<!-- PRINT REPORT CONTAINER (Visible only in @media print) -->
+<div id="printReportContainer" class="print-report-container" aria-hidden="true"></div>
+
+<!-- Datalist for Client Date Suggestions -->
+<datalist id="clientDateLabelsList">
+  <option value="استلام نموذج 19"></option>
+  <option value="استلام نموذج 15"></option>
+  <option value="جلسة لجنة داخلية"></option>
+  <option value="جلسة لجنة طعن"></option>
+  <option value="ميعاد حجز إداري"></option>
+  <option value="تقديم مستندات ومذكرة"></option>
+  <option value="تاريخ توقف النشاط (نموذج 16 مكرر)"></option>
+</datalist>
 
 <!-- MODAL 1: ADD / EDIT CLIENT -->
 <div class="modal-backdrop" id="clientModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="clientModalTitle">
@@ -460,35 +544,59 @@
           <input type="text" id="clientFormActivity" class="input-field" required placeholder="مثال: استثمار عقاري / طبيب / مقاولات متوقف">
         </div>
         <div>
-          <label class="field-label" for="clientFormCategory">قسم الملف</label>
+          <div class="field-label-row">
+            <label class="field-label" for="clientFormCategory">قسم الملف</label>
+            <button type="button" class="btn-inline-custom" data-custom-list="categories" data-target-select="clientFormCategory">+ مخصص</button>
+          </div>
           <select id="clientFormCategory" class="select-field">
             <option value="فحص ولجان وطعون">فحص ولجان وطعون</option>
             <option value="عقارات (استثمار/تصرفات/ثروة)">عقارات (استثمار/تصرفات/ثروة)</option>
             <option value="توقف وورثة وأطباء">توقف وورثة وأطباء وإقرارات</option>
+            <option value="__ADD_CUSTOM__">+ إضافة قيمة جديدة...</option>
           </select>
+          <div class="custom-value-adder" id="customAdder_clientFormCategory" style="display:none;">
+            <input type="text" class="input-field custom-adder-input" placeholder="اكتب اسم القسم الجديد...">
+            <button type="button" class="btn btn-sm btn-primary custom-adder-save" data-list-key="categories" data-select-id="clientFormCategory">حفظ</button>
+            <button type="button" class="btn btn-sm custom-adder-cancel" data-select-id="clientFormCategory">إلغاء</button>
+          </div>
         </div>
       </div>
       <div class="form-grid-2">
         <div>
-          <label class="field-label" for="clientFormStatus">حالة المتابعة</label>
+          <div class="field-label-row">
+            <label class="field-label" for="clientFormStatus">حالة المتابعة</label>
+            <button type="button" class="btn-inline-custom" data-custom-list="statuses" data-target-select="clientFormStatus">+ مخصص</button>
+          </div>
           <select id="clientFormStatus" class="select-field">
             <option value="عاجل / طعن">عاجل / طعن أو حجز</option>
             <option value="قيد المتابعة">قيد المتابعة باللجان/المأمورية</option>
             <option value="منتهي">منتهي / تم التسوية</option>
+            <option value="__ADD_CUSTOM__">+ إضافة قيمة جديدة...</option>
           </select>
+          <div class="custom-value-adder" id="customAdder_clientFormStatus" style="display:none;">
+            <input type="text" class="input-field custom-adder-input" placeholder="اكتب حالة متابعة جديدة...">
+            <button type="button" class="btn btn-sm btn-primary custom-adder-save" data-list-key="statuses" data-select-id="clientFormStatus">حفظ</button>
+            <button type="button" class="btn btn-sm custom-adder-cancel" data-select-id="clientFormStatus">إلغاء</button>
+          </div>
         </div>
         <div>
-          <label class="field-label" for="clientFormNoticeDate">تاريخ استلام نموذج 19 أو 15 (مهلة 30 يوم)</label>
-          <input type="date" id="clientFormNoticeDate" class="input-field">
+          <label class="field-label" for="clientFormAction">الإجراء المطلوب في المكتب *</label>
+          <input type="text" id="clientFormAction" class="input-field" required placeholder="مثال: تقديم طعن على محضر الحجز / مطابقة عقود الشقة">
         </div>
       </div>
-      <div style="margin-bottom: 12px;">
+
+      <!-- MULTI-DATE SECTION -->
+      <div class="client-dates-section">
+        <div class="client-dates-header">
+          <label class="field-label" style="margin-bottom:0;">تواريخ ومواعيد الملف (استلام نماذج، جلسات، حجز، تقديم مستندات)</label>
+          <button type="button" class="btn btn-sm btn-soft" id="btnAddClientDateRow">+ إضافة تاريخ / ميعاد</button>
+        </div>
+        <div id="clientDatesContainer" class="client-dates-container"></div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
         <label class="field-label" for="clientFormProblem">تفاصيل المشكلة والأرقام والسنوات *</label>
         <textarea id="clientFormProblem" class="textarea-field" required placeholder="اكتب كل تفاصيل الفحص، السنوات، أرقام الضريبة، المأمور الفاحص..."></textarea>
-      </div>
-      <div style="margin-bottom: 16px;">
-        <label class="field-label" for="clientFormAction">الإجراء المطلوب في المكتب *</label>
-        <input type="text" id="clientFormAction" class="input-field" required placeholder="مثال: تقديم طعن على محضر الحجز / مطابقة عقود الشقة">
       </div>
       <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
         <button type="submit" class="btn btn-primary">حفظ بيانات الممول</button>
@@ -498,18 +606,38 @@
   </div>
 </div>
 
-<!-- MODAL 2: BACKUP & RESTORE FROM FILE -->
+<!-- MODAL 2: BACKUP, CHECKPOINTS & RESTORE FROM FILE -->
 <div class="modal-backdrop" id="backupModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="backupModalTitle">
   <div class="modal-sheet">
     <div class="modal-header">
-      <h2 class="modal-title" id="backupModalTitle">النسخ الاحتياطي واسترجاع البيانات</h2>
+      <h2 class="modal-title" id="backupModalTitle">النسخ الاحتياطي ونقاط الاسترجاع (Checkpoints)</h2>
       <button type="button" class="btn btn-sm" id="btnCloseBackupModal">إغلاق</button>
+    </div>
+
+    <!-- GIT-LIKE CHECKPOINTS SECTION -->
+    <div class="checkpoints-section">
+      <div class="checkpoints-header-row">
+        <div>
+          <h3 class="checkpoints-title">سجل التعديلات ونقاط الاسترجاع (Checkpoints - نظام Git المحلي)</h3>
+          <p class="checkpoints-subtitle">
+            يتم حفظ نقطة استرجاع تلقائية مع كل تعديل (بحد أقصى <span class="num-tabular">50</span> نقطة محلية)، ويمكنك أخذ نقطة حفظ يدوية أو العودة لأي نقطة سابقة بضغطة زر:
+          </p>
+        </div>
+      </div>
+      <div class="checkpoint-manual-bar">
+        <input type="text" id="manualCheckpointMsg" class="input-field" placeholder="وصف نقطة الحفظ اليدوية (مثال: قبل مراجعة ملفات العقارات)...">
+        <button type="button" class="btn btn-primary btn-sm" id="btnCreateManualCheckpoint">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><line x1="17.01" y1="12" x2="22.96" y2="12"/></svg>
+          <span>حفظ نقطة استرجاع الآن</span>
+        </button>
+      </div>
+      <div id="checkpointsTimelineContainer" class="checkpoints-timeline"></div>
     </div>
 
     <div style="margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--border-subtle);">
       <h3 style="margin:0 0 6px 0; font-size:1.02rem;">1. حفظ نسخة احتياطية كاملة</h3>
       <p style="margin:0 0 12px 0; font-size:0.87rem; color:var(--ink-secondary);">
-        التطبيق بيحفظ كل تعديل أوتوماتيك في مكانين (<span class="num-tabular">IndexedDB + localStorage</span>). وتقدر تنزل ملف النسخة الاحتياطية (<span class="num-tabular">.json</span>) لنقل البيانات بين جهاز المكتب والموبايل:
+        التطبيق بيحفظ كل تعديل أوتوماتيك في مكانين (<span class="num-tabular">IndexedDB + localStorage</span>) مع المزامنة السحابية. وتقدر تنزل ملف النسخة الاحتياطية (<span class="num-tabular">.json</span>) لنقل البيانات يدوياً:
       </p>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <button type="button" class="btn btn-primary" id="btnDownloadBackupFile">
@@ -578,14 +706,23 @@
       </div>
       <div class="form-grid-2">
         <div>
-          <label class="field-label" for="taskFormType">نوع الإجراء</label>
+          <div class="field-label-row">
+            <label class="field-label" for="taskFormType">نوع الإجراء</label>
+            <button type="button" class="btn-inline-custom" data-custom-list="taskTypes" data-target-select="taskFormType">+ مخصص</button>
+          </div>
           <select id="taskFormType" class="select-field">
             <option value="طعن 30 يوم / نموذج 19 و15">طعن 30 يوم / نموذج 19 و15</option>
             <option value="لجنة داخلية / مختصة / فض منازعات">لجنة داخلية / مختصة / فض منازعات</option>
             <option value="محضر حجز إداري وفتح باب الطعن">محضر حجز إداري وفتح باب الطعن</option>
             <option value="شهادة موقف ضريبي / تسوية / حفظ">شهادة موقف ضريبي / تسوية / حفظ</option>
             <option value="إقرار ضريبي / اعتماد محاسب">إقرار ضريبي / اعتماد محاسب</option>
+            <option value="__ADD_CUSTOM__">+ إضافة قيمة جديدة...</option>
           </select>
+          <div class="custom-value-adder" id="customAdder_taskFormType" style="display:none;">
+            <input type="text" class="input-field custom-adder-input" placeholder="اكتب نوع إجراء جديد...">
+            <button type="button" class="btn btn-sm btn-primary custom-adder-save" data-list-key="taskTypes" data-select-id="taskFormType">حفظ</button>
+            <button type="button" class="btn btn-sm custom-adder-cancel" data-select-id="taskFormType">إلغاء</button>
+          </div>
         </div>
         <div>
           <label class="field-label" for="taskFormDue">تاريخ الاستحقاق</label>
@@ -609,9 +746,13 @@
 <!-- Toast Notification -->
 <div class="toast-box" id="toastBox" role="status" aria-live="polite">
   <span id="toastMessage">تم الحفظ بنجاح</span>
+  <button type="button" class="btn-toast-undo" id="btnToastUndo" style="display:none;">تراجع</button>
 </div>
 
 <script src="./data.js"></script>
+<script src="./app_core.js"></script>
+<script src="./app_views.js"></script>
+<script src="./app_calc.js"></script>
 <script src="./app.js"></script>
 </body>
 </html>
