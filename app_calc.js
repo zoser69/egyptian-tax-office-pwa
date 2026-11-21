@@ -168,49 +168,53 @@ function runPenaltyCalculator() {
   const monthsEl = document.getElementById('penDelayMonths');
   const cbeEl = document.getElementById('penCbeRate');
   const retEl = document.getElementById('penReturnTax');
-  const settledEl = document.getElementById('penSettledBeforeAppeal');
+  const stageEl = document.getElementById('penStage');
   const panel = document.getElementById('penResultsPanel');
   if (!taxEl || !panel) return;
 
-  const principal = Math.max(0, Number(taxEl.value) || 0);
+  const principal = Math.floor(Math.max(0, Number(taxEl.value) || 0));
   const months = Math.max(0, Math.floor(Number(monthsEl.value) || 0));
   const cbeRate = Math.max(0, Number(cbeEl.value) || 0);
-  const returnTax = Math.max(0, Number(retEl.value) || 0);
-  const settled = Boolean(settledEl && settledEl.checked);
+  const returnTax = Math.floor(Math.max(0, Number(retEl.value) || 0));
+  const stage = stageEl ? stageEl.value : 'INTERNAL_COMMITTEE';
+  const settledBeforeAppeal = (stage === 'DIRECT_AGREEMENT' || stage === 'INTERNAL_COMMITTEE');
 
   const annualPenaltyRate = (cbeRate + 2) / 100;
-  const rawDelayPenalty = principal * annualPenaltyRate * (months / 12);
+  const rawDelayPenalty = principal <= 200 ? 0 : (principal * annualPenaltyRate * (months / 12));
   const cappedDelayPenalty = Math.round(Math.min(rawDelayPenalty, principal));
-  const isCapped = rawDelayPenalty > principal && principal > 0;
+  const isCapped = rawDelayPenalty > principal && principal > 200;
+  const delayWaiver30 = settledBeforeAppeal ? Math.round(cappedDelayPenalty * 0.30) : 0;
+  const netDelayPenalty = Math.max(0, cappedDelayPenalty - delayWaiver30);
 
   let art87Rate = 0;
   let art87Label = 'لا توجد فروق (الإقرار مطابق)';
   const diff = Math.max(0, principal - returnTax);
   if (principal > 0 && diff > 0) {
     if (returnTax === 0) {
-      art87Rate = settled ? 0.20 : 0.40;
-      art87Label = settled ? 'عدم تقديم إقرار + اتفاق قبل الطعن (20%)' : 'عدم تقديم إقرار (40% من النهائية)';
+      art87Rate = settledBeforeAppeal ? 0.20 : 0.40;
+      art87Label = settledBeforeAppeal ? 'عدم تقديم إقرار + اتفاق قبل الطعن (20%)' : 'عدم تقديم إقرار (40% من النهائية)';
     } else if ((diff / principal) >= 0.5) {
-      art87Rate = settled ? 0.20 : 0.40;
-      art87Label = settled ? 'فروق >= 50% + اتفاق قبل الطعن (20%)' : 'فروق >= 50% (40% من الفرق)';
+      art87Rate = settledBeforeAppeal ? 0.20 : 0.40;
+      art87Label = settledBeforeAppeal ? 'فروق >= 50% + اتفاق قبل الطعن (20%)' : 'فروق >= 50% (40% من الفرق)';
     } else {
-      art87Rate = settled ? 0.10 : 0.20;
-      art87Label = settled ? 'فروق < 50% + اتفاق قبل الطعن (10%)' : 'فروق < 50% (20% من الفرق)';
+      art87Rate = settledBeforeAppeal ? 0.10 : 0.20;
+      art87Label = settledBeforeAppeal ? 'فروق < 50% + اتفاق قبل الطعن (10%)' : 'فروق < 50% (20% من الفرق)';
     }
   }
   const art87Base = returnTax === 0 ? principal : diff;
   const art87Amount = Math.round(art87Base * art87Rate);
-  const grandTotal = principal + cappedDelayPenalty + art87Amount;
+  const grandTotal = principal + netDelayPenalty + art87Amount;
 
   panel.innerHTML =
     '<div class="result-hero">' +
-      '<p class="result-headline">إجمالي مقابل التأخير والضريبة الإضافية</p>' +
-      '<p class="result-big"><span class="num-tabular">' + formatMoney(cappedDelayPenalty + art87Amount) + '</span> ج</p>' +
-      '<span class="result-subtag">' + (isCapped ? 'مقيد بالسقف القانوني 100% من أصل الضريبة (ق 7/2025)' : 'معدل سنوي ' + (cbeRate + 2).toFixed(2) + '%') + '</span>' +
+      '<p class="result-headline">صافي مقابل التأخير والمبلغ الإضافي (م 87 مكرراً)</p>' +
+      '<p class="result-big"><span class="num-tabular">' + formatMoney(netDelayPenalty + art87Amount) + '</span> ج</p>' +
+      '<span class="result-subtag">' + (isCapped ? 'مقيد بالسقف القانوني 100% من أصل الضريبة (ق 7/2025)' : 'معدل سنوي ' + (cbeRate + 2).toFixed(2) + '%' + (principal > 0 && principal <= 200 ? ' (معفى <= 200 ج)' : '')) + '</span>' +
     '</div>' +
     '<dl class="dl-ledger">' +
-      '<div class="dl-row"><dt class="dl-term">أصل الضريبة النهائية</dt><dd class="dl-val num-tabular">' + formatMoney(principal) + ' ج</dd></div>' +
-      '<div class="dl-row"><dt class="dl-term">مقابل التأخير (' + months + ' شهر)</dt><dd class="dl-val num-tabular" style="color:var(--status-urgent);">+ ' + formatMoney(cappedDelayPenalty) + ' ج</dd></div>' +
+      '<div class="dl-row"><dt class="dl-term">أصل الضريبة النهائية (مقرب للجنيه)</dt><dd class="dl-val num-tabular">' + formatMoney(principal) + ' ج</dd></div>' +
+      '<div class="dl-row"><dt class="dl-term">مقابل التأخير قبل الإعفاء (' + months + ' شهر)</dt><dd class="dl-val num-tabular" style="color:var(--status-urgent);">+ ' + formatMoney(cappedDelayPenalty) + ' ج</dd></div>' +
+      (delayWaiver30 > 0 ? '<div class="dl-row"><dt class="dl-term" style="color:var(--status-safe);">إعفاء 30% من مقابل التأخير (م 110 عند السداد)</dt><dd class="dl-val num-tabular" style="color:var(--status-safe);">- ' + formatMoney(delayWaiver30) + ' ج</dd></div>' : '') +
       '<div class="dl-row"><dt class="dl-term">المبلغ الإضافي م 87 مكرراً (' + art87Label + ')</dt><dd class="dl-val num-tabular">+ ' + formatMoney(art87Amount) + ' ج</dd></div>' +
       '<div class="dl-row"><dt class="dl-term" style="font-weight:800; color:var(--ink-primary);">الإجمالي الكلي واجب السداد</dt><dd class="dl-val num-tabular" style="color:var(--status-safe); font-size:1.1rem;">' + formatMoney(grandTotal) + ' ج</dd></div>' +
     '</dl>';
