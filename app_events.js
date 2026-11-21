@@ -521,7 +521,7 @@ function initEventListeners() {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', runRealEstateCalculator);
   });
-  ['penTaxAmount', 'penDelayMonths', 'penCbeRate', 'penReturnTax', 'penSettledBeforeAppeal'].forEach(id => {
+  ['penTaxAmount', 'penDelayMonths', 'penCbeRate', 'penReturnTax', 'penStage'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('input', runPenaltyCalculator);
