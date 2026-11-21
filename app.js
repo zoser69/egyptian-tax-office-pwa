@@ -196,6 +196,38 @@ function switchMainTab(targetId) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function initEventListeners() {
+  // 0. Mobile Header Menu Toggle
+  const btnMobileMenuToggle = document.getElementById('btnMobileMenuToggle');
+  const headerActionsMenu = document.getElementById('headerActionsMenu');
+  function setMobileMenuOpen(isOpen) {
+    if (!headerActionsMenu || !btnMobileMenuToggle) return;
+    headerActionsMenu.classList.toggle('open', isOpen);
+    btnMobileMenuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    const openIcon = document.getElementById('iconMenuOpen');
+    const closeIcon = document.getElementById('iconMenuClose');
+    if (openIcon) openIcon.style.display = isOpen ? 'none' : 'block';
+    if (closeIcon) closeIcon.style.display = isOpen ? 'block' : 'none';
+  }
+  if (btnMobileMenuToggle && headerActionsMenu) {
+    btnMobileMenuToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setMobileMenuOpen(!headerActionsMenu.classList.contains('open'));
+    });
+    document.addEventListener('click', (e) => {
+      if (headerActionsMenu.classList.contains('open') &&
+          !headerActionsMenu.contains(e.target) &&
+          !btnMobileMenuToggle.contains(e.target)) {
+        setMobileMenuOpen(false);
+      }
+    });
+    ['btnSyncNow', 'btnLockApp', 'btnToggleTheme', 'btnInstallPwa', 'btnOpenBackupModal'].forEach(btnId => {
+      const b = document.getElementById(btnId);
+      if (b) {
+        b.addEventListener('click', () => setMobileMenuOpen(false));
+      }
+    });
+  }
+
   // 1. Auth Lock Screen Listeners
   const authForm = document.getElementById('authLockForm');
   if (authForm) {
@@ -404,6 +436,7 @@ function initEventListeners() {
       switchMainTab('view-clients');
       document.getElementById('clientSearchInput').focus();
     } else if (e.key === 'Escape') {
+      if (typeof setMobileMenuOpen === 'function') setMobileMenuOpen(false);
       document.getElementById('clientModalBackdrop').classList.remove('open');
       document.getElementById('backupModalBackdrop').classList.remove('open');
       document.getElementById('taskModalBackdrop').classList.remove('open');
