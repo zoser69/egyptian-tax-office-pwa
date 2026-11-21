@@ -496,6 +496,8 @@ function initEventListeners() {
     document.getElementById('inspReturnTax').value = '0';
     runInspectionCalculator();
   });
+  const btnResetInsp = document.getElementById('btnResetInspCalc');
+  if (btnResetInsp) btnResetInsp.addEventListener('click', resetInspectionCalculator);
   document.getElementById('btnPresetAudio3').addEventListener('click', () => {
     document.getElementById('inspInputMethod').value = 'DAILY';
     document.getElementById('inspDailyRev').value = '1000';
