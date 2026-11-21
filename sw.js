@@ -1,4 +1,4 @@
-const CACHE_NAME = 'egyptian-tax-office-pwa-v5';
+const CACHE_NAME = 'egyptian-tax-office-pwa-v6';
 const ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,9 @@ const ASSETS = [
   './icon.svg',
   './styles.css',
   './data.js',
+  './app_core.js',
+  './app_views.js',
+  './app_calc.js',
   './app.js'
 ];
 
@@ -25,6 +28,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  if (event.request.url.indexOf('supabase.co') !== -1) return;
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const fetchPromise = fetch(event.request)
