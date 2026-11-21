@@ -485,7 +485,7 @@ function initEventListeners() {
     document.getElementById('inspInputMethod').value = 'DIRECT';
     document.getElementById('inspTurnover').value = '4561230';
     document.getElementById('inspProfitMargin').value = '20';
-    document.getElementById('inspReturnTax').value = '0';
+    document.getElementById('inspReturnTax').value = '';
     initCalcYearMonthOptions();
   runInspectionCalculator();
   });
@@ -493,7 +493,7 @@ function initEventListeners() {
     document.getElementById('inspInputMethod').value = 'DIRECT';
     document.getElementById('inspTurnover').value = '4561230';
     document.getElementById('inspProfitMargin').value = '5';
-    document.getElementById('inspReturnTax').value = '0';
+    document.getElementById('inspReturnTax').value = '';
     runInspectionCalculator();
   });
   const btnResetInsp = document.getElementById('btnResetInspCalc');
@@ -528,6 +528,111 @@ function initEventListeners() {
       el.addEventListener('change', runPenaltyCalculator);
     }
   });
+  // Clear literal "0" on focus for all number inputs in calculators
+  document.querySelectorAll('#view-calc input[type="number"]').forEach(inp => {
+    inp.addEventListener('focus', () => {
+      if (inp.value === '0') {
+        inp.value = '';
+      }
+    });
+  });
+
+  // Invoice Calculator Presets & Reset
+  const btnPresetInv1 = document.getElementById('btnPresetInv1');
+  if (btnPresetInv1) btnPresetInv1.addEventListener('click', () => {
+    document.getElementById('invNetAmount').value = '100000';
+    document.getElementById('invVatRate').value = '14';
+    document.getElementById('invWhtRate').value = '1';
+    document.getElementById('invRole').value = 'BUYER';
+    runInvoiceCalculator();
+  });
+  const btnPresetInv2 = document.getElementById('btnPresetInv2');
+  if (btnPresetInv2) btnPresetInv2.addEventListener('click', () => {
+    document.getElementById('invNetAmount').value = '50000';
+    document.getElementById('invVatRate').value = '14';
+    document.getElementById('invWhtRate').value = '3';
+    document.getElementById('invRole').value = 'BUYER';
+    runInvoiceCalculator();
+  });
+  const btnPresetInv3 = document.getElementById('btnPresetInv3');
+  if (btnPresetInv3) btnPresetInv3.addEventListener('click', () => {
+    document.getElementById('invNetAmount').value = '20000';
+    document.getElementById('invVatRate').value = '0';
+    document.getElementById('invWhtRate').value = '5';
+    document.getElementById('invRole').value = 'SELLER';
+    runInvoiceCalculator();
+  });
+  const btnResetInv = document.getElementById('btnResetInvCalc');
+  if (btnResetInv) btnResetInv.addEventListener('click', resetInvoiceCalculator);
+
+  // Payroll Calculator Presets & Reset
+  const btnPresetPay1 = document.getElementById('btnPresetPay1');
+  if (btnPresetPay1) btnPresetPay1.addEventListener('click', () => {
+    document.getElementById('payGrossMonthly').value = '10000';
+    document.getElementById('payInsWage').value = '6000';
+    runPayrollCalculator();
+  });
+  const btnPresetPay2 = document.getElementById('btnPresetPay2');
+  if (btnPresetPay2) btnPresetPay2.addEventListener('click', () => {
+    document.getElementById('payGrossMonthly').value = '25000';
+    document.getElementById('payInsWage').value = '16700';
+    runPayrollCalculator();
+  });
+  const btnPresetPay3 = document.getElementById('btnPresetPay3');
+  if (btnPresetPay3) btnPresetPay3.addEventListener('click', () => {
+    document.getElementById('payGrossMonthly').value = '4000';
+    document.getElementById('payInsWage').value = '2700';
+    runPayrollCalculator();
+  });
+  const btnResetPay = document.getElementById('btnResetPayCalc');
+  if (btnResetPay) btnResetPay.addEventListener('click', resetPayrollCalculator);
+
+  // Real Estate Calculator Presets & Reset
+  const btnPresetRe1 = document.getElementById('btnPresetRe1');
+  if (btnPresetRe1) btnPresetRe1.addEventListener('click', () => {
+    document.getElementById('reSaleValue').value = '2000000';
+    document.getElementById('reProfitMargin').value = '20';
+    runRealEstateCalculator();
+  });
+  const btnPresetRe2 = document.getElementById('btnPresetRe2');
+  if (btnPresetRe2) btnPresetRe2.addEventListener('click', () => {
+    document.getElementById('reSaleValue').value = '5000000';
+    document.getElementById('reProfitMargin').value = '30';
+    runRealEstateCalculator();
+  });
+  const btnResetRe = document.getElementById('btnResetReCalc');
+  if (btnResetRe) btnResetRe.addEventListener('click', resetRealEstateCalculator);
+
+  // Penalty Calculator Presets & Reset
+  const btnPresetPen1 = document.getElementById('btnPresetPen1');
+  if (btnPresetPen1) btnPresetPen1.addEventListener('click', () => {
+    document.getElementById('penTaxAmount').value = '100000';
+    document.getElementById('penDelayMonths').value = '24';
+    document.getElementById('penCbeRate').value = '20.5';
+    document.getElementById('penReturnTax').value = '20000';
+    document.getElementById('penStage').value = 'INTERNAL_COMMITTEE';
+    runPenaltyCalculator();
+  });
+  const btnPresetPen2 = document.getElementById('btnPresetPen2');
+  if (btnPresetPen2) btnPresetPen2.addEventListener('click', () => {
+    document.getElementById('penTaxAmount').value = '50000';
+    document.getElementById('penDelayMonths').value = '60';
+    document.getElementById('penCbeRate').value = '20.5';
+    document.getElementById('penReturnTax').value = '';
+    document.getElementById('penStage').value = 'APPEAL_COMMITTEE';
+    runPenaltyCalculator();
+  });
+  const btnPresetPen3 = document.getElementById('btnPresetPen3');
+  if (btnPresetPen3) btnPresetPen3.addEventListener('click', () => {
+    document.getElementById('penTaxAmount').value = '200';
+    document.getElementById('penDelayMonths').value = '12';
+    document.getElementById('penCbeRate').value = '20.5';
+    document.getElementById('penReturnTax').value = '';
+    document.getElementById('penStage').value = 'DIRECT_AGREEMENT';
+    runPenaltyCalculator();
+  });
+  const btnResetPen = document.getElementById('btnResetPenCalc');
+  if (btnResetPen) btnResetPen.addEventListener('click', resetPenaltyCalculator);
   ['memoClientSelect', 'memoTemplateType', 'memoFormNum'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {

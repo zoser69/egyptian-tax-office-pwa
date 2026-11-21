@@ -1924,3 +1924,53 @@ html, body {
     grid-column: 1 / -1;
   }
 }
+
+/* Calculator Onboarding Guide, Actions Bar & Legal Alert Boxes */
+.calc-guide-box {
+  background-color: var(--surface-muted);
+  border: 1px solid var(--border-subtle);
+  border-right: 3px solid var(--accent-primary);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--ink-secondary);
+}
+
+[data-theme="dark"] .calc-guide-box {
+  border-right-color: var(--accent-soft-ink);
+}
+
+.calc-actions-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.calc-alert-box {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.calc-alert-info {
+  background-color: var(--surface-muted);
+  border: 1px solid var(--border-subtle);
+  border-right: 3px solid var(--accent-primary);
+  color: var(--ink-secondary);
+}
+
+[data-theme="dark"] .calc-alert-info {
+  border-right-color: var(--accent-soft-ink);
+}
+
+.calc-alert-info strong {
+  color: var(--ink-primary);
+}
