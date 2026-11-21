@@ -217,11 +217,13 @@ html, body {
 
 /* Header */
 .top-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 16px 0;
+  gap: 12px 16px;
+  flex-wrap: wrap;
+  padding: 14px 0;
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -229,6 +231,10 @@ html, body {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+}
+
+.brand-text-wrap {
   min-width: 0;
 }
 
@@ -263,11 +269,46 @@ html, body {
   flex-wrap: wrap;
 }
 
-.header-actions {
+.header-controls-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.header-actions-menu {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.header-undo-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.header-divider {
+  width: 1px;
+  height: 24px;
+  background-color: var(--border-subtle);
+  margin: 0 2px;
+}
+
+.header-primary-actions {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.menu-btn-label {
+  display: none;
+}
+
+.btn.btn-mobile-menu {
+  display: none;
 }
 
 /* Desktop Sticky Navigation Bar */
@@ -1240,8 +1281,9 @@ html, body {
   }
 
   .top-header {
-    padding: 12px 0;
-    gap: 10px;
+    padding: 10px 0;
+    gap: 8px;
+    flex-wrap: nowrap;
   }
 
   .brand-mark {
@@ -1250,24 +1292,102 @@ html, body {
   .auth-brand-mark {
     display: flex;
   }
+  .brand-block {
+    flex: 1;
+    min-width: 0;
+  }
   .brand-title {
-    font-size: 0.96rem;
+    font-size: 0.98rem;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .brand-meta,
+  .brand-meta {
+    margin-top: 3px;
+    gap: 6px;
+  }
+  .brand-meta .tag-inline {
+    font-size: 0.7rem;
+    padding: 2px 7px;
+  }
   .hide-mobile {
-    display: none;
+    display: none !important;
   }
 
-  /* Icon-only secondary buttons on mobile */
-  .header-actions .btn-mobile-icon {
-    width: 44px;
-    min-width: 44px;
-    padding: 0;
+  .header-controls-wrap {
+    flex-wrap: nowrap;
+    flex-shrink: 0;
   }
 
-  .header-actions .btn-mobile-icon .btn-label {
+  .header-primary-actions {
+    gap: 6px;
+  }
+
+  .header-primary-actions #btnQuickAddClient {
+    padding: 8px 12px;
+    font-size: 0.86rem;
+  }
+
+  .btn.btn-mobile-menu {
+    display: inline-flex;
+    padding: 8px 12px;
+    font-size: 0.86rem;
+    background-color: var(--surface-card);
+    border-color: var(--border-strong);
+  }
+
+  .btn.btn-mobile-menu[aria-expanded="true"] {
+    background-color: var(--accent-soft);
+    color: var(--accent-soft-ink);
+    border-color: var(--accent-primary);
+  }
+
+  .header-actions-menu {
     display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 80;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 12px;
+    background-color: var(--surface-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    animation: fadeSlideUp 0.16s ease;
+  }
+
+  .header-actions-menu.open {
+    display: flex;
+  }
+
+  .header-undo-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .header-actions-menu .header-menu-btn {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    min-height: 44px;
+    padding: 10px 14px;
+    justify-content: flex-start;
+    gap: 10px;
+    font-size: 0.9rem;
+  }
+
+  .header-undo-group .header-menu-btn {
+    justify-content: center;
+  }
+
+  .menu-btn-label {
+    display: inline;
   }
 
   /* Fixed Bottom Navigation Bar on Mobile */
