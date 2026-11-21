@@ -205,6 +205,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   initEventListeners();
   renderClients();
   renderTasks();
+  if (typeof initCalcYearMonthOptions === "function") initCalcYearMonthOptions();
   runInspectionCalculator();
   runInvoiceCalculator();
   runPayrollCalculator();
