@@ -26,7 +26,7 @@ function runInspectionCalculator() {
   if (method === 'DAILY') {
     dailyFields.style.display = 'grid';
     const daily = Number(document.getElementById('inspDailyRev').value) || 0;
-    const days = Number(document.getElementById('inspWorkDays').value) || 310;
+    const days = Number(document.getElementById('inspWorkDays').value) || 0;
     turnover = daily * days;
     turnoverInput.value = turnover;
     turnoverInput.readOnly = true;
@@ -308,7 +308,7 @@ function runPayrollCalculator() {
 }
 function runRealEstateCalculator() {
   const val = Number(document.getElementById('reSaleValue').value) || 0;
-  const margin = Number(document.getElementById('reProfitMargin').value) || 15;
+  const margin = Number(document.getElementById('reProfitMargin').value) || 0;
   const dispTax = Math.round(val * 0.025);
   const estProfit = Math.round(val * (margin / 100));
   const commTax = calcLaw91IndividualTax(estProfit);
@@ -347,4 +347,24 @@ function initCalcYearMonthOptions() {
     mTo.innerHTML = mOpts;
     mTo.value = '12';
   }
+}
+
+function resetInspectionCalculator() {
+  ['inspDailyRev', 'inspWorkDays', 'inspTurnover', 'inspProfitMargin', 'inspReturnTax', 'inspWhtPaid'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const yEl = document.getElementById('inspTaxYear');
+  if (yEl) yEl.value = '2026';
+  const mFrom = document.getElementById('inspMonthFrom');
+  if (mFrom) mFrom.value = '1';
+  const mTo = document.getElementById('inspMonthTo');
+  if (mTo) mTo.value = '12';
+  const noEx = document.getElementById('inspNoExemption');
+  if (noEx) noEx.checked = false;
+  const methodEl = document.getElementById('inspInputMethod');
+  if (methodEl) methodEl.value = 'DIRECT';
+  const entityEl = document.getElementById('inspEntityType');
+  if (entityEl) entityEl.value = 'INDIVIDUAL';
+  runInspectionCalculator();
 }
