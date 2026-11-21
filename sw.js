@@ -8,7 +8,10 @@ const ASSETS = [
   './data.js',
   './app_core.js',
   './app_views.js',
+  './app_calc_law91.js',
   './app_calc.js',
+  './app_memo.js',
+  './app_events.js',
   './app.js'
 ];
 
