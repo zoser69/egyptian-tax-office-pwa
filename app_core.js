@@ -407,6 +407,7 @@ function mergeTwoAppStates(localObj, remoteObj) {
     const delTime = mergedDeletedClients[lc.id];
     const lcTime = lc.updatedAt || SEED_EPOCH_ISO;
     if (delTime && delTime >= lcTime) return;
+    if (delTime && lcTime > delTime) delete mergedDeletedClients[lc.id];
     const copy = JSON.parse(JSON.stringify(lc));
     normalizeClientDates(copy);
     clientMap.set(copy.id, copy);
@@ -417,6 +418,7 @@ function mergeTwoAppStates(localObj, remoteObj) {
     const delTime = mergedDeletedClients[rc.id];
     const rcTime = rc.updatedAt || SEED_EPOCH_ISO;
     if (delTime && delTime >= rcTime) return;
+    if (delTime && rcTime > delTime) delete mergedDeletedClients[rc.id];
     const copy = JSON.parse(JSON.stringify(rc));
     normalizeClientDates(copy);
     if (!clientMap.has(copy.id)) {
@@ -442,6 +444,7 @@ function mergeTwoAppStates(localObj, remoteObj) {
     const delTime = mergedDeletedTasks[lt.id];
     const ltTime = lt.updatedAt || localObj.lastSaved || SEED_EPOCH_ISO;
     if (delTime && delTime >= ltTime) return;
+    if (delTime && ltTime > delTime) delete mergedDeletedTasks[lt.id];
     taskMap.set(lt.id, lt);
   });
 
@@ -452,6 +455,7 @@ function mergeTwoAppStates(localObj, remoteObj) {
     const delTime = mergedDeletedTasks[rt.id];
     const rtTime = rt.updatedAt || remoteObj.lastSaved || SEED_EPOCH_ISO;
     if (delTime && delTime >= rtTime) return;
+    if (delTime && rtTime > delTime) delete mergedDeletedTasks[rt.id];
     if (!taskMap.has(rt.id)) {
       taskMap.set(rt.id, rt);
     } else {
@@ -642,7 +646,34 @@ function pushUndoState(actionLabel) {
   updateUndoRedoButtons();
 }
 
-function applySnapshotStringToAppState(snapshotStr) {
+function reviveRestoredEntities(prevClientIds, prevTaskIds, prevDeletedClients, prevDeletedTasks) {
+  ensureDeletedIdsShape(appState);
+  const reviveIso = getNextMonotonicIso();
+  (appState.clients || []).forEach(c => {
+    if (!c || !c.id) return;
+    const wasDeletedOrMissing = !prevClientIds.has(c.id) || Boolean(prevDeletedClients[c.id]);
+    if (wasDeletedOrMissing) {
+      c.updatedAt = reviveIso;
+      delete appState.deletedIds.clients[c.id];
+    }
+  });
+  (appState.tasks || []).forEach(t => {
+    if (!t || !t.id) return;
+    const wasDeletedOrMissing = !prevTaskIds.has(t.id) || Boolean(prevDeletedTasks[t.id]);
+    if (wasDeletedOrMissing) {
+      t.updatedAt = reviveIso;
+      delete appState.deletedIds.tasks[t.id];
+    }
+  });
+}
+
+function applySnapshotStringToAppState(snapshotStr, options) {
+  const opts = options || {};
+  const prevClientIds = new Set((appState.clients || []).map(c => c.id));
+  const prevTaskIds = new Set((appState.tasks || []).map(t => t.id));
+  const prevDeletedClients = Object.assign({}, (appState.deletedIds && appState.deletedIds.clients) || {});
+  const prevDeletedTasks = Object.assign({}, (appState.deletedIds && appState.deletedIds.tasks) || {});
+
   const parsed = typeof snapshotStr === 'string' ? JSON.parse(snapshotStr) : snapshotStr;
   if (!parsed) return false;
   if (Array.isArray(parsed.clients)) {
@@ -659,6 +690,9 @@ function applySnapshotStringToAppState(snapshotStr) {
   }
   ensureCustomListsShape();
   normalizeAllClientsDates();
+  if (opts.reviveDeleted) {
+    reviveRestoredEntities(prevClientIds, prevTaskIds, prevDeletedClients, prevDeletedTasks);
+  }
   syncCustomDropdowns();
   return true;
 }
@@ -678,7 +712,7 @@ async function performUndo() {
   if (redoStack.length > MAX_UNDO_STEPS) {
     redoStack.shift();
   }
-  applySnapshotStringToAppState(entry.snapshotStr);
+  applySnapshotStringToAppState(entry.snapshotStr, { reviveDeleted: true });
   persistUndoHistory();
   updateUndoRedoButtons();
   await saveState(true, 'تراجع عن: ' + entry.label);
@@ -703,7 +737,7 @@ async function performRedo() {
   if (undoStack.length > MAX_UNDO_STEPS) {
     undoStack.shift();
   }
-  applySnapshotStringToAppState(entry.snapshotStr);
+  applySnapshotStringToAppState(entry.snapshotStr, { reviveDeleted: true });
   persistUndoHistory();
   updateUndoRedoButtons();
   await saveState(true, 'إعادة: ' + entry.label);
@@ -874,7 +908,7 @@ async function restoreCheckpointById(cpId) {
     return;
   }
   pushUndoState('استرجاع نقطة حفظ: ' + cp.id);
-  applySnapshotStringToAppState(cp.snapshot);
+  applySnapshotStringToAppState(cp.snapshot, { reviveDeleted: true });
   await saveState(true, 'استرجاع نقطة حفظ (' + cp.id + '): ' + cp.message);
   renderClients();
   renderTasks();
@@ -1234,7 +1268,8 @@ async function persistAppStateLocallyOnly() {
   } catch (err) {}
 }
 
-async function syncToSupabase(commitMsg) {
+async function syncToSupabase(commitMsg, syncOpts) {
+  const sOpts = syncOpts || {};
   const message = String(commitMsg || 'تحديث تلقائي للدفتر').trim();
   if (typeof window.fetch !== 'function' || navigator.onLine === false) {
     setPendingSync(true);
@@ -1275,7 +1310,7 @@ async function syncToSupabase(commitMsg) {
 
     const existingRows = await getRes.json();
     let mergedFromRemote = false;
-    if (Array.isArray(existingRows) && existingRows.length > 0) {
+    if (!sOpts.forceReplaceCloud && Array.isArray(existingRows) && existingRows.length > 0) {
       const remoteRec = existingRows[0];
       if (remoteRec && remoteRec.state_json) {
         const remoteStateObj = typeof remoteRec.state_json === 'string'
@@ -1613,7 +1648,7 @@ async function saveState(silent, commitMessage, options) {
   }
   if (!opts.skipRemoteSync) {
     setPendingSync(true);
-    await syncToSupabase(effectiveCommitMsg);
+    await syncToSupabase(effectiveCommitMsg, { forceReplaceCloud: Boolean(opts.forceReplaceCloud) });
   }
   if (opts.notifyEntityId) {
     clearNotifKeysForEntity(opts.notifyEntityId);

@@ -97,7 +97,7 @@ async function executeRestore() {
   ensureCustomListsShape();
   normalizeAllClientsDates();
   syncCustomDropdowns();
-  await saveState(true, 'استرجاع نسخة احتياطية (' + appState.clients.length + ' ممول)');
+  await saveState(true, 'استرجاع نسخة احتياطية (' + appState.clients.length + ' ممول)', { forceReplaceCloud: mode === 'REPLACE' });
   renderClients();
   renderTasks();
   document.getElementById('backupModalBackdrop').classList.remove('open');
