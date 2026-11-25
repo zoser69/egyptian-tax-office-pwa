@@ -3,6 +3,7 @@
 function getBackupPayloadString() {
   return JSON.stringify(appState, null, 2);
 }
+
 function downloadBackupFile() {
   const dataStr = getBackupPayloadString();
   const blob = new Blob([dataStr], { type: 'application/json;charset=utf-8' });
@@ -17,6 +18,7 @@ function downloadBackupFile() {
   setTimeout(() => URL.revokeObjectURL(url), 1500);
   showToast('تم تحميل ملف النسخة الاحتياطية (.json) على جهازك');
 }
+
 async function shareBackupFile() {
   const dataStr = getBackupPayloadString();
   const datePart = new Date().toISOString().slice(0, 10);
@@ -26,7 +28,7 @@ async function shareBackupFile() {
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         title: 'نسخة احتياطية - دفتر المكتب الضريبي',
-        text: 'نسخة احتياطية لملفات الممولين والمهام الضريبية (' + datePart + ')',
+        text: 'نسخة احتياطية لملفات الممولين والجلسات الضريبية (' + datePart + ')',
         files: [file]
       });
       showToast('تمت مشاركة ملف النسخة الاحتياطية');
@@ -35,6 +37,7 @@ async function shareBackupFile() {
   } catch (e) {}
   downloadBackupFile();
 }
+
 function copyTextToClipboard(text, msg) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(() => showToast(msg)).catch(() => fallbackCopy(text, msg));
@@ -42,6 +45,7 @@ function copyTextToClipboard(text, msg) {
     fallbackCopy(text, msg);
   }
 }
+
 function fallbackCopy(text, msg) {
   const ta = document.createElement('textarea');
   ta.value = text;
@@ -50,6 +54,7 @@ function fallbackCopy(text, msg) {
   try { document.execCommand('copy'); showToast(msg); } catch (e) {}
   document.body.removeChild(ta);
 }
+
 function previewRestoreJson(rawText) {
   const previewEl = document.getElementById('restorePreviewBox');
   if (!rawText || !rawText.trim()) {
@@ -58,13 +63,15 @@ function previewRestoreJson(rawText) {
   }
   try {
     const parsed = JSON.parse(rawText);
-    if (!parsed || !Array.isArray(parsed.clients) || !Array.isArray(parsed.tasks)) {
+    if (!parsed || !Array.isArray(parsed.clients)) {
       previewEl.style.color = 'var(--status-urgent)';
-      previewEl.textContent = 'ملف غير صالح: يجب أن يحتوي على مصفوفة الممولين (clients) والمهام (tasks).';
+      previewEl.textContent = 'ملف غير صالح: يجب أن يحتوي على مصفوفة الممولين (clients).';
       return null;
     }
+    const sessionsArr = Array.isArray(parsed.tasks) ? parsed.tasks : (Array.isArray(parsed.sessions) ? parsed.sessions : []);
     previewEl.style.color = 'var(--status-safe)';
-    previewEl.textContent = 'الملف جاهز للاسترجاع: يحتوي على (' + parsed.clients.length + ' ممول) و (' + parsed.tasks.length + ' مهمة).';
+    previewEl.textContent = 'الملف جاهز للاسترجاع: يحتوي على (' + parsed.clients.length + ' ممول) و (' + sessionsArr.length + ' جلسة).';
+    parsed.tasks = sessionsArr;
     return parsed;
   } catch (err) {
     previewEl.style.color = 'var(--status-urgent)';
@@ -72,6 +79,7 @@ function previewRestoreJson(rawText) {
     return null;
   }
 }
+
 async function executeRestore() {
   const rawText = document.getElementById('restoreJsonTextarea').value;
   const parsed = previewRestoreJson(rawText);
@@ -80,31 +88,11 @@ async function executeRestore() {
   const mode = document.getElementById('restoreModeSelect').value;
   if (mode === 'REPLACE') {
     appState.clients = parsed.clients;
-    appState.tasks = parsed.tasks;
+    appState.tasks = parsed.tasks || [];
+    appState.deletedIds = { clients: {}, tasks: {} };
     if (parsed.customLists) appState.customLists = parsed.customLists;
   } else {
-    const clientMap = new Map(appState.clients.map(c => [c.id, c]));
-    parsed.clients.forEach(c => {
-      if (c && c.id) clientMap.set(c.id, c);
-    });
-    appState.clients = Array.from(clientMap.values());
-    const taskMap = new Map(appState.tasks.map(t => [t.id, t]));
-    parsed.tasks.forEach(t => {
-      if (t && t.id) taskMap.set(t.id, t);
-    });
-    appState.tasks = Array.from(taskMap.values());
-    if (parsed.customLists && typeof parsed.customLists === 'object') {
-      ensureCustomListsShape();
-      ['categories', 'statuses', 'taskTypes'].forEach(k => {
-        if (Array.isArray(parsed.customLists[k])) {
-          parsed.customLists[k].forEach(val => {
-            if (val && appState.customLists[k].indexOf(val) === -1) {
-              appState.customLists[k].push(val);
-            }
-          });
-        }
-      });
-    }
+    appState = mergeTwoAppStates(appState, parsed);
   }
   ensureCustomListsShape();
   normalizeAllClientsDates();
@@ -115,6 +103,7 @@ async function executeRestore() {
   document.getElementById('backupModalBackdrop').classList.remove('open');
   showToast('تم استرجاع النسخة الاحتياطية بنجاح (' + appState.clients.length + ' ممول)', { canUndo: true });
 }
+
 function exportClientsCsv() {
   normalizeAllClientsDates();
   const headers = ['الاسم', 'المأمورية', 'النشاط', 'القسم', 'الحالة', 'التواريخ والمواعيد', 'تفاصيل المشكلة', 'الإجراء المطلوب'];
@@ -135,6 +124,7 @@ function exportClientsCsv() {
   document.body.removeChild(a);
   showToast('تم تحميل جدول العملاء بصيغة CSV');
 }
+
 function openClientModal(clientId) {
   syncCustomDropdowns();
   closeCustomValueAdder('clientFormCategory');
@@ -167,25 +157,47 @@ function openClientModal(clientId) {
   }
   modal.classList.add('open');
 }
+
 function openTaskModal(taskId) {
-  syncCustomDropdowns();
-  closeCustomValueAdder('taskFormType');
-  const t = appState.tasks.find(item => item.id === taskId);
-  if (!t) return;
-  document.getElementById('taskFormId').value = t.id;
-  document.getElementById('taskFormTitle').value = t.title || '';
-  document.getElementById('taskFormClient').value = t.clientId || '';
-  const typeSelect = document.getElementById('taskFormType');
-  const taskType = t.type || BASE_TASK_TYPES[0];
-  if (BASE_TASK_TYPES.indexOf(taskType) === -1 && appState.customLists.taskTypes.indexOf(taskType) === -1) {
-    appState.customLists.taskTypes.push(taskType);
-    syncCustomDropdowns();
-  }
-  typeSelect.value = taskType;
-  document.getElementById('taskFormDue').value = t.due || '';
-  document.getElementById('taskFormPriority').value = t.priority || 'عادي';
+  populateClientDropdowns();
+  const s = appState.tasks.find(item => item.id === taskId);
+  if (!s) return;
+  document.getElementById('taskFormId').value = s.id;
+  const sel = document.getElementById('taskFormClient');
+  if (sel) sel.value = s.clientId || '';
+  const nameInp = document.getElementById('taskFormClientName');
+  if (nameInp) nameInp.value = s.clientName || '';
+  const appealInp = document.getElementById('taskFormAppealNum');
+  if (appealInp) appealInp.value = s.appealNum || '';
+  const dateInp = document.getElementById('taskFormDue');
+  if (dateInp) dateInp.value = s.sessionDate || s.due || '';
+  const detailsInp = document.getElementById('taskFormTitle');
+  if (detailsInp) detailsInp.value = s.details || s.title || '';
   document.getElementById('taskModalBackdrop').classList.add('open');
 }
+
+function openPostponeModal(sessionId) {
+  const s = appState.tasks.find(item => item.id === sessionId);
+  if (!s) return;
+  document.getElementById('postponeSessionId').value = s.id;
+  document.getElementById('postponeClientNameDisplay').textContent = s.clientName + (s.appealNum ? (' (طعن رقم: ' + s.appealNum + ')') : '');
+  document.getElementById('postponeOldDateDisplay').textContent = s.sessionDate || 'غير محدد';
+  const newDateInput = document.getElementById('postponeNewDateInput');
+  if (newDateInput) {
+    newDateInput.value = '';
+  }
+  const noteInput = document.getElementById('postponeReasonInput');
+  if (noteInput) {
+    noteInput.value = '';
+  }
+  const historyPreview = document.getElementById('postponeModalHistoryPreview');
+  if (historyPreview) {
+    historyPreview.innerHTML = renderSessionPostponementTimelineHtml(s.history);
+  }
+  document.getElementById('postponeModalBackdrop').classList.add('open');
+  if (newDateInput) setTimeout(() => newDateInput.focus(), 40);
+}
+
 function switchMainTab(targetId) {
   document.querySelectorAll('.nav-tab').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-tab') === targetId);
@@ -195,6 +207,7 @@ function switchMainTab(targetId) {
   });
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
 window.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   applyAuthLockState();
@@ -205,7 +218,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   initEventListeners();
   renderClients();
   renderTasks();
-  if (typeof initCalcYearMonthOptions === "function") initCalcYearMonthOptions();
+  updateNotificationUiBar();
+  if (typeof initCalcYearMonthOptions === 'function') initCalcYearMonthOptions();
   runInspectionCalculator();
   runInvoiceCalculator();
   runPayrollCalculator();
@@ -217,9 +231,17 @@ window.addEventListener('DOMContentLoaded', async () => {
   updateStorageStatusBadge();
   if (isAppUnlocked()) {
     pullFromSupabase(false);
+    evaluateAndFireScheduledNotifications(false);
   }
   initSupabaseRealtimeSocket();
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    navigator.serviceWorker.register('./sw.js').then(() => {
+      updateNotificationUiBar();
+    }).catch(() => {});
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'NOTIFICATION_CLICKED') {
+        switchMainTab('view-tasks');
+      }
+    });
   }
 });
