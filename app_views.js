@@ -4,7 +4,7 @@ function syncCustomDropdowns() {
   ensureCustomListsShape();
   const allCategories = BASE_CATEGORIES.concat(appState.customLists.categories.filter(x => BASE_CATEGORIES.indexOf(x) === -1));
   const allStatuses = BASE_STATUSES.concat(appState.customLists.statuses.filter(x => BASE_STATUSES.indexOf(x) === -1));
-  const allTaskTypes = BASE_TASK_TYPES.concat(appState.customLists.taskTypes.filter(x => BASE_TASK_TYPES.indexOf(x) === -1));
+
   // 1. clientCategoryFilter
   const catFilterEl = document.getElementById('clientCategoryFilter');
   if (catFilterEl) {
@@ -45,20 +45,8 @@ function syncCustomDropdowns() {
       formStatusEl.value = allStatuses[0];
     }
   }
-  // 5. newTaskType & taskFormType
-  ['newTaskType', 'taskFormType'].forEach(selectId => {
-    const el = document.getElementById(selectId);
-    if (!el) return;
-    const prev = el.value;
-    el.innerHTML = allTaskTypes.map(t => '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + '</option>').join('') +
-      '<option value="__ADD_CUSTOM__">+ إضافة قيمة جديدة...</option>';
-    if (prev && prev !== '__ADD_CUSTOM__' && allTaskTypes.indexOf(prev) !== -1) {
-      el.value = prev;
-    } else {
-      el.value = allTaskTypes[0];
-    }
-  });
 }
+
 function openCustomValueAdder(selectId) {
   const box = document.getElementById('customAdder_' + selectId);
   if (!box) return;
@@ -69,6 +57,7 @@ function openCustomValueAdder(selectId) {
     setTimeout(() => inp.focus(), 20);
   }
 }
+
 function closeCustomValueAdder(selectId) {
   const box = document.getElementById('customAdder_' + selectId);
   if (box) box.style.display = 'none';
@@ -77,6 +66,7 @@ function closeCustomValueAdder(selectId) {
     selectEl.selectedIndex = 0;
   }
 }
+
 function resolveSelectOrPendingCustomValue(selectId, listKey, fallbackVal) {
   ensureCustomListsShape();
   const box = document.getElementById('customAdder_' + selectId);
@@ -98,6 +88,7 @@ function resolveSelectOrPendingCustomValue(selectId, listKey, fallbackVal) {
   if (!val || val === '__ADD_CUSTOM__') return fallbackVal;
   return val;
 }
+
 async function saveCustomValueFromAdder(listKey, selectId) {
   const box = document.getElementById('customAdder_' + selectId);
   if (!box) return;
@@ -124,6 +115,7 @@ async function saveCustomValueFromAdder(listKey, selectId) {
   renderTasks();
   showToast('تمت إضافة «' + val + '» للقوائم بنجاح', { canUndo: true });
 }
+
 function getSingleDateBadgeHtml(dateEntry) {
   if (!dateEntry || (!dateEntry.date && !dateEntry.label)) return '';
   const labelStr = escapeHtml(dateEntry.label || 'تاريخ ملف');
@@ -148,11 +140,13 @@ function getSingleDateBadgeHtml(dateEntry) {
   }
   return '<span class="tag-inline">' + labelStr + ': <span class="num-tabular">' + dateStr + '</span></span>';
 }
+
 function getClientDatesBadgesHtml(client) {
   const dates = normalizeClientDates(client);
   if (!dates || dates.length === 0) return '';
   return dates.map(d => getSingleDateBadgeHtml(d)).filter(Boolean).join('');
 }
+
 function createClientDateRowElement(dateObj) {
   const item = dateObj || { id: 'd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), label: '', date: '', hasAppeal30: false };
   const row = document.createElement('div');
@@ -171,6 +165,7 @@ function createClientDateRowElement(dateObj) {
   });
   return row;
 }
+
 function renderClientDateRowsInModal(datesArray) {
   const container = document.getElementById('clientDatesContainer');
   if (!container) return;
@@ -182,6 +177,7 @@ function renderClientDateRowsInModal(datesArray) {
     container.appendChild(createClientDateRowElement(d));
   });
 }
+
 function collectClientDatesFromModal() {
   const container = document.getElementById('clientDatesContainer');
   if (!container) return [];
@@ -203,9 +199,11 @@ function collectClientDatesFromModal() {
   });
   return collected;
 }
+
 function renderClients() {
   normalizeAllClientsDates();
   const container = document.getElementById('clientsListContainer');
+  if (!container) return;
   const q = (document.getElementById('clientSearchInput').value || '').trim().toLowerCase();
   const catFilter = document.getElementById('clientCategoryFilter').value;
   const statusFilter = document.getElementById('clientStatusFilter').value;
@@ -268,8 +266,8 @@ function renderClients() {
           '<button type="button" class="btn btn-icon" data-action="edit-client" data-id="' + escapeHtml(c.id) + '" title="تعديل بيانات الممول" aria-label="تعديل بيانات الممول">' +
             '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
           '</button>' +
-          '<button type="button" class="btn btn-icon" data-action="client-to-task" data-id="' + escapeHtml(c.id) + '" title="تحويل لمهمة في الأجندة" aria-label="تحويل لمهمة في الأجندة">' +
-            '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' +
+          '<button type="button" class="btn btn-icon" data-action="client-to-task" data-id="' + escapeHtml(c.id) + '" title="إضافة جلسة لهذا الممول" aria-label="إضافة جلسة لهذا الممول">' +
+            '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
           '</button>' +
         '</div>' +
         '<button type="button" class="btn btn-sm btn-soft" data-action="client-to-memo" data-id="' + escapeHtml(c.id) + '">صياغة طعن/طلب</button>' +
@@ -279,81 +277,184 @@ function renderClients() {
   populateClientDropdowns();
   populatePrintOfficeReport();
 }
+
 function populateClientDropdowns() {
-  const taskSelect = document.getElementById('newTaskClient');
-  const taskFormSelect = document.getElementById('taskFormClient');
+  const sessionClientSelect = document.getElementById('newSessionClientSelect');
+  const sessionFormClientSelect = document.getElementById('taskFormClient');
+  const datalistEl = document.getElementById('clientsNamesDatalist');
   const memoSelect = document.getElementById('memoClientSelect');
-  const opts = appState.clients.map(c => '<option value="' + escapeHtml(c.id) + '">' + escapeHtml(c.name) + ' (' + escapeHtml(c.activity) + ')</option>').join('');
-  if (taskSelect) taskSelect.innerHTML = '<option value="">بدون ربط أو اختر الممول</option>' + opts;
-  if (taskFormSelect) taskFormSelect.innerHTML = '<option value="">بدون ربط أو اختر الممول</option>' + opts;
+
+  const opts = appState.clients.map(c => '<option value="' + escapeHtml(c.id) + '">' + escapeHtml(c.name) + ' (' + escapeHtml(c.office || c.activity) + ')</option>').join('');
+  if (sessionClientSelect) {
+    const prev = sessionClientSelect.value;
+    sessionClientSelect.innerHTML = '<option value="">اختر من قائمة الممولين أو اكتب الاسم...</option>' + opts;
+    if (prev && appState.clients.some(c => c.id === prev)) sessionClientSelect.value = prev;
+  }
+  if (sessionFormClientSelect) {
+    const prev = sessionFormClientSelect.value;
+    sessionFormClientSelect.innerHTML = '<option value="">اختر من قائمة الممولين أو اكتب الاسم...</option>' + opts;
+    if (prev && appState.clients.some(c => c.id === prev)) sessionFormClientSelect.value = prev;
+  }
+  if (datalistEl) {
+    datalistEl.innerHTML = appState.clients.map(c => '<option value="' + escapeHtml(c.name) + '"></option>').join('');
+  }
   if (memoSelect) {
     const currentVal = memoSelect.value;
-    memoSelect.innerHTML = opts;
+    memoSelect.innerHTML = appState.clients.map(c => '<option value="' + escapeHtml(c.id) + '">' + escapeHtml(c.name) + ' (' + escapeHtml(c.activity) + ')</option>').join('');
     if (currentVal && appState.clients.some(c => c.id === currentVal)) {
       memoSelect.value = currentVal;
     }
     generateLegalMemo();
   }
 }
+
+function getSessionTimingBadgeHtml(session) {
+  if (!session || !session.sessionDate) return '<span class="tag-inline">بدون تاريخ</span>';
+  if (session.done) {
+    return '<span class="tag-inline safe">جلسة منتهية (<span class="num-tabular">' + escapeHtml(session.sessionDate) + '</span>)</span>';
+  }
+  const diff = computeDaysDiffFromToday(session.sessionDate);
+  if (diff === null) {
+    return '<span class="tag-inline"><span class="num-tabular">' + escapeHtml(session.sessionDate) + '</span></span>';
+  }
+  if (diff === 0) {
+    return '<span class="tag-inline urgent">جلسة اليوم (<span class="num-tabular">' + escapeHtml(session.sessionDate) + '</span>)</span>';
+  } else if (diff === 1) {
+    return '<span class="tag-inline urgent">جلسة غداً (<span class="num-tabular">' + escapeHtml(session.sessionDate) + '</span>)</span>';
+  } else if (diff > 1 && diff <= 7) {
+    return '<span class="tag-inline brass">خلال ' + diff + ' أيام (<span class="num-tabular">' + escapeHtml(session.sessionDate) + '</span>)</span>';
+  } else if (diff < 0) {
+    return '<span class="tag-inline urgent">فات موعدها منذ ' + Math.abs(diff) + ' يوم (<span class="num-tabular">' + escapeHtml(session.sessionDate) + '</span>) · تحتاج تأجيل أو إنهاء</span>';
+  }
+  return '<span class="tag-inline safe">جلسة قادمة: <span class="num-tabular">' + escapeHtml(session.sessionDate) + '</span> (بعد ' + diff + ' يوم)</span>';
+}
+
+function renderSessionPostponementTimelineHtml(history) {
+  if (!Array.isArray(history) || history.length === 0) return '';
+  const itemsHtml = history.map((h, idx) => {
+    const stepNum = idx + 1;
+    const fromStr = escapeHtml(h.fromDate || 'غير محدد');
+    const toStr = escapeHtml(h.toDate || 'غير محدد');
+    const noteStr = h.note ? (' — <span class="postpone-note">' + escapeHtml(h.note) + '</span>') : '';
+    return '<div class="postpone-history-item">' +
+      '<span class="postpone-step-badge">تأجيل ' + stepNum + '</span>' +
+      '<span>التاريخ السابق: <strong class="num-tabular postpone-old-date">' + fromStr + '</strong></span>' +
+      '<span class="postpone-arrow">&larr;</span>' +
+      '<span>تأجلت إلى: <strong class="num-tabular postpone-new-date">' + toStr + '</strong></span>' +
+      noteStr +
+    '</div>';
+  }).join('');
+
+  const lastEntry = history[history.length - 1];
+  return '<div class="session-history-box">' +
+    '<div class="session-history-header">' +
+      '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>' +
+      '<span>سجل التأجيلات (' + history.length + ' مرة) · آخر تاريخ سابق: <strong class="num-tabular">' + escapeHtml(lastEntry.fromDate || '-') + '</strong></span>' +
+    '</div>' +
+    '<div class="session-history-list">' + itemsHtml + '</div>' +
+  '</div>';
+}
+
 function renderTasks() {
+  normalizeAllClientsDates();
   const container = document.getElementById('tasksListContainer');
-  const openCount = appState.tasks.filter(t => !t.done).length;
-  const urgentCount = appState.tasks.filter(t => !t.done && t.priority === 'عاجل').length;
-  const doneCount = appState.tasks.filter(t => t.done).length;
-  document.getElementById('statOpenTasks').textContent = openCount;
-  document.getElementById('navTasksCount').textContent = openCount;
-  document.getElementById('statHighPriorityTasks').textContent = urgentCount;
-  document.getElementById('statCompletedTasks').textContent = doneCount;
-  const filtered = appState.tasks.filter(t => {
-    if (appState.taskFilter === 'OPEN') return !t.done;
-    if (appState.taskFilter === 'URGENT') return !t.done && t.priority === 'عاجل';
-    if (appState.taskFilter === 'DONE') return t.done;
-    return true;
-  });
+  if (!container) return;
+
+  const sessions = Array.isArray(appState.tasks) ? appState.tasks : [];
+  const openCount = sessions.filter(s => !s.done).length;
+  const postponedCount = sessions.filter(s => !s.done && Array.isArray(s.history) && s.history.length > 0).length;
+  const doneCount = sessions.filter(s => s.done).length;
+
+  const statOpenEl = document.getElementById('statOpenTasks');
+  const navCountEl = document.getElementById('navTasksCount');
+  const statPostponedEl = document.getElementById('statHighPriorityTasks');
+  const statDoneEl = document.getElementById('statCompletedTasks');
+
+  if (statOpenEl) statOpenEl.textContent = openCount;
+  if (navCountEl) navCountEl.textContent = openCount;
+  if (statPostponedEl) statPostponedEl.textContent = postponedCount;
+  if (statDoneEl) statDoneEl.textContent = doneCount;
+
+  const qInput = document.getElementById('sessionSearchInput');
+  const q = (qInput ? qInput.value : '').trim().toLowerCase();
+
+  const filtered = sessions
+    .filter(s => {
+      if (appState.taskFilter === 'OPEN') return !s.done;
+      if (appState.taskFilter === 'URGENT' || appState.taskFilter === 'POSTPONED') {
+        return !s.done && Array.isArray(s.history) && s.history.length > 0;
+      }
+      if (appState.taskFilter === 'DONE') return s.done;
+      return true;
+    })
+    .filter(s => {
+      if (!q) return true;
+      const histDates = (s.history || []).map(h => (h.fromDate || '') + ' ' + (h.toDate || '') + ' ' + (h.note || '')).join(' ');
+      const hay = ((s.clientName || '') + ' ' + (s.appealNum || '') + ' ' + (s.sessionDate || '') + ' ' + (s.details || '') + ' ' + histDates).toLowerCase();
+      return hay.indexOf(q) !== -1;
+    })
+    .sort((a, b) => {
+      if (a.done !== b.done) return a.done ? 1 : -1;
+      return String(a.sessionDate || '9999-99-99').localeCompare(String(b.sessionDate || '9999-99-99'));
+    });
+
   if (filtered.length === 0) {
-    container.innerHTML = '<div style="padding:30px 20px; text-align:center; color:var(--ink-secondary);">لا توجد مهام في هذا التصنيف حالياً.</div>';
+    container.innerHTML = '<div style="padding:32px 20px; text-align:center; color:var(--ink-secondary);">لا توجد جلسات مسجلة في هذا التصنيف حالياً. أضف جلسة جديدة من النموذج بالأعلى لتفعيل المتابعة والتنبيهات.</div>';
     populatePrintOfficeReport();
     return;
   }
-  container.innerHTML = filtered.map((t, idx) => {
+
+  container.innerHTML = filtered.map((s, idx) => {
     const delay = Math.min(idx * 20, 200);
-    const metaParts = [];
-    if (t.clientName) metaParts.push(escapeHtml(t.clientName));
-    metaParts.push(escapeHtml(t.type || 'إجراء ضريبي'));
-    if (t.due) metaParts.push('<span class="num-tabular">' + escapeHtml(t.due) + '</span>');
-    return '<div class="task-row ' + (t.done ? 'done' : '') + '" style="animation-delay:' + delay + 'ms;">' +
+    const timingBadge = getSessionTimingBadgeHtml(s);
+    const appealBadge = s.appealNum
+      ? '<span class="tag-inline appeal-num-badge">طعن رقم: <strong class="num-tabular">' + escapeHtml(s.appealNum) + '</strong></span>'
+      : '<span class="tag-inline">بدون رقم طعن</span>';
+    const historyHtml = renderSessionPostponementTimelineHtml(s.history);
+
+    return '<div class="task-row session-card-row ' + (s.done ? 'done' : '') + '" style="animation-delay:' + delay + 'ms;" data-session-id="' + escapeHtml(s.id) + '">' +
       '<div class="task-main">' +
-        '<button type="button" class="task-check-btn" data-action="toggle-task" data-id="' + escapeHtml(t.id) + '" aria-label="تغيير حالة المهمة">' +
-          (t.done
+        '<button type="button" class="task-check-btn" data-action="toggle-task" data-id="' + escapeHtml(s.id) + '" title="' + (s.done ? 'إعادة فتح الجلسة' : 'تحديد الجلسة كمنتهية') + '" aria-label="تغيير حالة الجلسة">' +
+          (s.done
             ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>'
-            : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" opacity="0.4"><rect x="3" y="3" width="18" height="18" rx="4"/></svg>') +
+            : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" opacity="0.45"><rect x="3" y="3" width="18" height="18" rx="4"/></svg>') +
         '</button>' +
-        '<div>' +
-          '<h3 class="task-title">' + escapeHtml(t.title) + '</h3>' +
-          '<div class="task-meta-row">' +
-            (t.priority === 'عاجل' ? '<span class="tag-inline urgent">عاجل</span>' : '') +
-            '<span class="task-meta-line">' + metaParts.join(' · ') + '</span>' +
+        '<div class="session-content-col">' +
+          '<div class="session-header-line">' +
+            '<h3 class="task-title session-client-title">' + escapeHtml(s.clientName) + '</h3>' +
+            appealBadge +
+            timingBadge +
           '</div>' +
+          (s.details ? '<p class="session-details-text">' + escapeHtml(s.details) + '</p>' : '') +
+          historyHtml +
         '</div>' +
       '</div>' +
-      '<div class="row-actions-secondary">' +
-        '<button type="button" class="btn btn-icon" data-action="edit-task" data-id="' + escapeHtml(t.id) + '" title="تعديل المهمة" aria-label="تعديل المهمة">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+      '<div class="session-actions-col">' +
+        '<button type="button" class="btn btn-sm btn-soft" data-action="postpone-task" data-id="' + escapeHtml(s.id) + '" title="تأجيل الجلسة لتاريخ جديد مع حفظ التاريخ السابق">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M12 14l4 4m0-4l-4 4"/></svg>' +
+          '<span>تأجيل الجلسة</span>' +
         '</button>' +
-        '<button type="button" class="btn btn-icon btn-danger" data-action="delete-task" data-id="' + escapeHtml(t.id) + '" title="حذف المهمة" aria-label="حذف المهمة">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
-        '</button>' +
+        '<div class="row-actions-secondary">' +
+          '<button type="button" class="btn btn-icon" data-action="edit-task" data-id="' + escapeHtml(s.id) + '" title="تعديل بيانات الجلسة" aria-label="تعديل بيانات الجلسة">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+          '</button>' +
+          '<button type="button" class="btn btn-icon btn-danger" data-action="delete-task" data-id="' + escapeHtml(s.id) + '" title="حذف الجلسة" aria-label="حذف الجلسة">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+          '</button>' +
+        '</div>' +
       '</div>' +
     '</div>';
   }).join('');
+
   populatePrintOfficeReport();
 }
+
 function populatePrintOfficeReport() {
   normalizeAllClientsDates();
   const container = document.getElementById('printReportContainer');
   if (!container) return;
   const activeClients = appState.clients.filter(c => c.status !== 'منتهي');
-  const openTasks = appState.tasks.filter(t => !t.done);
+  const openSessions = (appState.tasks || []).filter(t => !t.done);
   const now = new Date();
   const dateFormatted = now.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
   const timeFormatted = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
@@ -372,27 +473,31 @@ function populatePrintOfficeReport() {
           '<td style="width:18%; font-weight:700;">' + escapeHtml(c.action) + '</td>' +
         '</tr>';
       }).join('');
-  const taskRowsHtml = openTasks.length === 0
-    ? '<tr><td colspan="6" style="text-align:center;">لا توجد مهام جارية غير مكتملة حالياً.</td></tr>'
-    : openTasks.map((t, i) => {
+
+  const sessionRowsHtml = openSessions.length === 0
+    ? '<tr><td colspan="5" style="text-align:center;">لا توجد جلسات جارية غير منتهية حالياً.</td></tr>'
+    : openSessions.map((s, i) => {
+        const prevDatesStr = (Array.isArray(s.history) && s.history.length > 0)
+          ? s.history.map(h => h.fromDate).filter(Boolean).join(' ثم ')
+          : 'أول جلسة';
         return '<tr>' +
           '<td class="num-tabular" style="width:28px; text-align:center; font-weight:700;">' + (i + 1) + '</td>' +
-          '<td style="width:34%;"><strong>' + escapeHtml(t.title) + '</strong></td>' +
-          '<td style="width:20%;">' + escapeHtml(t.clientName || '-') + '</td>' +
-          '<td style="width:22%;">' + escapeHtml(t.type || 'إجراء ضريبي') + '</td>' +
-          '<td class="num-tabular" style="width:12%;">' + escapeHtml(t.due || '-') + '</td>' +
-          '<td style="width:8%; font-weight:700;">' + escapeHtml(t.priority || 'عادي') + '</td>' +
+          '<td style="width:24%;"><strong>' + escapeHtml(s.clientName || '-') + '</strong></td>' +
+          '<td class="num-tabular" style="width:16%; font-weight:700;">' + escapeHtml(s.appealNum || '-') + '</td>' +
+          '<td class="num-tabular" style="width:22%;"><strong>' + escapeHtml(s.sessionDate || '-') + '</strong><br><span style="font-size:8pt;">السابق: ' + escapeHtml(prevDatesStr) + '</span></td>' +
+          '<td style="width:34%;">' + escapeHtml(s.details || '-') + '</td>' +
         '</tr>';
       }).join('');
+
   container.innerHTML =
     '<div class="print-doc-header">' +
       '<div>' +
-        '<h1 class="print-doc-title">دفتر المكتب الضريبي - بيان الحالات والمهام الجارية</h1>' +
-        '<p class="print-doc-subtitle">تقرير متابعة الملفات النشطة (غير المنتهية) ومهام الأجندة قيد التنفيذ</p>' +
+        '<h1 class="print-doc-title">دفتر المكتب الضريبي - بيان الملفات والجلسات الجارية</h1>' +
+        '<p class="print-doc-subtitle">تقرير متابعة الملفات النشطة وجدول جلسات الطعون واللجان</p>' +
       '</div>' +
       '<div class="print-doc-meta">' +
         '<div>تاريخ الطباعة: ' + escapeHtml(dateFormatted) + ' - ' + escapeHtml(timeFormatted) + '</div>' +
-        '<div>ملفات نشطة: (' + activeClients.length + ') | مهام جارية: (' + openTasks.length + ')</div>' +
+        '<div>ملفات نشطة: (' + activeClients.length + ') | جلسات جارية: (' + openSessions.length + ')</div>' +
       '</div>' +
     '</div>' +
     '<h2 class="print-section-heading">أولاً: ملفات الممولين النشطة (' + activeClients.length + ' ملف)</h2>' +
@@ -409,27 +514,28 @@ function populatePrintOfficeReport() {
       '</thead>' +
       '<tbody>' + clientRowsHtml + '</tbody>' +
     '</table>' +
-    '<h2 class="print-section-heading">ثانياً: المهام والإجراءات الجارية بالأجندة (' + openTasks.length + ' مهمة)</h2>' +
+    '<h2 class="print-section-heading">ثانياً: جدول الجلسات والطعون الجارية (' + openSessions.length + ' جلسة)</h2>' +
     '<table class="print-table">' +
       '<thead>' +
         '<tr>' +
           '<th>م</th>' +
-          '<th>المهمة / الإجراء</th>' +
-          '<th>الممول المرتبط</th>' +
-          '<th>نوع الإجراء</th>' +
-          '<th>تاريخ الاستحقاق</th>' +
-          '<th>الأولوية</th>' +
+          '<th>اسم الممول</th>' +
+          '<th>رقم الطعن</th>' +
+          '<th>تاريخ الجلسة والتأجيلات</th>' +
+          '<th>التفاصيل والقرارات</th>' +
         '</tr>' +
       '</thead>' +
-      '<tbody>' + taskRowsHtml + '</tbody>' +
+      '<tbody>' + sessionRowsHtml + '</tbody>' +
     '</table>';
 }
+
 let currentPrintMode = 'REPORT';
 function renderAndPrintOfficeReport() {
   currentPrintMode = 'REPORT';
   populatePrintOfficeReport();
   window.print();
 }
+
 function populatePrintLegalMemo() {
   const container = document.getElementById('printReportContainer');
   if (!container) return;
@@ -484,6 +590,7 @@ function populatePrintLegalMemo() {
       '</div>' +
     '</div>';
 }
+
 function renderAndPrintLegalMemo() {
   currentPrintMode = 'MEMO';
   populatePrintLegalMemo();

@@ -74,6 +74,7 @@ function initEventListeners() {
   if (btnLockApp) {
     btnLockApp.addEventListener('click', lockApp);
   }
+
   // 1b. Undo / Redo & Toast Undo & Sync Now Buttons
   const btnUndoAction = document.getElementById('btnUndoAction');
   if (btnUndoAction) {
@@ -98,7 +99,38 @@ function initEventListeners() {
       pullFromSupabase(true);
     });
   }
-  // 1c. Checkpoints Listeners in Backup Modal
+
+  // 1c. Notification Permission & Test Notification Buttons
+  const btnEnableNotifications = document.getElementById('btnEnableNotifications');
+  if (btnEnableNotifications) {
+    btnEnableNotifications.addEventListener('click', () => {
+      return requestNotificationPermissionAndSendWelcome();
+    });
+  }
+  const btnSendTestNotification = document.getElementById('btnSendTestNotification');
+  if (btnSendTestNotification) {
+    btnSendTestNotification.addEventListener('click', () => {
+      return triggerManualTestNotification();
+    });
+  }
+
+  // Copy SQL setup button if cloud table is not yet created
+  const btnCopySupabaseSql = document.getElementById('btnCopySupabaseSql');
+  if (btnCopySupabaseSql) {
+    btnCopySupabaseSql.addEventListener('click', async () => {
+      try {
+        const resp = await window.fetch('./supabase_setup.sql');
+        if (resp.ok) {
+          const sqlText = await resp.text();
+          copyTextToClipboard(sqlText, 'تم نسخ كود SQL بالكامل - الصقه في Supabase SQL Editor واضغط Run');
+          return;
+        }
+      } catch (e) {}
+      showToast('افتح ملف supabase_setup.sql من المستودع وانسخه إلى Supabase SQL Editor');
+    });
+  }
+
+  // 1d. Checkpoints Listeners in Backup Modal
   const btnCreateManualCheckpoint = document.getElementById('btnCreateManualCheckpoint');
   if (btnCreateManualCheckpoint) {
     btnCreateManualCheckpoint.addEventListener('click', async () => {
@@ -134,6 +166,7 @@ function initEventListeners() {
       }
     });
   }
+
   // 2. Custom Values Listeners (+ مخصص & __ADD_CUSTOM__)
   document.querySelectorAll('.btn-inline-custom').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -141,7 +174,7 @@ function initEventListeners() {
       openCustomValueAdder(targetSelectId);
     });
   });
-  ['clientFormCategory', 'clientFormStatus', 'newTaskType', 'taskFormType'].forEach(selectId => {
+  ['clientFormCategory', 'clientFormStatus'].forEach(selectId => {
     const sel = document.getElementById(selectId);
     if (!sel) return;
     sel.addEventListener('change', () => {
@@ -175,6 +208,7 @@ function initEventListeners() {
       }
     });
   });
+
   // 3. Multi-Date Row Button
   const btnAddClientDateRow = document.getElementById('btnAddClientDateRow');
   if (btnAddClientDateRow) {
@@ -182,7 +216,7 @@ function initEventListeners() {
       const container = document.getElementById('clientDatesContainer');
       if (!container) return;
       const row = createClientDateRowElement({
-        id: 'd_' + Date.now(),
+        id: generateUniqueEntityId('d'),
         label: '',
         date: '',
         hasAppeal30: false
@@ -192,6 +226,7 @@ function initEventListeners() {
       if (labelInput) labelInput.focus();
     });
   }
+
   // 4. Print Button
   const btnPrintOfficeReport = document.getElementById('btnPrintOfficeReport');
   if (btnPrintOfficeReport) {
@@ -207,12 +242,14 @@ function initEventListeners() {
   window.addEventListener('afterprint', () => {
     currentPrintMode = 'REPORT';
   });
+
   document.getElementById('btnToggleTheme').addEventListener('click', () => {
     const curr = document.documentElement.getAttribute('data-theme');
     const next = (curr === 'dark') ? 'light' : 'dark';
     applyTheme(next);
     showToast(next === 'dark' ? 'تم تفعيل الوضع الليلي' : 'تم تفعيل الوضع النهاري');
   });
+
   document.addEventListener('keydown', (e) => {
     if (!isAppUnlocked()) return;
     const activeEl = document.activeElement;
@@ -242,14 +279,17 @@ function initEventListeners() {
       document.getElementById('clientSearchInput').focus();
     } else if (e.key === 'Escape') {
       if (typeof setMobileMenuOpen === 'function') setMobileMenuOpen(false);
-      document.getElementById('clientModalBackdrop').classList.remove('open');
-      document.getElementById('backupModalBackdrop').classList.remove('open');
-      document.getElementById('taskModalBackdrop').classList.remove('open');
+      ['clientModalBackdrop', 'backupModalBackdrop', 'taskModalBackdrop', 'postponeModalBackdrop'].forEach(id => {
+        const m = document.getElementById(id);
+        if (m) m.classList.remove('open');
+      });
     }
   });
+
   document.querySelectorAll('.nav-tab').forEach(btn => {
     btn.addEventListener('click', () => switchMainTab(btn.getAttribute('data-tab')));
   });
+
   const toggleFiltersBtn = document.getElementById('btnToggleFilters');
   const filterDrawer = document.getElementById('filterDrawer');
   if (toggleFiltersBtn && filterDrawer) {
@@ -258,6 +298,7 @@ function initEventListeners() {
       toggleFiltersBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     });
   }
+
   document.getElementById('clientSearchInput').addEventListener('input', renderClients);
   document.getElementById('clientCategoryFilter').addEventListener('change', renderClients);
   document.getElementById('clientStatusFilter').addEventListener('change', renderClients);
@@ -267,11 +308,13 @@ function initEventListeners() {
     document.getElementById('clientStatusFilter').value = 'ALL';
     renderClients();
   });
+
   document.getElementById('btnExportClientsCsv').addEventListener('click', exportClientsCsv);
   document.getElementById('btnQuickAddClient').addEventListener('click', () => openClientModal(null));
   document.getElementById('btnCloseClientModal').addEventListener('click', () => {
     document.getElementById('clientModalBackdrop').classList.remove('open');
   });
+
   document.getElementById('clientForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = document.getElementById('clientFormId').value;
@@ -282,8 +325,9 @@ function initEventListeners() {
     const statusVal = resolveSelectOrPendingCustomValue('clientFormStatus', 'statuses', BASE_STATUSES[0]);
     const collectedDates = collectClientDatesFromModal();
     const firstDateObj = collectedDates.find(d => d.date);
+    const nowIso = getNextMonotonicIso();
     const record = {
-      id: id || ('c_' + Date.now()),
+      id: id || generateUniqueEntityId('c'),
       name: clientName,
       office: document.getElementById('clientFormOffice').value.trim(),
       activity: document.getElementById('clientFormActivity').value.trim(),
@@ -292,31 +336,48 @@ function initEventListeners() {
       dates: collectedDates,
       noticeDate: firstDateObj ? firstDateObj.date : '',
       problem: document.getElementById('clientFormProblem').value.trim(),
-      action: document.getElementById('clientFormAction').value.trim()
+      action: document.getElementById('clientFormAction').value.trim(),
+      updatedAt: nowIso
     };
     normalizeClientDates(record);
+    record.updatedAt = nowIso;
     if (id) {
       const idx = appState.clients.findIndex(c => c.id === id);
       if (idx !== -1) appState.clients[idx] = record;
+      // Keep linked sessions clientName in sync if renamed
+      (appState.tasks || []).forEach(s => {
+        if (s.clientId === id) {
+          s.clientName = clientName;
+          s.updatedAt = nowIso;
+        }
+      });
     } else {
       appState.clients.unshift(record);
     }
-    await saveState(false, actionMsg);
+    ensureDeletedIdsShape(appState);
+    delete appState.deletedIds.clients[record.id];
+    await saveState(false, actionMsg, { notifyEntityId: record.id });
     renderClients();
+    renderTasks();
     document.getElementById('clientModalBackdrop').classList.remove('open');
   });
+
   document.getElementById('btnDeleteClientInModal').addEventListener('click', async () => {
     const id = document.getElementById('clientFormId').value;
     if (!id) return;
     const targetClient = appState.clients.find(c => c.id === id);
     const delMsg = 'حذف ملف: ' + (targetClient ? targetClient.name : id);
     pushUndoState(delMsg);
+    ensureDeletedIdsShape(appState);
+    appState.deletedIds.clients[id] = getNextMonotonicIso();
     appState.clients = appState.clients.filter(c => c.id !== id);
+    clearNotifKeysForEntity(id);
     await saveState(true, delMsg);
     renderClients();
     document.getElementById('clientModalBackdrop').classList.remove('open');
     showToast('تم ' + delMsg, { canUndo: true });
   });
+
   document.getElementById('clientsListContainer').addEventListener('click', async (e) => {
     const btn = e.target.closest('button[data-action]');
     if (!btn) return;
@@ -327,35 +388,18 @@ function initEventListeners() {
     if (action === 'edit-client') {
       openClientModal(id);
     } else if (action === 'client-to-task') {
-      const targetClientId = client.id;
-      const existingOpen = appState.tasks.find(t => !t.done && t.clientId === targetClientId);
-      if (existingOpen) {
-        appState.taskFilter = 'OPEN';
-        document.querySelectorAll('.task-filter-btn').forEach(b => {
-          b.classList.toggle('btn-primary', b.getAttribute('data-filter') === 'OPEN');
-        });
-        renderTasks();
-        switchMainTab('view-tasks');
-        showToast('يوجد بالفعل مهمة مفتوحة لهذا الممول في الأجندة (يمكنك تعديلها من هنا)');
-        return;
-      }
-      const newTask = {
-        id: 't_' + Date.now(),
-        title: client.action || ('متابعة ملف ' + client.name),
-        clientId: client.id,
-        clientName: client.name,
-        type: client.category,
-        due: new Date().toISOString().slice(0, 10),
-        priority: client.status === 'عاجل / طعن' ? 'عاجل' : 'عادي',
-        done: false
-      };
-      const commitMsg = 'إضافة مهمة: ' + newTask.title;
-      pushUndoState(commitMsg);
-      appState.tasks.unshift(newTask);
-      await saveState(true, commitMsg);
-      renderTasks();
       switchMainTab('view-tasks');
-      showToast('تمت إضافة إجراء (' + client.name + ') إلى الأجندة', { canUndo: true });
+      const sel = document.getElementById('newSessionClientSelect');
+      const nameInput = document.getElementById('newSessionClientName');
+      const detailsInput = document.getElementById('newTaskTitle');
+      const appealInput = document.getElementById('newSessionAppealNum');
+      if (sel) sel.value = client.id;
+      if (nameInput) nameInput.value = client.name;
+      if (detailsInput && !detailsInput.value.trim()) {
+        detailsInput.value = client.action || ('جلسة متابعة ملف ' + client.name);
+      }
+      if (appealInput) appealInput.focus();
+      showToast('تم تجهيز بيانات (' + client.name + ') لإضافة جلسة جديدة');
     } else if (action === 'client-to-memo') {
       switchMainTab('view-reference');
       const memoSelect = document.getElementById('memoClientSelect');
@@ -364,47 +408,93 @@ function initEventListeners() {
       showToast('تم تجهيز المذكرة القانونية لملف: ' + client.name);
     }
   });
+
+  // =========================================================================
+  // SESSIONS (الجلسات) LISTENERS: Add, Filter, Search, Postpone, Edit, Delete
+  // =========================================================================
+  const newSessionClientSelect = document.getElementById('newSessionClientSelect');
+  if (newSessionClientSelect) {
+    newSessionClientSelect.addEventListener('change', () => {
+      const clientId = newSessionClientSelect.value;
+      const clientObj = appState.clients.find(c => c.id === clientId);
+      const nameInput = document.getElementById('newSessionClientName');
+      if (clientObj && nameInput) {
+        nameInput.value = clientObj.name;
+      }
+    });
+  }
+
+  const taskFormClient = document.getElementById('taskFormClient');
+  if (taskFormClient) {
+    taskFormClient.addEventListener('change', () => {
+      const clientId = taskFormClient.value;
+      const clientObj = appState.clients.find(c => c.id === clientId);
+      const nameInput = document.getElementById('taskFormClientName');
+      if (clientObj && nameInput) {
+        nameInput.value = clientObj.name;
+      }
+    });
+  }
+
+  const sessionSearchInput = document.getElementById('sessionSearchInput');
+  if (sessionSearchInput) {
+    sessionSearchInput.addEventListener('input', renderTasks);
+  }
+
   document.getElementById('btnAddTask').addEventListener('click', async () => {
-    const titleInput = document.getElementById('newTaskTitle');
-    const title = titleInput.value.trim();
-    if (!title) {
-      showToast('اكتب عنوان المهمة أولاً');
+    const sel = document.getElementById('newSessionClientSelect');
+    const nameInput = document.getElementById('newSessionClientName');
+    const appealInput = document.getElementById('newSessionAppealNum');
+    const dateInput = document.getElementById('newTaskDue');
+    const detailsInput = document.getElementById('newTaskTitle');
+
+    let clientId = sel ? sel.value : '';
+    let clientName = (nameInput ? nameInput.value : '').trim();
+    const clientObj = clientId ? appState.clients.find(c => c.id === clientId) : appState.clients.find(c => c.name === clientName);
+    if (clientObj) {
+      clientId = clientObj.id;
+      if (!clientName) clientName = clientObj.name;
+    }
+
+    if (!clientName) {
+      showToast('اختر اسم الممول أو اكتبه أولاً');
+      if (nameInput) nameInput.focus();
       return;
     }
-    const clientId = document.getElementById('newTaskClient').value;
-    if (clientId) {
-      const targetClientId = clientId;
-      const existingOpen = appState.tasks.find(t => !t.done && t.clientId === targetClientId);
-      if (existingOpen) {
-        appState.taskFilter = 'OPEN';
-        document.querySelectorAll('.task-filter-btn').forEach(b => {
-          b.classList.toggle('btn-primary', b.getAttribute('data-filter') === 'OPEN');
-        });
-        renderTasks();
-        switchMainTab('view-tasks');
-        showToast('يوجد بالفعل مهمة مفتوحة لهذا الممول في الأجندة (يمكنك تعديلها من هنا)');
-        return;
-      }
-    }
-    const commitMsg = 'إضافة مهمة: ' + title;
+
+    const appealNum = (appealInput ? appealInput.value : '').trim();
+    const sessionDate = (dateInput && dateInput.value) ? dateInput.value : getLocalTodayIso();
+    const details = (detailsInput ? detailsInput.value : '').trim();
+
+    const commitMsg = 'إضافة جلسة: ' + clientName + (appealNum ? (' (طعن ' + appealNum + ')') : '');
     pushUndoState(commitMsg);
-    const clientObj = appState.clients.find(c => c.id === clientId);
-    const taskTypeVal = resolveSelectOrPendingCustomValue('newTaskType', 'taskTypes', BASE_TASK_TYPES[0]);
-    const task = {
-      id: 't_' + Date.now(),
-      title: title,
+
+    const nowIso = getNextMonotonicIso();
+    const newSession = normalizeSessionItem({
+      id: generateUniqueEntityId('s'),
       clientId: clientId,
-      clientName: clientObj ? clientObj.name : '',
-      type: taskTypeVal,
-      due: document.getElementById('newTaskDue').value || new Date().toISOString().slice(0, 10),
-      priority: document.getElementById('newTaskPriority').value,
-      done: false
-    };
-    appState.tasks.unshift(task);
-    titleInput.value = '';
-    await saveState(false, commitMsg);
+      clientName: clientName,
+      appealNum: appealNum,
+      sessionDate: sessionDate,
+      details: details,
+      history: [],
+      done: false,
+      updatedAt: nowIso
+    });
+
+    ensureDeletedIdsShape(appState);
+    delete appState.deletedIds.tasks[newSession.id];
+    appState.tasks.unshift(newSession);
+
+    if (nameInput) nameInput.value = '';
+    if (sel) sel.value = '';
+    if (appealInput) appealInput.value = '';
+    if (detailsInput) detailsInput.value = '';
+
+    await saveState(false, commitMsg, { notifyEntityId: newSession.id });
     renderTasks();
   });
+
   document.querySelectorAll('.task-filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       appState.taskFilter = btn.getAttribute('data-filter');
@@ -413,57 +503,145 @@ function initEventListeners() {
       renderTasks();
     });
   });
+
   document.getElementById('tasksListContainer').addEventListener('click', async (e) => {
     const btn = e.target.closest('button[data-action]');
     if (!btn) return;
     const action = btn.getAttribute('data-action');
     const id = btn.getAttribute('data-id');
     if (action === 'toggle-task') {
-      const t = appState.tasks.find(item => item.id === id);
-      if (t) {
-        const toggleMsg = (t.done ? 'إعادة فتح مهمة: ' : 'إنجاز مهمة: ') + t.title;
+      const targetBefore = appState.tasks.find(item => item.id === id);
+      if (targetBefore) {
+        const toggleMsg = (targetBefore.done ? 'إعادة فتح جلسة: ' : 'إنهاء جلسة: ') + targetBefore.clientName;
         pushUndoState(toggleMsg);
-        t.done = !t.done;
-        await saveState(true, toggleMsg);
+        const s = appState.tasks.find(item => item.id === id);
+        if (!s) return;
+        s.done = !s.done;
+        s.updatedAt = getNextMonotonicIso();
+        clearNotifKeysForEntity(s.id);
+        await saveState(true, toggleMsg, { notifyEntityId: s.done ? null : s.id });
         renderTasks();
         showToast('تم ' + toggleMsg, { canUndo: true });
       }
+    } else if (action === 'postpone-task') {
+      openPostponeModal(id);
     } else if (action === 'edit-task') {
       openTaskModal(id);
     } else if (action === 'delete-task') {
-      const targetTask = appState.tasks.find(item => item.id === id);
-      const delMsg = 'حذف مهمة: ' + (targetTask ? targetTask.title : id);
+      const targetSession = appState.tasks.find(item => item.id === id);
+      const delMsg = 'حذف جلسة: ' + (targetSession ? targetSession.clientName : id);
       pushUndoState(delMsg);
+      ensureDeletedIdsShape(appState);
+      appState.deletedIds.tasks[id] = getNextMonotonicIso();
       appState.tasks = appState.tasks.filter(item => item.id !== id);
+      clearNotifKeysForEntity(id);
       await saveState(true, delMsg);
       renderTasks();
       showToast('تم ' + delMsg, { canUndo: true });
     }
   });
+
+  // Postpone Session Modal Listeners (Supports unlimited consecutive postponements)
+  const btnClosePostponeModal = document.getElementById('btnClosePostponeModal');
+  if (btnClosePostponeModal) {
+    btnClosePostponeModal.addEventListener('click', () => {
+      document.getElementById('postponeModalBackdrop').classList.remove('open');
+    });
+  }
+
+  const postponeForm = document.getElementById('postponeForm');
+  if (postponeForm) {
+    postponeForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('postponeSessionId').value;
+      const targetBefore = appState.tasks.find(item => item.id === id);
+      if (!targetBefore) return;
+      const newDateVal = (document.getElementById('postponeNewDateInput').value || '').trim();
+      const reasonVal = (document.getElementById('postponeReasonInput').value || '').trim();
+      if (!newDateVal) {
+        showToast('اختر التاريخ الجديد للجلسة أولاً');
+        return;
+      }
+      const prevDate = targetBefore.sessionDate || targetBefore.due || 'غير محدد';
+      if (newDateVal === prevDate) {
+        showToast('التاريخ الجديد مطابق للتاريخ الحالي، اختر تاريخ التأجيل الجديد');
+        return;
+      }
+      const commitMsg = 'تأجيل جلسة ' + targetBefore.clientName + ' من ' + prevDate + ' إلى ' + newDateVal;
+      pushUndoState(commitMsg);
+
+      const s = appState.tasks.find(item => item.id === id);
+      if (!s) return;
+      if (!Array.isArray(s.history)) s.history = [];
+      const nowIso = getNextMonotonicIso();
+      s.history.push({
+        id: generateUniqueEntityId('h'),
+        fromDate: prevDate,
+        toDate: newDateVal,
+        note: reasonVal,
+        changedAt: nowIso
+      });
+      s.sessionDate = newDateVal;
+      s.due = newDateVal;
+      if (reasonVal) {
+        s.details = s.details ? (s.details + ' | تأجيل (' + newDateVal + '): ' + reasonVal) : ('تأجيل (' + newDateVal + '): ' + reasonVal);
+        s.title = s.details;
+      }
+      s.done = false;
+      s.updatedAt = nowIso;
+
+      document.getElementById('postponeModalBackdrop').classList.remove('open');
+      await saveState(false, commitMsg, { notifyEntityId: s.id });
+      renderTasks();
+    });
+  }
+
+  // Edit Session Modal Listeners
   document.getElementById('btnCloseTaskModal').addEventListener('click', () => {
     document.getElementById('taskModalBackdrop').classList.remove('open');
   });
+
   document.getElementById('taskForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = document.getElementById('taskFormId').value;
-    const t = appState.tasks.find(item => item.id === id);
-    if (!t) return;
-    const newTitle = document.getElementById('taskFormTitle').value.trim();
-    const editMsg = 'تعديل مهمة: ' + newTitle;
+    const targetBefore = appState.tasks.find(item => item.id === id);
+    if (!targetBefore) return;
+
+    const selClientId = document.getElementById('taskFormClient').value;
+    let typedName = (document.getElementById('taskFormClientName').value || '').trim();
+    const clientObj = selClientId ? appState.clients.find(c => c.id === selClientId) : appState.clients.find(c => c.name === typedName);
+    if (clientObj && !typedName) typedName = clientObj.name;
+    if (!typedName) {
+      showToast('اكتب اسم الممول أولاً');
+      return;
+    }
+
+    const newAppealNum = (document.getElementById('taskFormAppealNum').value || '').trim();
+    const newDate = (document.getElementById('taskFormDue').value || '').trim();
+    const newDetails = (document.getElementById('taskFormTitle').value || '').trim();
+
+    const editMsg = 'تعديل جلسة: ' + typedName;
     pushUndoState(editMsg);
-    const clientId = document.getElementById('taskFormClient').value;
-    const clientObj = appState.clients.find(c => c.id === clientId);
-    const taskTypeVal = resolveSelectOrPendingCustomValue('taskFormType', 'taskTypes', BASE_TASK_TYPES[0]);
-    t.title = newTitle;
-    t.clientId = clientId;
-    t.clientName = clientObj ? clientObj.name : '';
-    t.type = taskTypeVal;
-    t.due = document.getElementById('taskFormDue').value;
-    t.priority = document.getElementById('taskFormPriority').value;
-    await saveState(false, editMsg);
+
+    const s = appState.tasks.find(item => item.id === id);
+    if (!s) return;
+    s.clientId = clientObj ? clientObj.id : selClientId;
+    s.clientName = typedName;
+    s.appealNum = newAppealNum;
+    s.sessionDate = newDate;
+    s.due = newDate;
+    s.details = newDetails;
+    s.title = newDetails || ('جلسة طعن ' + (newAppealNum || typedName));
+    s.updatedAt = getNextMonotonicIso();
+
+    await saveState(false, editMsg, { notifyEntityId: s.id });
     renderTasks();
     document.getElementById('taskModalBackdrop').classList.remove('open');
   });
+
+  // =========================================================================
+  // CALCULATORS LISTENERS
+  // =========================================================================
   document.querySelectorAll('.calc-mode-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const target = btn.getAttribute('data-mode');
@@ -487,7 +665,7 @@ function initEventListeners() {
     document.getElementById('inspProfitMargin').value = '20';
     document.getElementById('inspReturnTax').value = '';
     initCalcYearMonthOptions();
-  runInspectionCalculator();
+    runInspectionCalculator();
   });
   document.getElementById('btnPresetAudio2').addEventListener('click', () => {
     document.getElementById('inspInputMethod').value = 'DIRECT';
@@ -528,7 +706,6 @@ function initEventListeners() {
       el.addEventListener('change', runPenaltyCalculator);
     }
   });
-  // Clear literal "0" on focus for all number inputs in calculators
   document.querySelectorAll('#view-calc input[type="number"]').forEach(inp => {
     inp.addEventListener('focus', () => {
       if (inp.value === '0') {
@@ -633,6 +810,7 @@ function initEventListeners() {
   });
   const btnResetPen = document.getElementById('btnResetPenCalc');
   if (btnResetPen) btnResetPen.addEventListener('click', resetPenaltyCalculator);
+
   ['memoClientSelect', 'memoTemplateType', 'memoFormNum'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
@@ -677,19 +855,21 @@ function initEventListeners() {
   });
   document.getElementById('btnExecuteRestore').addEventListener('click', executeRestore);
   document.getElementById('btnResetToDefaultData').addEventListener('click', async () => {
-    pushUndoState('استعادة البيانات الأصلية للـ 20 عميلاً');
+    pushUndoState('استعادة البيانات المعتمدة للـ 21 ممولاً');
     appState.clients = JSON.parse(JSON.stringify(DEFAULT_CLIENTS));
-    appState.tasks = JSON.parse(JSON.stringify(DEFAULT_TASKS));
+    appState.tasks = [];
+    appState.deletedIds = { clients: {}, tasks: {} };
     appState.customLists = { categories: [], statuses: [], taskTypes: [] };
     normalizeAllClientsDates();
     syncCustomDropdowns();
-    await saveState(true, 'استعادة البيانات الأصلية للـ 20 عميلاً');
+    await saveState(true, 'استعادة البيانات المعتمدة للـ 21 ممولاً');
     renderClients();
     renderTasks();
     document.getElementById('backupModalBackdrop').classList.remove('open');
-    showToast('تمت استعادة قائمة الـ 20 عميلاً والمهام الأصلية من الريكورد', { canUndo: true });
+    showToast('تمت استعادة قائمة الـ 21 ممولاً المعتمدة بنجاح', { canUndo: true });
   });
-  // Cloud Sync Event Listeners (Online/Offline/Focus + 25s Smart Polling)
+
+  // Cloud Sync Event Listeners (Online/Offline/Focus + 25s Smart Polling + Notification Check)
   window.addEventListener('online', () => {
     if (isPendingSync()) {
       syncToSupabase('مزامنة تلقائية للتعديلات المعلقة بعد عودة الإنترنت');
@@ -702,15 +882,19 @@ function initEventListeners() {
     updateStorageStatusBadge('OFFLINE');
   });
   window.addEventListener('focus', () => {
+    updateNotificationUiBar();
     if (isAppUnlocked()) {
       pullFromSupabase(false);
+      evaluateAndFireScheduledNotifications(false);
     }
   });
   setInterval(() => {
     if (isAppUnlocked() && navigator.onLine !== false) {
       pullFromSupabase(false);
+      evaluateAndFireScheduledNotifications(false);
     }
   }, 25000);
+
   let deferredPrompt = null;
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
