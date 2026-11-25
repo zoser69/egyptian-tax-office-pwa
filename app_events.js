@@ -104,6 +104,10 @@ function initEventListeners() {
   const btnEnableNotifications = document.getElementById('btnEnableNotifications');
   if (btnEnableNotifications) {
     btnEnableNotifications.addEventListener('click', () => {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        showToast('الإشعارات مفعلة بالفعل على هذا الجهاز. اضغط على «إرسال إشعار تجريبي» للتجربة.');
+        return;
+      }
       return requestNotificationPermissionAndSendWelcome();
     });
   }
@@ -219,6 +223,7 @@ function initEventListeners() {
         id: generateUniqueEntityId('d'),
         label: '',
         date: '',
+        time: '',
         hasAppeal30: false
       });
       container.appendChild(row);
@@ -446,6 +451,7 @@ function initEventListeners() {
     const nameInput = document.getElementById('newSessionClientName');
     const appealInput = document.getElementById('newSessionAppealNum');
     const dateInput = document.getElementById('newTaskDue');
+    const timeInput = document.getElementById('newTaskTime');
     const detailsInput = document.getElementById('newTaskTitle');
 
     let clientId = sel ? sel.value : '';
@@ -464,6 +470,7 @@ function initEventListeners() {
 
     const appealNum = (appealInput ? appealInput.value : '').trim();
     const sessionDate = (dateInput && dateInput.value) ? dateInput.value : getLocalTodayIso();
+    const sessionTime = (timeInput && timeInput.value) ? normalizeTimeHHMM(timeInput.value) : '';
     const details = (detailsInput ? detailsInput.value : '').trim();
 
     const commitMsg = 'إضافة جلسة: ' + clientName + (appealNum ? (' (طعن ' + appealNum + ')') : '');
@@ -476,6 +483,7 @@ function initEventListeners() {
       clientName: clientName,
       appealNum: appealNum,
       sessionDate: sessionDate,
+      sessionTime: sessionTime,
       details: details,
       history: [],
       done: false,
@@ -489,6 +497,7 @@ function initEventListeners() {
     if (nameInput) nameInput.value = '';
     if (sel) sel.value = '';
     if (appealInput) appealInput.value = '';
+    if (timeInput) timeInput.value = '';
     if (detailsInput) detailsInput.value = '';
 
     await saveState(false, commitMsg, { notifyEntityId: newSession.id });
@@ -557,6 +566,8 @@ function initEventListeners() {
       const targetBefore = appState.tasks.find(item => item.id === id);
       if (!targetBefore) return;
       const newDateVal = (document.getElementById('postponeNewDateInput').value || '').trim();
+      const newTimeEl = document.getElementById('postponeNewTimeInput');
+      const newTimeVal = newTimeEl ? normalizeTimeHHMM(newTimeEl.value || '') : '';
       const reasonVal = (document.getElementById('postponeReasonInput').value || '').trim();
       if (!newDateVal) {
         showToast('اختر التاريخ الجديد للجلسة أولاً');
@@ -583,6 +594,7 @@ function initEventListeners() {
       });
       s.sessionDate = newDateVal;
       s.due = newDateVal;
+      s.sessionTime = newTimeVal;
       if (reasonVal) {
         s.details = s.details ? (s.details + ' | تأجيل (' + newDateVal + '): ' + reasonVal) : ('تأجيل (' + newDateVal + '): ' + reasonVal);
         s.title = s.details;
@@ -618,6 +630,8 @@ function initEventListeners() {
 
     const newAppealNum = (document.getElementById('taskFormAppealNum').value || '').trim();
     const newDate = (document.getElementById('taskFormDue').value || '').trim();
+    const newTimeEl = document.getElementById('taskFormTime');
+    const newTime = newTimeEl ? normalizeTimeHHMM(newTimeEl.value || '') : '';
     const newDetails = (document.getElementById('taskFormTitle').value || '').trim();
 
     const editMsg = 'تعديل جلسة: ' + typedName;
@@ -630,6 +644,7 @@ function initEventListeners() {
     s.appealNum = newAppealNum;
     s.sessionDate = newDate;
     s.due = newDate;
+    s.sessionTime = newTime;
     s.details = newDetails;
     s.title = newDetails || ('جلسة طعن ' + (newAppealNum || typedName));
     s.updatedAt = getNextMonotonicIso();
@@ -856,13 +871,17 @@ function initEventListeners() {
   document.getElementById('btnExecuteRestore').addEventListener('click', executeRestore);
   document.getElementById('btnResetToDefaultData').addEventListener('click', async () => {
     pushUndoState('استعادة البيانات المعتمدة للـ 21 ممولاً');
-    appState.clients = JSON.parse(JSON.stringify(DEFAULT_CLIENTS));
+    const resetIso = getNextMonotonicIso();
+    appState.clients = JSON.parse(JSON.stringify(DEFAULT_CLIENTS)).map(c => {
+      c.updatedAt = resetIso;
+      return c;
+    });
     appState.tasks = [];
     appState.deletedIds = { clients: {}, tasks: {} };
     appState.customLists = { categories: [], statuses: [], taskTypes: [] };
     normalizeAllClientsDates();
     syncCustomDropdowns();
-    await saveState(true, 'استعادة البيانات المعتمدة للـ 21 ممولاً');
+    await saveState(true, 'استعادة البيانات المعتمدة للـ 21 ممولاً', { forceReplaceCloud: true });
     renderClients();
     renderTasks();
     document.getElementById('backupModalBackdrop').classList.remove('open');
@@ -877,6 +896,9 @@ function initEventListeners() {
       pullFromSupabase(false);
     }
     initSupabaseRealtimeSocket();
+    if (isAppUnlocked()) {
+      evaluateAndFireScheduledNotifications(false);
+    }
   });
   window.addEventListener('offline', () => {
     updateStorageStatusBadge('OFFLINE');
@@ -884,13 +906,15 @@ function initEventListeners() {
   window.addEventListener('focus', () => {
     updateNotificationUiBar();
     if (isAppUnlocked()) {
-      pullFromSupabase(false);
+      if (navigator.onLine !== false) pullFromSupabase(false);
       evaluateAndFireScheduledNotifications(false);
     }
   });
   setInterval(() => {
-    if (isAppUnlocked() && navigator.onLine !== false) {
-      pullFromSupabase(false);
+    if (isAppUnlocked()) {
+      if (navigator.onLine !== false) {
+        pullFromSupabase(false);
+      }
       evaluateAndFireScheduledNotifications(false);
     }
   }, 25000);

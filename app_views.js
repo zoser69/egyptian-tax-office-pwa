@@ -120,25 +120,23 @@ function getSingleDateBadgeHtml(dateEntry) {
   if (!dateEntry || (!dateEntry.date && !dateEntry.label)) return '';
   const labelStr = escapeHtml(dateEntry.label || 'تاريخ ملف');
   const dateStr = escapeHtml(dateEntry.date || '');
+  const timeStr = dateEntry.time ? (' · ' + escapeHtml(formatArabicTime12h(dateEntry.time))) : '';
   if (!dateEntry.date) {
     return '<span class="tag-inline">' + labelStr + '</span>';
   }
   if (dateEntry.hasAppeal30) {
-    const start = new Date(dateEntry.date + 'T00:00:00');
-    if (!isNaN(start.getTime())) {
-      const deadline = new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000);
-      const today = new Date();
-      const diffDays = Math.ceil((deadline.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
-      const deadlineFormatted = deadline.toISOString().slice(0, 10);
+    const deadlineFormatted = addLocalDaysToIso(dateEntry.date, 30);
+    if (deadlineFormatted) {
+      const diffDays = computeDaysDiffFromToday(deadlineFormatted);
       if (diffDays < 0) {
-        return '<span class="tag-inline urgent">' + labelStr + ' (<span class="num-tabular">' + dateStr + '</span>) · انتهت مهلة الـ 30 يوم (<span class="num-tabular">' + deadlineFormatted + '</span>)</span>';
+        return '<span class="tag-inline urgent">' + labelStr + ' (<span class="num-tabular">' + dateStr + timeStr + '</span>) · انتهت مهلة الـ 30 يوم (<span class="num-tabular">' + deadlineFormatted + '</span>)</span>';
       } else if (diffDays <= 10) {
-        return '<span class="tag-inline urgent">' + labelStr + ' (<span class="num-tabular">' + dateStr + '</span>) · متبقي للطعن ' + diffDays + ' يوم (آخره <span class="num-tabular">' + deadlineFormatted + '</span>)</span>';
+        return '<span class="tag-inline urgent">' + labelStr + ' (<span class="num-tabular">' + dateStr + timeStr + '</span>) · متبقي للطعن ' + diffDays + ' يوم (آخره <span class="num-tabular">' + deadlineFormatted + '</span>)</span>';
       }
-      return '<span class="tag-inline brass">' + labelStr + ' (<span class="num-tabular">' + dateStr + '</span>) · مهلة 30 يوم: متبقي ' + diffDays + ' يوم (آخره <span class="num-tabular">' + deadlineFormatted + '</span>)</span>';
+      return '<span class="tag-inline brass">' + labelStr + ' (<span class="num-tabular">' + dateStr + timeStr + '</span>) · مهلة 30 يوم: متبقي ' + diffDays + ' يوم (آخره <span class="num-tabular">' + deadlineFormatted + '</span>)</span>';
     }
   }
-  return '<span class="tag-inline">' + labelStr + ': <span class="num-tabular">' + dateStr + '</span></span>';
+  return '<span class="tag-inline">' + labelStr + ': <span class="num-tabular">' + dateStr + timeStr + '</span></span>';
 }
 
 function getClientDatesBadgesHtml(client) {
@@ -148,13 +146,14 @@ function getClientDatesBadgesHtml(client) {
 }
 
 function createClientDateRowElement(dateObj) {
-  const item = dateObj || { id: 'd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), label: '', date: '', hasAppeal30: false };
+  const item = dateObj || { id: 'd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), label: '', date: '', time: '', hasAppeal30: false };
   const row = document.createElement('div');
   row.className = 'client-date-row';
   row.setAttribute('data-date-id', item.id || ('d_' + Date.now()));
   row.innerHTML =
     '<input type="text" class="input-field date-row-label" list="clientDateLabelsList" placeholder="المسمى (مثال: استلام نموذج 19 / جلسة لجنة...)" value="' + escapeHtml(item.label || '') + '">' +
     '<input type="date" class="input-field date-row-value" value="' + escapeHtml(item.date || '') + '">' +
+    '<input type="time" class="input-field date-row-time" title="وقت الإشعار (اختياري - الافتراضي 12:00 منتصف الليل)" value="' + escapeHtml(item.time || '') + '">' +
     '<label class="checkbox-inline-label" title="حساب مهلة الطعن 30 يوماً تلقائياً">' +
       '<input type="checkbox" class="date-row-appeal30"' + (item.hasAppeal30 ? ' checked' : '') + '>' +
       '<span>مهلة 30 يوم</span>' +
@@ -187,12 +186,15 @@ function collectClientDatesFromModal() {
     const id = row.getAttribute('data-date-id') || ('d_' + (idx + 1));
     const label = (row.querySelector('.date-row-label').value || '').trim();
     const date = (row.querySelector('.date-row-value').value || '').trim();
+    const timeEl = row.querySelector('.date-row-time');
+    const time = timeEl ? normalizeTimeHHMM(timeEl.value || '') : '';
     const hasAppeal30 = Boolean(row.querySelector('.date-row-appeal30').checked);
     if (date || label) {
       collected.push({
         id: id,
         label: label || 'استلام نموذج 19/15',
         date: date,
+        time: time,
         hasAppeal30: hasAppeal30
       });
     }
@@ -310,23 +312,24 @@ function populateClientDropdowns() {
 
 function getSessionTimingBadgeHtml(session) {
   if (!session || !session.sessionDate) return '<span class="tag-inline">بدون تاريخ</span>';
+  const timeSuffix = session.sessionTime ? (' · ' + escapeHtml(formatArabicTime12h(session.sessionTime))) : '';
   if (session.done) {
-    return '<span class="tag-inline safe">جلسة منتهية (<span class="num-tabular">' + escapeHtml(session.sessionDate) + '</span>)</span>';
+    return '<span class="tag-inline safe">جلسة منتهية (<span class="num-tabular">' + escapeHtml(session.sessionDate) + timeSuffix + '</span>)</span>';
   }
   const diff = computeDaysDiffFromToday(session.sessionDate);
   if (diff === null) {
-    return '<span class="tag-inline"><span class="num-tabular">' + escapeHtml(session.sessionDate) + '</span></span>';
+    return '<span class="tag-inline"><span class="num-tabular">' + escapeHtml(session.sessionDate) + timeSuffix + '</span></span>';
   }
   if (diff === 0) {
-    return '<span class="tag-inline urgent">جلسة اليوم (<span class="num-tabular">' + escapeHtml(session.sessionDate) + '</span>)</span>';
+    return '<span class="tag-inline urgent">جلسة اليوم (<span class="num-tabular">' + escapeHtml(session.sessionDate) + timeSuffix + '</span>)</span>';
   } else if (diff === 1) {
-    return '<span class="tag-inline urgent">جلسة غداً (<span class="num-tabular">' + escapeHtml(session.sessionDate) + '</span>)</span>';
+    return '<span class="tag-inline urgent">جلسة غداً (<span class="num-tabular">' + escapeHtml(session.sessionDate) + timeSuffix + '</span>)</span>';
   } else if (diff > 1 && diff <= 7) {
-    return '<span class="tag-inline brass">خلال ' + diff + ' أيام (<span class="num-tabular">' + escapeHtml(session.sessionDate) + '</span>)</span>';
+    return '<span class="tag-inline brass">خلال ' + diff + ' أيام (<span class="num-tabular">' + escapeHtml(session.sessionDate) + timeSuffix + '</span>)</span>';
   } else if (diff < 0) {
-    return '<span class="tag-inline urgent">فات موعدها منذ ' + Math.abs(diff) + ' يوم (<span class="num-tabular">' + escapeHtml(session.sessionDate) + '</span>) · تحتاج تأجيل أو إنهاء</span>';
+    return '<span class="tag-inline urgent">فات موعدها منذ ' + Math.abs(diff) + ' يوم (<span class="num-tabular">' + escapeHtml(session.sessionDate) + timeSuffix + '</span>) · تحتاج تأجيل أو إنهاء</span>';
   }
-  return '<span class="tag-inline safe">جلسة قادمة: <span class="num-tabular">' + escapeHtml(session.sessionDate) + '</span> (بعد ' + diff + ' يوم)</span>';
+  return '<span class="tag-inline safe">جلسة قادمة: <span class="num-tabular">' + escapeHtml(session.sessionDate) + timeSuffix + '</span> (بعد ' + diff + ' يوم)</span>';
 }
 
 function renderSessionPostponementTimelineHtml(history) {

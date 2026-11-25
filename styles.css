@@ -582,7 +582,7 @@ html, body {
 
 .client-date-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 0.82fr) auto auto;
   gap: 8px;
   align-items: center;
   background-color: var(--surface-card);
@@ -2016,7 +2016,7 @@ html, body {
 
 .session-add-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 2fr) auto;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr) minmax(0, 0.82fr) minmax(0, 1.7fr) auto;
   gap: 12px;
   align-items: end;
 }

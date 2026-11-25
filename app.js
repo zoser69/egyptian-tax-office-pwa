@@ -86,13 +86,35 @@ async function executeRestore() {
   if (!parsed) return;
   pushUndoState('استرجاع نسخة احتياطية من ملف');
   const mode = document.getElementById('restoreModeSelect').value;
+  const restoreIso = getNextMonotonicIso();
   if (mode === 'REPLACE') {
-    appState.clients = parsed.clients;
-    appState.tasks = parsed.tasks || [];
+    appState.clients = (parsed.clients || []).map(c => {
+      c.updatedAt = restoreIso;
+      return c;
+    });
+    appState.tasks = (parsed.tasks || []).map(t => {
+      t.updatedAt = restoreIso;
+      return t;
+    });
     appState.deletedIds = { clients: {}, tasks: {} };
     if (parsed.customLists) appState.customLists = parsed.customLists;
+    try { window.localStorage.removeItem(NOTIF_LOG_KEY); } catch (e) {}
   } else {
-    appState = mergeTwoAppStates(appState, parsed);
+    ensureDeletedIdsShape(appState);
+    const revParsed = JSON.parse(JSON.stringify(parsed));
+    (revParsed.clients || []).forEach(c => {
+      if (c && c.id && appState.deletedIds.clients[c.id]) {
+        delete appState.deletedIds.clients[c.id];
+        c.updatedAt = restoreIso;
+      }
+    });
+    (revParsed.tasks || []).forEach(t => {
+      if (t && t.id && appState.deletedIds.tasks[t.id]) {
+        delete appState.deletedIds.tasks[t.id];
+        t.updatedAt = restoreIso;
+      }
+    });
+    appState = mergeTwoAppStates(appState, revParsed);
   }
   ensureCustomListsShape();
   normalizeAllClientsDates();
@@ -100,6 +122,7 @@ async function executeRestore() {
   await saveState(true, 'استرجاع نسخة احتياطية (' + appState.clients.length + ' ممول)', { forceReplaceCloud: mode === 'REPLACE' });
   renderClients();
   renderTasks();
+  if (isAppUnlocked()) evaluateAndFireScheduledNotifications(false);
   document.getElementById('backupModalBackdrop').classList.remove('open');
   showToast('تم استرجاع النسخة الاحتياطية بنجاح (' + appState.clients.length + ' ممول)', { canUndo: true });
 }
@@ -171,6 +194,8 @@ function openTaskModal(taskId) {
   if (appealInp) appealInp.value = s.appealNum || '';
   const dateInp = document.getElementById('taskFormDue');
   if (dateInp) dateInp.value = s.sessionDate || s.due || '';
+  const timeInp = document.getElementById('taskFormTime');
+  if (timeInp) timeInp.value = s.sessionTime || '';
   const detailsInp = document.getElementById('taskFormTitle');
   if (detailsInp) detailsInp.value = s.details || s.title || '';
   document.getElementById('taskModalBackdrop').classList.add('open');
@@ -185,6 +210,10 @@ function openPostponeModal(sessionId) {
   const newDateInput = document.getElementById('postponeNewDateInput');
   if (newDateInput) {
     newDateInput.value = '';
+  }
+  const newTimeInput = document.getElementById('postponeNewTimeInput');
+  if (newTimeInput) {
+    newTimeInput.value = s.sessionTime || '';
   }
   const noteInput = document.getElementById('postponeReasonInput');
   if (noteInput) {
@@ -240,7 +269,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     }).catch(() => {});
     navigator.serviceWorker.addEventListener('message', (event) => {
       if (event.data && event.data.type === 'NOTIFICATION_CLICKED') {
-        switchMainTab('view-tasks');
+        const targetUrl = String(event.data.url || '');
+        if (targetUrl.indexOf('#view-clients') !== -1) {
+          switchMainTab('view-clients');
+        } else {
+          switchMainTab('view-tasks');
+        }
       }
     });
   }
