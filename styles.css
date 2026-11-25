@@ -1974,3 +1974,206 @@ html, body {
 .calc-alert-info strong {
   color: var(--ink-primary);
 }
+
+/* v12: Sessions (الجلسات), Multi-Postponement History & Notification Controls */
+.notif-banner-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.notif-banner-info {
+  flex: 1;
+  min-width: 240px;
+}
+
+.notif-banner-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.96rem;
+  color: var(--ink-primary);
+  margin-bottom: 4px;
+}
+
+.notif-banner-sub {
+  margin: 0;
+  font-size: 0.83rem;
+  color: var(--ink-secondary);
+  line-height: 1.5;
+}
+
+.notif-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.session-add-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 2fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.session-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.session-search-wrap {
+  flex: 1;
+  min-width: 240px;
+  max-width: 380px;
+}
+
+.session-search-wrap .input-field {
+  min-height: 40px;
+  padding: 6px 12px;
+  font-size: 0.88rem;
+}
+
+.session-card-row {
+  align-items: flex-start;
+}
+
+.session-content-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.session-header-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.session-client-title {
+  margin: 0 !important;
+  font-size: 1.02rem;
+}
+
+.appeal-num-badge {
+  background-color: var(--accent-soft);
+  color: var(--accent-soft-ink);
+  border-color: transparent;
+}
+
+.session-details-text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-primary);
+  line-height: 1.55;
+}
+
+.session-history-box {
+  margin-top: 4px;
+  padding: 10px 12px;
+  background-color: var(--surface-muted);
+  border: 1px solid var(--border-subtle);
+  border-right: 3px solid var(--accent-primary);
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+
+[data-theme="dark"] .session-history-box {
+  border-right-color: var(--accent-soft-ink);
+}
+
+.session-history-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  color: var(--ink-primary);
+  margin-bottom: 6px;
+}
+
+.session-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.postpone-history-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  color: var(--ink-secondary);
+}
+
+.postpone-step-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 5px;
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-strong);
+  color: var(--ink-primary);
+}
+
+.postpone-old-date {
+  color: var(--status-urgent);
+  text-decoration: line-through;
+}
+
+.postpone-new-date {
+  color: var(--status-safe);
+}
+
+.postpone-arrow {
+  font-weight: 800;
+  color: var(--ink-muted);
+}
+
+.postpone-note {
+  color: var(--ink-primary);
+  font-weight: 600;
+}
+
+.session-actions-col {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .session-add-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .session-search-wrap {
+    max-width: 100%;
+    width: 100%;
+  }
+  .session-card-row {
+    flex-direction: column;
+  }
+  .session-actions-col {
+    width: 100%;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .notif-banner-actions {
+    width: 100%;
+  }
+  .notif-banner-actions .btn {
+    flex: 1;
+  }
+}
