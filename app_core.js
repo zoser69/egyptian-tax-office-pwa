@@ -266,6 +266,48 @@ function ensureCustomListsShape() {
   });
 }
 
+function normalizeTimeHHMM(val) {
+  const s = String(val || '').trim();
+  if (!s) return '';
+  const m = s.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+  if (!m) return '';
+  return String(m[1]).padStart(2, '0') + ':' + m[2];
+}
+
+function formatArabicTime12h(hhmm) {
+  const norm = normalizeTimeHHMM(hhmm);
+  if (!norm) return '';
+  const parts = norm.split(':');
+  let h = parseInt(parts[0], 10);
+  const m = parts[1];
+  const suffix = h >= 12 ? 'م' : 'ص';
+  if (h === 0) h = 12;
+  else if (h > 12) h -= 12;
+  return h + ':' + m + ' ' + suffix;
+}
+
+function addLocalDaysToIso(dateStr, days) {
+  if (!dateStr || typeof dateStr !== 'string') return '';
+  const m = dateStr.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return '';
+  const dt = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10) + Number(days || 0));
+  if (isNaN(dt.getTime())) return '';
+  const y = dt.getFullYear();
+  const mo = String(dt.getMonth() + 1).padStart(2, '0');
+  const d = String(dt.getDate()).padStart(2, '0');
+  return y + '-' + mo + '-' + d;
+}
+
+function hasTargetTimeArrived(hhmm) {
+  const norm = normalizeTimeHHMM(hhmm);
+  if (!norm) return true;
+  const parts = norm.split(':');
+  const targetMins = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  return nowMins >= targetMins;
+}
+
 function normalizeClientDates(client) {
   if (!client) return [];
   if (Array.isArray(client.dates) && client.dates.length > 0) {
@@ -275,6 +317,7 @@ function normalizeClientDates(client) {
         id: d.id || ('d_' + (idx + 1)),
         label: String(d.label || 'تاريخ ملف').trim(),
         date: String(d.date || '').trim(),
+        time: normalizeTimeHHMM(d.time || ''),
         hasAppeal30: Boolean(d.hasAppeal30)
       }));
   } else if (client.noticeDate && String(client.noticeDate).trim()) {
@@ -282,6 +325,7 @@ function normalizeClientDates(client) {
       id: 'd_1',
       label: 'استلام نموذج 19/15',
       date: String(client.noticeDate).trim(),
+      time: '',
       hasAppeal30: true
     }];
   } else {
@@ -298,6 +342,7 @@ function normalizeClientDates(client) {
 function normalizeSessionItem(session) {
   if (!session || typeof session !== 'object') return null;
   const sDate = String(session.sessionDate || session.due || '').trim();
+  const sTime = normalizeTimeHHMM(session.sessionTime || session.time || '');
   const detailsStr = String(session.details || session.title || '').trim();
   const appealNumStr = String(session.appealNum || '').trim();
   const clientNameStr = String(session.clientName || '').trim();
@@ -321,6 +366,7 @@ function normalizeSessionItem(session) {
   session.appealNum = appealNumStr;
   session.sessionDate = sDate;
   session.due = sDate;
+  session.sessionTime = sTime;
   session.details = detailsStr;
   session.title = detailsStr || ('جلسة طعن ' + (appealNumStr || clientNameStr));
   session.history = historyArr;
@@ -465,7 +511,7 @@ function mergeTwoAppStates(localObj, remoteObj) {
       winner.history = mergeSessionHistories(lt.history, rt.history);
       if (winner.history.length > 0) {
         const lastHist = winner.history[winner.history.length - 1];
-        if (lastHist.toDate && String(lastHist.changedAt || '') >= String(winner.updatedAt || '')) {
+        if (lastHist.toDate && String(lastHist.changedAt || '') > String(winner.updatedAt || '')) {
           winner.sessionDate = lastHist.toDate;
           winner.due = lastHist.toDate;
         }
@@ -646,21 +692,32 @@ function pushUndoState(actionLabel) {
   updateUndoRedoButtons();
 }
 
-function reviveRestoredEntities(prevClientIds, prevTaskIds, prevDeletedClients, prevDeletedTasks) {
+function entityContentSignature(obj) {
+  if (!obj || typeof obj !== 'object') return '';
+  const clone = Object.assign({}, obj);
+  delete clone.updatedAt;
+  return JSON.stringify(clone);
+}
+
+function reviveRestoredEntities(prevClientsMap, prevTasksMap, prevDeletedClients, prevDeletedTasks) {
   ensureDeletedIdsShape(appState);
   const reviveIso = getNextMonotonicIso();
   (appState.clients || []).forEach(c => {
     if (!c || !c.id) return;
-    const wasDeletedOrMissing = !prevClientIds.has(c.id) || Boolean(prevDeletedClients[c.id]);
-    if (wasDeletedOrMissing) {
+    const prev = prevClientsMap.get(c.id);
+    const wasDeletedOrMissing = !prev || Boolean(prevDeletedClients[c.id]);
+    const wasModified = prev && entityContentSignature(c) !== entityContentSignature(prev);
+    if (wasDeletedOrMissing || wasModified) {
       c.updatedAt = reviveIso;
       delete appState.deletedIds.clients[c.id];
     }
   });
   (appState.tasks || []).forEach(t => {
     if (!t || !t.id) return;
-    const wasDeletedOrMissing = !prevTaskIds.has(t.id) || Boolean(prevDeletedTasks[t.id]);
-    if (wasDeletedOrMissing) {
+    const prev = prevTasksMap.get(t.id);
+    const wasDeletedOrMissing = !prev || Boolean(prevDeletedTasks[t.id]);
+    const wasModified = prev && entityContentSignature(t) !== entityContentSignature(prev);
+    if (wasDeletedOrMissing || wasModified) {
       t.updatedAt = reviveIso;
       delete appState.deletedIds.tasks[t.id];
     }
@@ -669,8 +726,8 @@ function reviveRestoredEntities(prevClientIds, prevTaskIds, prevDeletedClients, 
 
 function applySnapshotStringToAppState(snapshotStr, options) {
   const opts = options || {};
-  const prevClientIds = new Set((appState.clients || []).map(c => c.id));
-  const prevTaskIds = new Set((appState.tasks || []).map(t => t.id));
+  const prevClientsMap = new Map((appState.clients || []).filter(c => c && c.id).map(c => [c.id, JSON.parse(JSON.stringify(c))]));
+  const prevTasksMap = new Map((appState.tasks || []).filter(t => t && t.id).map(t => [t.id, JSON.parse(JSON.stringify(t))]));
   const prevDeletedClients = Object.assign({}, (appState.deletedIds && appState.deletedIds.clients) || {});
   const prevDeletedTasks = Object.assign({}, (appState.deletedIds && appState.deletedIds.tasks) || {});
 
@@ -691,7 +748,7 @@ function applySnapshotStringToAppState(snapshotStr, options) {
   ensureCustomListsShape();
   normalizeAllClientsDates();
   if (opts.reviveDeleted) {
-    reviveRestoredEntities(prevClientIds, prevTaskIds, prevDeletedClients, prevDeletedTasks);
+    reviveRestoredEntities(prevClientsMap, prevTasksMap, prevDeletedClients, prevDeletedTasks);
   }
   syncCustomDropdowns();
   return true;
@@ -973,8 +1030,11 @@ function clearNotifKeysForEntity(entityId) {
   try {
     const log = getNotifSentLog();
     let changed = false;
+    const p1 = 'sess_' + entityId + '_';
+    const p2 = 'client30_' + entityId + '_';
+    const p3 = 'clientdate_' + entityId + '_';
     Object.keys(log).forEach(k => {
-      if (k.indexOf(entityId) !== -1) {
+      if (k.indexOf(p1) === 0 || k.indexOf(p2) === 0 || k.indexOf(p3) === 0) {
         delete log[k];
         changed = true;
       }
@@ -1156,93 +1216,107 @@ function computeDaysDiffFromToday(targetDateStr) {
   return Math.round((t1.getTime() - t0.getTime()) / (24 * 60 * 60 * 1000));
 }
 
+let notifEvalDepth = 0;
 async function evaluateAndFireScheduledNotifications(forceNotifyForEntityId) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  const todayIso = getLocalTodayIso();
-  const sentLog = getNotifSentLog();
+  if (notifEvalDepth > 0 && !forceNotifyForEntityId) return;
+  notifEvalDepth += 1;
+  try {
+    const todayIso = getLocalTodayIso();
+    const sentLog = getNotifSentLog();
 
-  // 1. Check active Sessions (الجلسات)
-  const sessions = Array.isArray(appState.tasks) ? appState.tasks : [];
-  for (let i = 0; i < sessions.length; i++) {
-    const s = sessions[i];
-    if (!s || s.done || !s.sessionDate) continue;
-    const diff = computeDaysDiffFromToday(s.sessionDate);
-    if (diff === null) continue;
+    // 1. Check active Sessions (الجلسات)
+    const sessions = Array.isArray(appState.tasks) ? appState.tasks : [];
+    for (let i = 0; i < sessions.length; i++) {
+      const s = sessions[i];
+      if (!s || s.done || !s.sessionDate) continue;
+      const diff = computeDaysDiffFromToday(s.sessionDate);
+      if (diff === null) continue;
 
-    // Alert if session is today (0), tomorrow (1), within 3 days (<=3), overdue (<0), or explicitly modified right now
-    const isForced = Boolean(forceNotifyForEntityId && forceNotifyForEntityId === s.id);
-    if (!isForced && diff > 3) continue;
+      const isForced = Boolean(forceNotifyForEntityId && forceNotifyForEntityId === s.id);
+      if (!isForced && diff > 3) continue;
+      if (!isForced && diff === 0 && !hasTargetTimeArrived(s.sessionTime)) continue;
 
-    const notifKey = 'sess_' + s.id + '_' + s.sessionDate + '_' + todayIso;
-    if (!isForced && sentLog[notifKey]) continue;
+      const timeTag = normalizeTimeHHMM(s.sessionTime) || '0000';
+      const notifKey = 'sess_' + s.id + '_' + s.sessionDate + '_' + timeTag + '_' + todayIso;
+      if (!isForced && sentLog[notifKey]) continue;
 
-    let timingLabel = '';
-    if (diff === 0) timingLabel = 'اليوم (' + s.sessionDate + ')';
-    else if (diff === 1) timingLabel = 'غداً (' + s.sessionDate + ')';
-    else if (diff > 1) timingLabel = 'خلال ' + diff + ' أيام (' + s.sessionDate + ')';
-    else timingLabel = 'موعد جلسة مستحق (' + s.sessionDate + ')';
+      let timingLabel = '';
+      if (diff === 0) timingLabel = 'اليوم (' + s.sessionDate + ')';
+      else if (diff === 1) timingLabel = 'غداً (' + s.sessionDate + ')';
+      else if (diff > 1) timingLabel = 'خلال ' + diff + ' أيام (' + s.sessionDate + ')';
+      else timingLabel = 'موعد جلسة مستحق (' + s.sessionDate + ')';
 
-    const appealLabel = s.appealNum ? (' - طعن رقم ' + s.appealNum) : '';
-    const prevInfo = (Array.isArray(s.history) && s.history.length > 0)
-      ? (' (مؤجلة من ' + s.history[s.history.length - 1].fromDate + ')')
-      : '';
+      const timeDisplay = s.sessionTime ? (' الساعة ' + formatArabicTime12h(s.sessionTime)) : '';
+      const appealLabel = s.appealNum ? (' - طعن رقم ' + s.appealNum) : '';
+      const prevInfo = (Array.isArray(s.history) && s.history.length > 0)
+        ? (' (مؤجلة من ' + s.history[s.history.length - 1].fromDate + ')')
+        : '';
 
-    await sendLocalDeviceNotification(
-      'تنبيه جلسة: ' + s.clientName + appealLabel,
-      'موعد الجلسة: ' + timingLabel + prevInfo + (s.details ? ' — ' + s.details : ''),
-      notifKey,
-      './index.html#view-tasks'
-    );
-    markNotifKeySent(notifKey);
-  }
+      markNotifKeySent(notifKey);
+      sentLog[notifKey] = true;
+      await sendLocalDeviceNotification(
+        'تنبيه جلسة: ' + s.clientName + appealLabel,
+        'موعد الجلسة: ' + timingLabel + timeDisplay + prevInfo + (s.details ? ' - ' + s.details : ''),
+        notifKey,
+        './index.html#view-tasks'
+      );
+    }
 
-  // 2. Check Client 30-day appeal deadlines & custom dates (only active/upcoming dates, never expired historical years)
-  const clients = Array.isArray(appState.clients) ? appState.clients : [];
-  for (let i = 0; i < clients.length; i++) {
-    const c = clients[i];
-    if (!c || c.status === 'منتهي' || !Array.isArray(c.dates)) continue;
-    const isClientForced = Boolean(forceNotifyForEntityId && forceNotifyForEntityId === c.id);
+    // 2. Check Client 30-day appeal deadlines & custom dates
+    const clients = Array.isArray(appState.clients) ? appState.clients : [];
+    for (let i = 0; i < clients.length; i++) {
+      const c = clients[i];
+      if (!c || c.status === 'منتهي' || !Array.isArray(c.dates)) continue;
+      const isClientForced = Boolean(forceNotifyForEntityId && forceNotifyForEntityId === c.id);
 
-    for (let j = 0; j < c.dates.length; j++) {
-      const d = c.dates[j];
-      if (!d || !d.date) continue;
+      for (let j = 0; j < c.dates.length; j++) {
+        const d = c.dates[j];
+        if (!d || !d.date) continue;
+        const timeTag = normalizeTimeHHMM(d.time) || '0000';
+        const timeDisplay = d.time ? (' الساعة ' + formatArabicTime12h(d.time)) : '';
 
-      if (d.hasAppeal30) {
-        const start = new Date(d.date + 'T00:00:00');
-        if (!isNaN(start.getTime())) {
-          const deadline = new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000);
-          const deadlineIso = deadline.toISOString().slice(0, 10);
-          const diffDeadline = computeDaysDiffFromToday(deadlineIso);
-          if (diffDeadline !== null && diffDeadline >= 0 && (diffDeadline <= 7 || isClientForced)) {
-            const key = 'client30_' + c.id + '_' + d.id + '_' + d.date + '_' + todayIso;
+        if (d.hasAppeal30) {
+          const deadlineIso = addLocalDaysToIso(d.date, 30);
+          if (deadlineIso) {
+            const diffDeadline = computeDaysDiffFromToday(deadlineIso);
+            if (diffDeadline !== null && diffDeadline >= 0 && (diffDeadline <= 7 || isClientForced)) {
+              if (!isClientForced && diffDeadline === 0 && !hasTargetTimeArrived(d.time)) continue;
+              const key = 'client30_' + c.id + '_' + d.id + '_' + d.date + '_' + timeTag + '_' + todayIso;
+              if (!isClientForced && sentLog[key]) continue;
+              const remainingLabel = diffDeadline === 0
+                ? ('اليوم آخر ميعاد للطعن (' + deadlineIso + ')' + timeDisplay)
+                : ('متبقي ' + diffDeadline + ' يوم (آخر ميعاد ' + deadlineIso + ')' + timeDisplay);
+              markNotifKeySent(key);
+              sentLog[key] = true;
+              await sendLocalDeviceNotification(
+                'مهلة طعن 30 يوم: ' + c.name,
+                (d.label || 'استلام نموذج') + ' بتاريخ ' + d.date + ' - ' + remainingLabel,
+                key,
+                './index.html#view-clients'
+              );
+            }
+          }
+        } else {
+          const diffDate = computeDaysDiffFromToday(d.date);
+          if (diffDate !== null && diffDate >= 0 && (diffDate <= 2 || isClientForced)) {
+            if (!isClientForced && diffDate === 0 && !hasTargetTimeArrived(d.time)) continue;
+            const key = 'clientdate_' + c.id + '_' + d.id + '_' + d.date + '_' + timeTag + '_' + todayIso;
             if (!isClientForced && sentLog[key]) continue;
-            const remainingLabel = diffDeadline === 0
-              ? ('اليوم آخر ميعاد للطعن (' + deadlineIso + ')')
-              : ('متبقي ' + diffDeadline + ' يوم (آخر ميعاد ' + deadlineIso + ')');
+            markNotifKeySent(key);
+            sentLog[key] = true;
             await sendLocalDeviceNotification(
-              'مهلة طعن 30 يوم: ' + c.name,
-              (d.label || 'استلام نموذج') + ' بتاريخ ' + d.date + ' — ' + remainingLabel,
+              'ميعاد ملف ممول: ' + c.name,
+              (d.label || 'ميعاد') + ' بتاريخ ' + d.date + timeDisplay + (diffDate === 0 ? ' (اليوم)' : (' (خلال ' + diffDate + ' يوم)')),
               key,
               './index.html#view-clients'
             );
-            markNotifKeySent(key);
           }
-        }
-      } else {
-        const diffDate = computeDaysDiffFromToday(d.date);
-        if (diffDate !== null && diffDate >= 0 && (diffDate <= 2 || isClientForced)) {
-          const key = 'clientdate_' + c.id + '_' + d.id + '_' + d.date + '_' + todayIso;
-          if (!isClientForced && sentLog[key]) continue;
-          await sendLocalDeviceNotification(
-            'ميعاد ملف ممول: ' + c.name,
-            (d.label || 'ميعاد') + ' بتاريخ ' + d.date + (diffDate === 0 ? ' (اليوم)' : (' (خلال ' + diffDate + ' يوم)')),
-            key,
-            './index.html#view-clients'
-          );
-          markNotifKeySent(key);
         }
       }
     }
+  } finally {
+    notifEvalDepth = Math.max(0, notifEvalDepth - 1);
   }
 }
 
@@ -1268,6 +1342,8 @@ async function persistAppStateLocallyOnly() {
   } catch (err) {}
 }
 
+let pendingResyncMessage = null;
+let pendingResyncOpts = null;
 async function syncToSupabase(commitMsg, syncOpts) {
   const sOpts = syncOpts || {};
   const message = String(commitMsg || 'تحديث تلقائي للدفتر').trim();
@@ -1276,6 +1352,13 @@ async function syncToSupabase(commitMsg, syncOpts) {
     updateStorageStatusBadge('OFFLINE');
     return false;
   }
+  if (isSyncInFlight) {
+    pendingResyncMessage = message;
+    pendingResyncOpts = sOpts;
+    setPendingSync(true);
+    return false;
+  }
+  isSyncInFlight = true;
   setSyncButtonSpinning(true);
   try {
     // 1. Fetch current remote record first to perform conflict-free entity merge before pushing
@@ -1333,6 +1416,9 @@ async function syncToSupabase(commitMsg, syncOpts) {
       if (typeof syncCustomDropdowns === 'function') syncCustomDropdowns();
       if (typeof renderClients === 'function') renderClients();
       if (typeof renderTasks === 'function') renderTasks();
+      if (isAppUnlocked()) {
+        evaluateAndFireScheduledNotifications(false);
+      }
     }
 
     const statePayload = {
@@ -1383,13 +1469,21 @@ async function syncToSupabase(commitMsg, syncOpts) {
       })
     }).catch(() => {});
 
-    setSyncButtonSpinning(false);
     return true;
   } catch (err) {
     setPendingSync(true);
     updateStorageStatusBadge('OFFLINE');
-    setSyncButtonSpinning(false);
     return false;
+  } finally {
+    isSyncInFlight = false;
+    setSyncButtonSpinning(false);
+    if (pendingResyncMessage !== null) {
+      const nextMsg = pendingResyncMessage;
+      const nextOpts = pendingResyncOpts;
+      pendingResyncMessage = null;
+      pendingResyncOpts = null;
+      syncToSupabase(nextMsg, nextOpts);
+    }
   }
 }
 
@@ -1472,9 +1566,7 @@ async function pullFromSupabase(isManualTrigger) {
   }
 
   if (isPendingSync()) {
-    isSyncInFlight = true;
     const pushed = await syncToSupabase('مزامنة أحدث التعديلات المحلية المعلقة');
-    isSyncInFlight = false;
     if (pushed && isManualTrigger) {
       showToast('تم دمج ورفع أحدث التعديلات المحلية إلى السحابة بنجاح');
     }
@@ -1520,11 +1612,11 @@ async function pullFromSupabase(isManualTrigger) {
 
     const rows = await res.json();
     if (!Array.isArray(rows) || rows.length === 0) {
-      await syncToSupabase('تهيئة أولية لبيانات الـ 21 ممولاً على السحابة');
       isSyncInFlight = false;
       setSyncButtonSpinning(false);
-      if (isManualTrigger) showToast('تم رفع وتهيئة بيانات الـ 21 ممولاً على السحابة بنجاح');
-      return true;
+      const pushed = await syncToSupabase('تهيئة أولية لبيانات الـ 21 ممولاً على السحابة');
+      if (pushed && isManualTrigger) showToast('تم رفع وتهيئة بيانات الـ 21 ممولاً على السحابة بنجاح');
+      return pushed;
     }
 
     const remote = rows[0];
@@ -1534,8 +1626,11 @@ async function pullFromSupabase(isManualTrigger) {
     if (remote.device_id !== myDeviceId && remoteUpdatedAt > localUpdatedAt) {
       await applyIncomingRemoteState(remote);
     } else if (localUpdatedAt > remoteUpdatedAt) {
-      await syncToSupabase('مزامنة أحدث التعديلات المحلية');
-      if (isManualTrigger) showToast('تم رفع أحدث التعديلات المحلية إلى السحابة');
+      isSyncInFlight = false;
+      setSyncButtonSpinning(false);
+      const pushed = await syncToSupabase('مزامنة أحدث التعديلات المحلية');
+      if (pushed && isManualTrigger) showToast('تم رفع أحدث التعديلات المحلية إلى السحابة');
+      return pushed;
     } else {
       setPendingSync(false);
       updateStorageStatusBadge('SYNCED');
