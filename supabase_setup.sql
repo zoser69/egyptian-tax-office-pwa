@@ -45,36 +45,28 @@ CREATE TABLE IF NOT EXISTS public.tax_sync_commits (
 CREATE INDEX IF NOT EXISTS idx_tax_sync_commits_created_at
   ON public.tax_sync_commits (created_at DESC, id DESC);
 
--- 3. تفعيل سياسات الوصول (RLS) لمفتاح Anon الخاص بتطبيق المكتب
+-- 3. تفعيل سياسات الوصول (RLS) للحساب الموثق فقط (Authenticated Only)
 ALTER TABLE public.tax_office_state ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tax_sync_commits ENABLE ROW LEVEL SECURITY;
 
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE tablename = 'tax_office_state' AND policyname = 'allow_anon_all_tax_office_state'
-  ) THEN
-    CREATE POLICY allow_anon_all_tax_office_state
-      ON public.tax_office_state
-      FOR ALL
-      TO anon, authenticated
-      USING (true)
-      WITH CHECK (true);
-  END IF;
+DROP POLICY IF EXISTS allow_anon_all_tax_office_state ON public.tax_office_state;
+DROP POLICY IF EXISTS allow_anon_all_tax_sync_commits ON public.tax_sync_commits;
+DROP POLICY IF EXISTS allow_authenticated_all_tax_office_state ON public.tax_office_state;
+DROP POLICY IF EXISTS allow_authenticated_all_tax_sync_commits ON public.tax_sync_commits;
 
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE tablename = 'tax_sync_commits' AND policyname = 'allow_anon_all_tax_sync_commits'
-  ) THEN
-    CREATE POLICY allow_anon_all_tax_sync_commits
-      ON public.tax_sync_commits
-      FOR ALL
-      TO anon, authenticated
-      USING (true)
-      WITH CHECK (true);
-  END IF;
-END $$;
+CREATE POLICY allow_authenticated_all_tax_office_state
+  ON public.tax_office_state
+  FOR ALL
+  TO authenticated
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY allow_authenticated_all_tax_sync_commits
+  ON public.tax_sync_commits
+  FOR ALL
+  TO authenticated
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 -- 4. دالة وTrigger التنظيف التلقائي (Auto-Pruning) للإبقاء على آخر 100 حركة فقط
 CREATE OR REPLACE FUNCTION public.prune_tax_sync_commits()
@@ -117,10 +109,14 @@ BEGIN
 END;
 $$;
 
--- 6. منح الصلاحيات الصريحة لدور anon و authenticated لضمان عمل REST API و RPC دون أخطاء
-GRANT ALL ON TABLE public.tax_office_state TO anon, authenticated;
-GRANT ALL ON TABLE public.tax_sync_commits TO anon, authenticated;
-GRANT USAGE, SELECT ON SEQUENCE public.tax_sync_commits_id_seq TO anon, authenticated;
+-- 6. قصر صلاحيات الجداول على الحساب الموثق فقط (authenticated) مع إبقاء نبضة keep-alive
+REVOKE ALL ON TABLE public.tax_office_state FROM anon;
+REVOKE ALL ON TABLE public.tax_sync_commits FROM anon;
+REVOKE ALL ON SEQUENCE public.tax_sync_commits_id_seq FROM anon;
+
+GRANT ALL ON TABLE public.tax_office_state TO authenticated;
+GRANT ALL ON TABLE public.tax_sync_commits TO authenticated;
+GRANT USAGE, SELECT ON SEQUENCE public.tax_sync_commits_id_seq TO authenticated;
 GRANT EXECUTE ON FUNCTION public.keep_project_alive() TO anon, authenticated;
 
 -- 7. بذر بيانات الـ 21 ممولاً المعتمدة من ملف النسخة الاحتياطية (2026-11-25)
