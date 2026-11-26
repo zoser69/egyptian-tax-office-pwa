@@ -81,6 +81,7 @@ CREATE OR REPLACE FUNCTION public.prune_tax_sync_commits()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 BEGIN
   DELETE FROM public.tax_sync_commits
@@ -106,6 +107,7 @@ CREATE OR REPLACE FUNCTION public.keep_project_alive()
 RETURNS TIMESTAMPTZ
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_now TIMESTAMPTZ := now();
@@ -130,12 +132,7 @@ VALUES (
   'تثبيت بيانات الـ 21 ممولاً المعتمدة من نسخة 2026-11-25',
   'seed_v12'
 )
-ON CONFLICT (id) DO UPDATE
-SET
-  state_json = EXCLUDED.state_json,
-  updated_at = EXCLUDED.updated_at,
-  last_commit_msg = EXCLUDED.last_commit_msg,
-  device_id = EXCLUDED.device_id;
+ON CONFLICT (id) DO NOTHING;
 
 -- 8. تحديث كاش PostgREST فوراً
 NOTIFY pgrst, 'reload schema';

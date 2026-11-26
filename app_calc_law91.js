@@ -1,7 +1,7 @@
 'use strict';
 
 function computeProgressiveBrackets(base, brackets, noExemption) {
-  let remaining = base;
+  let remaining = Math.max(0, Number(base) || 0);
   let prevLimit = 0;
   let totalTax = 0;
   const rows = [];
@@ -206,7 +206,7 @@ function calcLaw91Detailed(netProfit, options) {
       { upTo: Infinity, rate: 0.225, label: 'أكثر من 200 ألف' }
     ];
     res = computeProgressiveBrackets(annualBase, brackets, noExemption);
-    if (annualBase > 8000 && annualBase <= 30000) taxCreditRate = 0.85;
+    if (annualBase <= 30000 && (noExemption || annualBase > 8000)) taxCreditRate = 0.85;
     else if (annualBase > 30000 && annualBase <= 45000) taxCreditRate = 0.45;
     else if (annualBase > 45000 && annualBase <= 200000) taxCreditRate = 0.075;
     taxCreditAmount = res.totalTax * taxCreditRate;
@@ -221,7 +221,7 @@ function calcLaw91Detailed(netProfit, options) {
       { upTo: Infinity, rate: 0.225, label: 'أكثر من 200 ألف' }
     ];
     res = computeProgressiveBrackets(annualBase, brackets, noExemption);
-    if (annualBase > 7200 && annualBase <= 30000) taxCreditRate = 0.80;
+    if (annualBase <= 30000 && (noExemption || annualBase > 7200)) taxCreditRate = 0.80;
     else if (annualBase > 30000 && annualBase <= 45000) taxCreditRate = 0.40;
     else if (annualBase > 45000 && annualBase <= 200000) taxCreditRate = 0.05;
     taxCreditAmount = res.totalTax * taxCreditRate;
@@ -245,6 +245,17 @@ function calcLaw91Detailed(netProfit, options) {
       { upTo: 45000, rate: 0.15, label: '30 إلى 45 ألف' },
       { upTo: 250000, rate: 0.20, label: '45 إلى 250 ألف' },
       { upTo: Infinity, rate: 0.25, label: 'أكثر من 250 ألف' }
+    ];
+    res = computeProgressiveBrackets(annualBase, brackets, noExemption);
+  } else if (year >= 2011) {
+    lawLabel = 'قانون 51 لسنة 2011';
+    exemptAmount = noExemption ? 0 : 5000;
+    const brackets = [
+      { upTo: 5000, rate: 0, label: 'حتى 5,000 (معفاة)' },
+      { upTo: 20000, rate: 0.10, label: '5 إلى 20 ألف' },
+      { upTo: 40000, rate: 0.15, label: '20 إلى 40 ألف' },
+      { upTo: 10000000, rate: 0.20, label: '40 ألف إلى 10 مليون' },
+      { upTo: Infinity, rate: 0.25, label: 'ما زاد عن 10 مليون' }
     ];
     res = computeProgressiveBrackets(annualBase, brackets, noExemption);
   } else {
@@ -278,17 +289,71 @@ function calcLaw91Detailed(netProfit, options) {
   };
 }
 
+function calcLaw91CorporateDetailed(netProfit, options) {
+  const opts = options || {};
+  const year = Number(opts.year) || 2026;
+  const months = Math.min(12, Math.max(1, Number(opts.months) || 12));
+  const rawPeriod = Math.max(0, Number(netProfit) || 0);
+  const rawAnnual = months < 12 ? (rawPeriod * (12 / months)) : rawPeriod;
+  const annualBase = Math.floor(rawAnnual / 10) * 10;
+
+  if (annualBase <= 0) {
+    const zeroRate = (year >= 2013 && year <= 2014) ? 25 : (year >= 2015 ? 22.5 : 20);
+    return {
+      year, months, noExemption: true, annualBase: 0, annualTax: 0, tax: 0,
+      lawLabel: 'شركات (' + year + ')', exemptAmount: 0, taxCreditRate: 0, taxCreditAmount: 0,
+      rows: [{ label: 'وعاء الشخص الاعتباري', amount: 0, ratePct: zeroRate, tax: 0 }]
+    };
+  }
+
+  let corpRows = [];
+  let annualTaxRaw = 0;
+  let lawLabel = 'شركات (' + year + ')';
+  if (year >= 2011 && year <= 2012) {
+    lawLabel = 'شركات - قانون 51 لسنة 2011 (' + year + ')';
+    const slice1 = Math.min(annualBase, 10000000);
+    const slice2 = Math.max(0, annualBase - 10000000);
+    const t1 = slice1 * 0.20;
+    const t2 = slice2 * 0.25;
+    annualTaxRaw = t1 + t2;
+    if (slice1 > 0) corpRows.push({ label: 'وعاء الشركات حتى 10 مليون (ق 51/2011)', amount: slice1, ratePct: 20, tax: Math.round(t1) });
+    if (slice2 > 0) corpRows.push({ label: 'ما زاد عن 10 مليون (ق 51/2011)', amount: slice2, ratePct: 25, tax: Math.round(t2) });
+  } else {
+    const corpRate = (year >= 2013 && year <= 2014) ? 0.25 : (year >= 2015 ? 0.225 : 0.20);
+    annualTaxRaw = annualBase * corpRate;
+    corpRows.push({ label: 'وعاء الشخص الاعتباري', amount: annualBase, ratePct: +(corpRate * 100).toFixed(1), tax: Math.round(annualTaxRaw) });
+  }
+
+  const annualTax = Math.round(annualTaxRaw);
+  const periodTax = months < 12 ? Math.round(annualTaxRaw * (months / 12)) : annualTax;
+
+  return {
+    year,
+    months,
+    noExemption: true,
+    annualBase,
+    annualTax,
+    tax: periodTax,
+    lawLabel,
+    exemptAmount: 0,
+    taxCreditRate: 0,
+    taxCreditAmount: 0,
+    rows: corpRows
+  };
+}
+
 function calcLaw91IndividualTax(netProfit) {
   return calcLaw91Detailed(netProfit, { year: 2026, months: 12, noExemption: false }).tax;
 }
 
 function calcArticle3Law30Tax(turnover) {
-  if (turnover <= 0) return { tax: 0, label: '0' };
-  if (turnover < 250000) return { tax: 1000, label: 'أقل من 250 ألف (1,000 ج قطعية)' };
-  if (turnover < 500000) return { tax: 2500, label: '250 إلى 500 ألف (2,500 ج قطعية)' };
-  if (turnover < 1000000) return { tax: 5000, label: '500 ألف إلى مليون (5,000 ج قطعية)' };
-  if (turnover < 2000000) return { tax: Math.round(turnover * 0.005), label: 'مليون إلى 2 مليون (0.5% من رقم الأعمال)' };
-  if (turnover < 3000000) return { tax: Math.round(turnover * 0.0075), label: '2 إلى 3 مليون (0.75% من رقم الأعمال)' };
-  if (turnover <= 10000000) return { tax: Math.round(turnover * 0.01), label: '3 إلى 10 مليون (1% من رقم الأعمال)' };
+  const safeTurnover = Math.max(0, Number(turnover) || 0);
+  if (safeTurnover <= 0) return { tax: 0, label: '0' };
+  if (safeTurnover < 250000) return { tax: 1000, label: 'أقل من 250 ألف (1,000 ج قطعية)' };
+  if (safeTurnover < 500000) return { tax: 2500, label: '250 إلى 500 ألف (2,500 ج قطعية)' };
+  if (safeTurnover < 1000000) return { tax: 5000, label: '500 ألف إلى مليون (5,000 ج قطعية)' };
+  if (safeTurnover < 2000000) return { tax: Math.round(safeTurnover * 0.005), label: 'مليون إلى 2 مليون (0.5% من رقم الأعمال)' };
+  if (safeTurnover < 3000000) return { tax: Math.round(safeTurnover * 0.0075), label: '2 إلى 3 مليون (0.75% من رقم الأعمال)' };
+  if (safeTurnover <= 10000000) return { tax: Math.round(safeTurnover * 0.01), label: '3 إلى 10 مليون (1% من رقم الأعمال)' };
   return { tax: null, label: 'تجاوز 10 مليون (خارج سقف المادة 3 ق 30/2023)' };
 }
