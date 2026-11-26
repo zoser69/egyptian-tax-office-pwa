@@ -33,25 +33,48 @@ function initEventListeners() {
     });
   }
 
-  // 1. Auth Lock Screen Listeners
+  // 1. Auth Lock Screen Listeners (Supabase Auth)
   const authForm = document.getElementById('authLockForm');
   if (authForm) {
-    authForm.addEventListener('submit', (e) => {
+    authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const emailInput = document.getElementById('authEmailInput');
       const passInput = document.getElementById('authPasswordInput');
       const rememberCheck = document.getElementById('authRememberCheck');
       const errEl = document.getElementById('authErrorMsg');
+      const submitBtn = document.getElementById('btnSubmitAuth');
+      const submitText = document.getElementById('authSubmitBtnText');
+      const email = (emailInput ? emailInput.value : '').trim();
       const entered = (passInput ? passInput.value : '');
-      if (entered === OFFICE_PIN) {
-        unlockApp(rememberCheck ? rememberCheck.checked : true);
-      } else {
+      if (!email || !entered) {
         if (errEl) {
-          errEl.textContent = 'كلمة المرور غير صحيحة. تأكد من إدخال كلمة مرور المكتب المعتمدة.';
+          errEl.textContent = 'أدخل البريد الإلكتروني وكلمة المرور أولاً.';
           errEl.style.display = 'block';
         }
-        if (passInput) {
-          passInput.select();
+        return;
+      }
+      if (errEl) {
+        errEl.style.display = 'none';
+        errEl.textContent = '';
+      }
+      if (submitBtn) submitBtn.disabled = true;
+      if (submitText) submitText.textContent = 'جاري التحقق من الحساب...';
+      try {
+        const res = await signInWithSupabaseEmail(email, entered, rememberCheck ? rememberCheck.checked : true);
+        if (res && res.ok) {
+          unlockApp();
+        } else {
+          if (errEl) {
+            errEl.textContent = (res && res.error) ? res.error : 'بيانات الدخول غير صحيحة.';
+            errEl.style.display = 'block';
+          }
+          if (passInput) {
+            passInput.select();
+          }
         }
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        if (submitText) submitText.textContent = 'تسجيل الدخول وفتح الدفتر';
       }
     });
   }

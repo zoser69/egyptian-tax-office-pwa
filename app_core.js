@@ -3,6 +3,7 @@
 const STORAGE_KEY = 'egyptian_tax_office_companion_v2';
 const THEME_KEY = 'egyptian_tax_office_theme_v1';
 const AUTH_KEY = 'egyptian_tax_office_auth_v1';
+const AUTH_SESSION_KEY = 'egyptian_tax_office_supabase_session_v1';
 const UNDO_STORAGE_KEY = 'egyptian_tax_office_undo_v1';
 const CHECKPOINTS_STORAGE_KEY = 'egyptian_tax_office_checkpoints_v1';
 const DEVICE_ID_KEY = 'egyptian_tax_office_device_id_v1';
@@ -10,7 +11,6 @@ const PENDING_SYNC_KEY = 'pendingSync';
 const NOTIF_LOG_KEY = 'egyptian_tax_office_notif_log_v1';
 const SEED_APPLIED_KEY = 'egyptian_tax_office_seed_v3_applied';
 const SEED_EPOCH_ISO = '2026-11-25T00:00:00.000Z';
-const OFFICE_PIN = 'Aa12345@';
 const DB_NAME = 'EgyptianTaxOfficeDB';
 const DB_STORE = 'app_state';
 const DB_CHECKPOINTS_STORE = 'checkpoints';
@@ -138,14 +138,149 @@ function updateStorageStatusBadge(stateMode) {
   }
 }
 
+let authRefreshPromise = null;
+
+function getStoredAuthSession() {
+  const parseSession = (raw) => {
+    if (!raw) return null;
+    try {
+      const obj = JSON.parse(raw);
+      if (obj && typeof obj.access_token === 'string' && obj.access_token.length > 20 && typeof obj.refresh_token === 'string' && obj.refresh_token.length > 5) {
+        return obj;
+      }
+    } catch (e) {}
+    return null;
+  };
+  try {
+    const s1 = parseSession(window.localStorage.getItem(AUTH_SESSION_KEY));
+    if (s1) return s1;
+  } catch (e) {}
+  try {
+    const s2 = parseSession(window.sessionStorage.getItem(AUTH_SESSION_KEY));
+    if (s2) return s2;
+  } catch (e) {}
+  return null;
+}
+
+function saveAuthSession(sessionObj, rememberDevice) {
+  const raw = JSON.stringify(sessionObj);
+  try { window.sessionStorage.setItem(AUTH_SESSION_KEY, raw); } catch (e) {}
+  try {
+    if (rememberDevice) {
+      window.localStorage.setItem(AUTH_SESSION_KEY, raw);
+    } else {
+      window.localStorage.removeItem(AUTH_SESSION_KEY);
+    }
+  } catch (e) {}
+  try { window.localStorage.removeItem(AUTH_KEY); } catch (e) {}
+  try { window.sessionStorage.removeItem(AUTH_KEY); } catch (e) {}
+}
+
+function clearAuthSession() {
+  try { window.localStorage.removeItem(AUTH_SESSION_KEY); } catch (e) {}
+  try { window.sessionStorage.removeItem(AUTH_SESSION_KEY); } catch (e) {}
+  try { window.localStorage.removeItem(AUTH_KEY); } catch (e) {}
+  try { window.sessionStorage.removeItem(AUTH_KEY); } catch (e) {}
+}
+
+async function signInWithSupabaseEmail(email, password, rememberDevice) {
+  if (typeof window.fetch !== 'function' || navigator.onLine === false) {
+    return { ok: false, error: 'تعذر الاتصال بالإنترنت. يرجى الاتصال بالإنترنت لتسجيل الدخول أول مرة على هذا الجهاز.' };
+  }
+  try {
+    const res = await window.fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({
+        email: String(email || '').trim(),
+        password: String(password || '')
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data || !data.access_token || !data.refresh_token) {
+      const msg = String(data.error_description || data.msg || data.message || '').toLowerCase();
+      if (msg.indexOf('invalid login') !== -1 || res.status === 400 || res.status === 401) {
+        return { ok: false, error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.' };
+      }
+      if (msg.indexOf('email not confirmed') !== -1) {
+        return { ok: false, error: 'الحساب غير مؤكد في لوحة Supabase. فعّل Auto Confirm للحساب أولاً.' };
+      }
+      return { ok: false, error: 'تعذر تسجيل الدخول حالياً. حاول مرة أخرى.' };
+    }
+    const expiresInSec = Number(data.expires_in) || 3600;
+    const sessionObj = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at: Date.now() + (expiresInSec * 1000),
+      user_email: (data.user && data.user.email) || String(email || '').trim()
+    };
+    saveAuthSession(sessionObj, Boolean(rememberDevice));
+    return { ok: true, session: sessionObj };
+  } catch (err) {
+    return { ok: false, error: 'تعذر الوصول إلى خادم المصادقة. تأكد من اتصال الإنترنت.' };
+  }
+}
+
+async function refreshSupabaseSession() {
+  if (authRefreshPromise) return authRefreshPromise;
+  authRefreshPromise = (async () => {
+    const current = getStoredAuthSession();
+    if (!current || !current.refresh_token) return null;
+    if (typeof window.fetch !== 'function' || navigator.onLine === false) return null;
+    const wasRemembered = (() => {
+      try { return Boolean(window.localStorage.getItem(AUTH_SESSION_KEY)); } catch (e) { return false; }
+    })();
+    try {
+      const res = await window.fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ refresh_token: current.refresh_token })
+      });
+      if (res.status === 400 || res.status === 401 || res.status === 403) {
+        clearAuthSession();
+        applyAuthLockState();
+        showToast('انتهت صلاحية جلسة الدخول. يرجى تسجيل الدخول مجدداً.');
+        return null;
+      }
+      if (!res.ok) return null;
+      const data = await res.json().catch(() => null);
+      if (!data || !data.access_token || !data.refresh_token) return null;
+      const expiresInSec = Number(data.expires_in) || 3600;
+      const updated = {
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        expires_at: Date.now() + (expiresInSec * 1000),
+        user_email: (data.user && data.user.email) || current.user_email || ''
+      };
+      saveAuthSession(updated, wasRemembered);
+      return updated.access_token;
+    } catch (e) {
+      return null;
+    }
+  })().finally(() => {
+    authRefreshPromise = null;
+  });
+  return authRefreshPromise;
+}
+
+async function getValidSupabaseAccessToken() {
+  const session = getStoredAuthSession();
+  if (!session) return null;
+  if (session.expires_at && Date.now() < Number(session.expires_at) - 60000) {
+    return session.access_token;
+  }
+  const refreshed = await refreshSupabaseSession();
+  return refreshed || null;
+}
+
 function isAppUnlocked() {
-  try {
-    if (window.localStorage.getItem(AUTH_KEY) === 'UNLOCKED') return true;
-  } catch (e) {}
-  try {
-    if (window.sessionStorage.getItem(AUTH_KEY) === 'UNLOCKED') return true;
-  } catch (e) {}
-  return false;
+  return Boolean(getStoredAuthSession());
 }
 
 function isAppLocked() {
@@ -175,47 +310,63 @@ function applyAuthLockState() {
       const m = document.getElementById(id);
       if (m) m.classList.remove('open');
     });
+    const emailInput = document.getElementById('authEmailInput');
     const passInput = document.getElementById('authPasswordInput');
-    if (passInput) {
-      passInput.value = '';
-      setTimeout(() => passInput.focus(), 50);
-    }
+    if (passInput) passInput.value = '';
+    setTimeout(() => {
+      if (emailInput && !emailInput.value.trim()) {
+        emailInput.focus();
+      } else if (passInput) {
+        passInput.focus();
+      }
+    }, 50);
   }
 }
 
-function unlockApp(rememberDevice) {
-  try {
-    window.sessionStorage.setItem(AUTH_KEY, 'UNLOCKED');
-  } catch (e) {}
-  try {
-    if (rememberDevice) {
-      window.localStorage.setItem(AUTH_KEY, 'UNLOCKED');
-    } else {
-      window.localStorage.removeItem(AUTH_KEY);
-    }
-  } catch (e) {}
+function unlockApp() {
   const errEl = document.getElementById('authErrorMsg');
   if (errEl) {
     errEl.style.display = 'none';
     errEl.textContent = '';
   }
   applyAuthLockState();
-  showToast('تم فتح دفتر المكتب الضريبي');
+  showToast('تم تسجيل الدخول وفتح دفتر المكتب الضريبي');
   pullFromSupabase(false);
   evaluateAndFireScheduledNotifications(false);
   initSupabaseRealtimeSocket();
 }
 
 function lockApp() {
-  try { window.localStorage.removeItem(AUTH_KEY); } catch (e) {}
-  try { window.sessionStorage.removeItem(AUTH_KEY); } catch (e) {}
+  const session = getStoredAuthSession();
+  if (session && session.access_token && typeof window.fetch === 'function' && navigator.onLine !== false) {
+    window.fetch(SUPABASE_URL + '/auth/v1/logout', {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + session.access_token
+      }
+    }).catch(() => {});
+  }
+  clearAuthSession();
+  if (realtimeHeartbeatTimer) {
+    clearInterval(realtimeHeartbeatTimer);
+    realtimeHeartbeatTimer = null;
+  }
+  if (realtimeReconnectTimer) {
+    clearTimeout(realtimeReconnectTimer);
+    realtimeReconnectTimer = null;
+  }
+  if (realtimeSocket) {
+    try { realtimeSocket.close(); } catch (e) {}
+    realtimeSocket = null;
+  }
   const errEl = document.getElementById('authErrorMsg');
   if (errEl) {
     errEl.style.display = 'none';
     errEl.textContent = '';
   }
   applyAuthLockState();
-  showToast('تم قفل التطبيق بنجاح');
+  showToast('تم تسجيل الخروج وقفل التطبيق بنجاح');
 }
 
 function applyTheme(themeName) {
@@ -1487,17 +1638,39 @@ async function syncToSupabase(commitMsg, syncOpts) {
   isSyncInFlight = true;
   setSyncButtonSpinning(true);
   try {
+    let accessToken = await getValidSupabaseAccessToken();
+    if (!accessToken) {
+      setPendingSync(true);
+      updateStorageStatusBadge('OFFLINE');
+      return false;
+    }
     // 1. Fetch current remote record first to perform conflict-free entity merge before pushing
-    const getRes = await window.fetch(
+    let getRes = await window.fetch(
       SUPABASE_URL + '/rest/v1/tax_office_state?id=eq.main_office&select=id,state_json,updated_at,last_commit_msg,device_id',
       {
         method: 'GET',
         headers: {
           'apikey': SUPABASE_ANON_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+          'Authorization': 'Bearer ' + accessToken
         }
       }
     );
+    if (getRes.status === 401 || getRes.status === 403) {
+      const refreshed = await refreshSupabaseSession();
+      if (refreshed) {
+        accessToken = refreshed;
+        getRes = await window.fetch(
+          SUPABASE_URL + '/rest/v1/tax_office_state?id=eq.main_office&select=id,state_json,updated_at,last_commit_msg,device_id',
+          {
+            method: 'GET',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': 'Bearer ' + accessToken
+            }
+          }
+        );
+      }
+    }
 
     if (!getRes.ok) {
       let errBody = null;
@@ -1560,7 +1733,7 @@ async function syncToSupabase(commitMsg, syncOpts) {
       headers: {
         'Content-Type': 'application/json',
         'apikey': SUPABASE_ANON_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + accessToken,
         'Prefer': 'resolution=merge-duplicates,return=minimal'
       },
       body: JSON.stringify(statePayload)
@@ -1582,7 +1755,7 @@ async function syncToSupabase(commitMsg, syncOpts) {
       headers: {
         'Content-Type': 'application/json',
         'apikey': SUPABASE_ANON_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + accessToken,
         'Prefer': 'return=minimal'
       },
       body: JSON.stringify({
@@ -1716,16 +1889,37 @@ async function pullFromSupabase(isManualTrigger) {
   isSyncInFlight = true;
   setSyncButtonSpinning(true);
   try {
-    const res = await window.fetch(
+    let accessToken = await getValidSupabaseAccessToken();
+    if (!accessToken) {
+      updateStorageStatusBadge('OFFLINE');
+      return false;
+    }
+    let res = await window.fetch(
       SUPABASE_URL + '/rest/v1/tax_office_state?id=eq.main_office&select=id,state_json,updated_at,last_commit_msg,device_id',
       {
         method: 'GET',
         headers: {
           'apikey': SUPABASE_ANON_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+          'Authorization': 'Bearer ' + accessToken
         }
       }
     );
+    if (res.status === 401 || res.status === 403) {
+      const refreshed = await refreshSupabaseSession();
+      if (refreshed) {
+        accessToken = refreshed;
+        res = await window.fetch(
+          SUPABASE_URL + '/rest/v1/tax_office_state?id=eq.main_office&select=id,state_json,updated_at,last_commit_msg,device_id',
+          {
+            method: 'GET',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': 'Bearer ' + accessToken
+            }
+          }
+        );
+      }
+    }
     if (!res.ok) {
       let errBody = null;
       try { errBody = await res.json(); } catch (e) {}
@@ -1791,12 +1985,14 @@ async function pullFromSupabase(isManualTrigger) {
   }
 }
 
-function initSupabaseRealtimeSocket() {
+async function initSupabaseRealtimeSocket() {
   if (isAppLocked() || typeof window.WebSocket !== 'function' || navigator.onLine === false) return;
   try {
     if (realtimeSocket && (realtimeSocket.readyState === 0 || realtimeSocket.readyState === 1)) {
       return;
     }
+    const accessToken = await getValidSupabaseAccessToken();
+    if (!accessToken) return;
     const wsUrl = 'wss://ssptmcbkrmgvalffcesp.supabase.co/realtime/v1/websocket?apikey=' +
       encodeURIComponent(SUPABASE_ANON_KEY) + '&vsn=1.0.0';
     realtimeSocket = new window.WebSocket(wsUrl);
@@ -1806,6 +2002,7 @@ function initSupabaseRealtimeSocket() {
           topic: 'realtime:public:tax_office_state',
           event: 'phx_join',
           payload: {
+            access_token: accessToken,
             config: {
               broadcast: { self: false },
               presence: { key: '' },
