@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tax-office-v16';
+const CACHE_NAME = 'tax-office-v17';
 const ASSETS = [
   './',
   './index.html',
