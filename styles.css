@@ -6,7 +6,7 @@
   --surface-hover: #F2EFEA;
   --ink-primary: #18181B;
   --ink-secondary: #52525B;
-  --ink-muted: #6B7280;
+  --ink-muted: #595E68;
   --border-subtle: #E5E0D8;
   --border-strong: #D1CAC0;
   --accent-primary: #1E3A5F;
@@ -31,12 +31,12 @@
 
 [data-theme="dark"] {
   --bg-canvas: #000000;
-  --surface-card: #0A0A0D;
-  --surface-muted: #121216;
-  --surface-hover: #18181E;
+  --surface-card: #141419;
+  --surface-muted: #1C1C24;
+  --surface-hover: #22222B;
   --ink-primary: #F4F4F6;
   --ink-secondary: #A6A8B3;
-  --ink-muted: #828592;
+  --ink-muted: #9498A6;
   --border-subtle: #1F2026;
   --border-strong: #2E303A;
   --accent-primary: #25548F;
@@ -83,6 +83,10 @@ html, body {
   direction: ltr;
   unicode-bidi: isolate;
   display: inline-block;
+}
+
+td.num-tabular, th.num-tabular {
+  display: table-cell;
 }
 
 @keyframes fadeSlideUp {
@@ -716,6 +720,10 @@ html, body {
   align-items: end;
 }
 
+#view-reference .controls-grid {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
+
 /* Client Cards Grid / List */
 .clients-cards-list {
   display: grid;
@@ -732,7 +740,6 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  animation: fadeSlideUp 0.22s ease backwards;
 }
 
 .client-card-top {
@@ -870,7 +877,6 @@ html, body {
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
-  animation: fadeSlideUp 0.2s ease backwards;
 }
 
 .task-row:last-child {
@@ -914,17 +920,6 @@ html, body {
   color: var(--ink-primary);
 }
 
-.task-meta-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.task-meta-line {
-  font-size: 0.82rem;
-  color: var(--ink-secondary);
-}
 
 /* Calculator Workspace */
 .calc-subnav {
@@ -1115,6 +1110,8 @@ html, body {
 .memo-footer-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .ref-cards-list {
@@ -1129,7 +1126,6 @@ html, body {
   border-radius: 12px;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
-  animation: fadeSlideUp 0.2s ease backwards;
 }
 
 .ref-summary {
@@ -1275,6 +1271,7 @@ html, body {
 }
 
 /* Mobile Ergonomics & Bottom Navigation (<= 768px) */
+
 @media (max-width: 768px) {
   .app-shell {
     padding: 0 12px 92px 12px;
@@ -1509,11 +1506,66 @@ html, body {
   }
 
   .toast-box {
-    bottom: 76px;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+
+  #view-reference .controls-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .checkpoint-manual-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .checkpoint-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .checkpoint-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .calc-year-period-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .calc-year-period-grid > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .session-add-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .session-search-wrap {
+    max-width: 100%;
+    width: 100%;
+  }
+  .session-card-row {
+    flex-direction: column;
+  }
+  .session-actions-col {
+    width: 100%;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .notif-banner-actions {
+    width: 100%;
+  }
+  .notif-banner-actions .btn {
+    flex: 1;
   }
 }
 
-/* Official A4 Office Print Stylesheet */
+@media (max-width: 480px) {
+  .summary-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .summary-cards-grid > .stat-card:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
 @media print {
   @page {
     size: A4 portrait;
@@ -1619,184 +1671,7 @@ html, body {
   .print-date-list li {
     margin-bottom: 2px;
   }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    transition: none !important;
-    animation: none !important;
-  }
-}
-
-/* Task 2: Undo/Redo, Toast Undo Button, Cloud Sync Spin, and Git-like Checkpoints Timeline */
-.btn:disabled,
-.btn[disabled] {
-  opacity: 0.38;
-  cursor: not-allowed;
-  pointer-events: none;
-  box-shadow: none;
-}
-
-@keyframes spinSync {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.sync-spinning svg {
-  animation: spinSync 0.9s linear infinite;
-}
-
-.btn-toast-undo {
-  background-color: rgba(255, 255, 255, 0.18);
-  color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-family: 'Tajawal', sans-serif;
-  font-size: 0.82rem;
-  font-weight: 800;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background-color 0.15s ease;
-}
-
-.btn-toast-undo:hover {
-  background-color: rgba(255, 255, 255, 0.3);
-}
-
-.checkpoints-section {
-  margin-bottom: 22px;
-  padding: 16px;
-  background-color: var(--surface-muted);
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
-}
-
-.checkpoints-title {
-  margin: 0 0 4px 0;
-  font-size: 1.02rem;
-  font-weight: 800;
-  color: var(--ink-primary);
-}
-
-.checkpoints-subtitle {
-  margin: 0 0 12px 0;
-  font-size: 0.84rem;
-  color: var(--ink-secondary);
-}
-
-.checkpoint-manual-bar {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-  align-items: center;
-}
-
-.checkpoint-manual-bar .input-field {
-  flex: 1;
-  min-height: 40px;
-  padding: 6px 10px;
-  font-size: 0.88rem;
-}
-
-.checkpoint-manual-bar .btn {
-  min-height: 40px;
-}
-
-.checkpoints-timeline {
-  max-height: 230px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-left: 2px;
-}
-
-.checkpoint-card {
-  background-color: var(--surface-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  padding: 10px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.checkpoint-info {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-  flex: 1;
-}
-
-.checkpoint-top-line {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.checkpoint-sha {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 5px;
-  background-color: var(--accent-soft);
-  color: var(--accent-soft-ink);
-  direction: ltr;
-  unicode-bidi: isolate;
-}
-
-.checkpoint-msg {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--ink-primary);
-}
-
-.checkpoint-meta {
-  font-size: 0.78rem;
-  color: var(--ink-secondary);
-}
-
-.checkpoint-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.checkpoint-actions .btn-sm {
-  min-height: 34px;
-  padding: 4px 10px;
-  font-size: 0.8rem;
-}
-
-@media (max-width: 768px) {
-  .checkpoint-manual-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .checkpoint-card {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .checkpoint-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-}
-
-/* Task 3: Legal Memo Footer Actions & Official A4 Memo Print Layout */
-.memo-footer-actions {
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-@media print {
   .print-memo-sheet {
     padding: 4mm 6mm;
     color: #000000 !important;
@@ -1877,7 +1752,158 @@ html, body {
     min-width: 180px;
   }
 }
-/* Historical Tax Year & Bracket Breakdown Table */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+@keyframes spinSync {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.sync-spinning svg {
+  animation: spinSync 0.9s linear infinite;
+}
+
+.btn-toast-undo {
+  background-color: rgba(255, 255, 255, 0.18);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+
+.btn-toast-undo:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.checkpoints-section {
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.checkpoints-title {
+  margin: 0 0 4px 0;
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: var(--ink-primary);
+}
+
+.checkpoints-subtitle {
+  margin: 0 0 12px 0;
+  font-size: 0.84rem;
+  color: var(--ink-secondary);
+}
+
+.checkpoint-manual-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.checkpoint-manual-bar .input-field {
+  flex: 1;
+  min-height: 44px;
+  padding: 6px 10px;
+  font-size: 0.88rem;
+}
+
+.checkpoint-manual-bar .btn {
+  min-height: 44px;
+}
+
+.checkpoints-timeline {
+  max-height: 230px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 2px;
+}
+
+.checkpoint-card {
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.checkpoint-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.checkpoint-top-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.checkpoint-sha {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background-color: var(--accent-soft);
+  color: var(--accent-soft-ink);
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.checkpoint-msg {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink-primary);
+}
+
+.checkpoint-meta {
+  font-size: 0.78rem;
+  color: var(--ink-secondary);
+}
+
+.checkpoint-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.checkpoint-actions .btn-sm {
+  min-height: 44px;
+  padding: 6px 12px;
+  font-size: 0.84rem;
+}
+
 .calc-year-period-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.85fr) minmax(0, 0.85fr);
@@ -1916,14 +1942,6 @@ html, body {
   border-bottom: none;
 }
 
-@media (max-width: 768px) {
-  .calc-year-period-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-  .calc-year-period-grid > div:first-child {
-    grid-column: 1 / -1;
-  }
-}
 
 /* Calculator Onboarding Guide, Actions Bar & Legal Alert Boxes */
 .calc-guide-box {
@@ -1975,7 +1993,6 @@ html, body {
   color: var(--ink-primary);
 }
 
-/* v12: Sessions (الجلسات), Multi-Postponement History & Notification Controls */
 .notif-banner-flex {
   display: flex;
   align-items: center;
@@ -2037,7 +2054,7 @@ html, body {
 }
 
 .session-search-wrap .input-field {
-  min-height: 40px;
+  min-height: 44px;
   padding: 6px 12px;
   font-size: 0.88rem;
 }
@@ -2151,29 +2168,4 @@ html, body {
   gap: 8px;
   flex-wrap: wrap;
   flex-shrink: 0;
-}
-
-@media (max-width: 768px) {
-  .session-add-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .session-search-wrap {
-    max-width: 100%;
-    width: 100%;
-  }
-  .session-card-row {
-    flex-direction: column;
-  }
-  .session-actions-col {
-    width: 100%;
-    justify-content: space-between;
-    padding-top: 8px;
-    border-top: 1px solid var(--border-subtle);
-  }
-  .notif-banner-actions {
-    width: 100%;
-  }
-  .notif-banner-actions .btn {
-    flex: 1;
-  }
 }
