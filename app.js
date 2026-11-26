@@ -57,6 +57,7 @@ function fallbackCopy(text, msg) {
 
 function previewRestoreJson(rawText) {
   const previewEl = document.getElementById('restorePreviewBox');
+  if (!previewEl) return null;
   if (!rawText || !rawText.trim()) {
     previewEl.textContent = '';
     return null;
@@ -81,11 +82,14 @@ function previewRestoreJson(rawText) {
 }
 
 async function executeRestore() {
-  const rawText = document.getElementById('restoreJsonTextarea').value;
+  const rawEl = document.getElementById('restoreJsonTextarea');
+  if (!rawEl) return;
+  const rawText = rawEl.value;
   const parsed = previewRestoreJson(rawText);
   if (!parsed) return;
   pushUndoState('استرجاع نسخة احتياطية من ملف');
-  const mode = document.getElementById('restoreModeSelect').value;
+  const modeEl = document.getElementById('restoreModeSelect');
+  const mode = modeEl ? modeEl.value : 'MERGE';
   const restoreIso = getNextMonotonicIso();
   if (mode === 'REPLACE') {
     appState.clients = (parsed.clients || []).map(c => {
@@ -123,7 +127,8 @@ async function executeRestore() {
   renderClients();
   renderTasks();
   if (isAppUnlocked()) evaluateAndFireScheduledNotifications(false);
-  document.getElementById('backupModalBackdrop').classList.remove('open');
+  const backupModal = document.getElementById('backupModalBackdrop');
+  if (backupModal) backupModal.classList.remove('open');
   showToast('تم استرجاع النسخة الاحتياطية بنجاح (' + appState.clients.length + ' ممول)', { canUndo: true });
 }
 
@@ -145,6 +150,7 @@ function exportClientsCsv() {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
   showToast('تم تحميل جدول العملاء بصيغة CSV');
 }
 
@@ -153,30 +159,34 @@ function openClientModal(clientId) {
   closeCustomValueAdder('clientFormCategory');
   closeCustomValueAdder('clientFormStatus');
   const modal = document.getElementById('clientModalBackdrop');
+  if (!modal) return;
   const delBtn = document.getElementById('btnDeleteClientInModal');
+  const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  const titleEl = document.getElementById('clientModalTitle');
   if (clientId) {
     const c = appState.clients.find(item => item.id === clientId);
     if (!c) return;
     normalizeClientDates(c);
-    document.getElementById('clientModalTitle').textContent = 'تعديل ملف: ' + c.name;
-    document.getElementById('clientFormId').value = c.id;
-    document.getElementById('clientFormName').value = c.name;
-    document.getElementById('clientFormOffice').value = c.office || '';
-    document.getElementById('clientFormActivity').value = c.activity || '';
-    document.getElementById('clientFormCategory').value = c.category || BASE_CATEGORIES[0];
-    document.getElementById('clientFormStatus').value = c.status || BASE_STATUSES[1];
-    document.getElementById('clientFormProblem').value = c.problem || '';
-    document.getElementById('clientFormAction').value = c.action || '';
+    if (titleEl) titleEl.textContent = 'تعديل ملف: ' + c.name;
+    setVal('clientFormId', c.id);
+    setVal('clientFormName', c.name);
+    setVal('clientFormOffice', c.office || '');
+    setVal('clientFormActivity', c.activity || '');
+    setVal('clientFormCategory', c.category || BASE_CATEGORIES[0]);
+    setVal('clientFormStatus', c.status || BASE_STATUSES[1]);
+    setVal('clientFormProblem', c.problem || '');
+    setVal('clientFormAction', c.action || '');
     renderClientDateRowsInModal(c.dates);
-    delBtn.style.display = 'inline-flex';
+    if (delBtn) delBtn.style.display = 'inline-flex';
   } else {
-    document.getElementById('clientModalTitle').textContent = 'إضافة ملف ممول جديد';
-    document.getElementById('clientForm').reset();
-    document.getElementById('clientFormId').value = '';
-    document.getElementById('clientFormCategory').value = BASE_CATEGORIES[0];
-    document.getElementById('clientFormStatus').value = BASE_STATUSES[0];
+    if (titleEl) titleEl.textContent = 'إضافة ملف ممول جديد';
+    const formEl = document.getElementById('clientForm');
+    if (formEl) formEl.reset();
+    setVal('clientFormId', '');
+    setVal('clientFormCategory', BASE_CATEGORIES[0]);
+    setVal('clientFormStatus', BASE_STATUSES[0]);
     renderClientDateRowsInModal([]);
-    delBtn.style.display = 'none';
+    if (delBtn) delBtn.style.display = 'none';
   }
   modal.classList.add('open');
 }
@@ -185,7 +195,10 @@ function openTaskModal(taskId) {
   populateClientDropdowns();
   const s = appState.tasks.find(item => item.id === taskId);
   if (!s) return;
-  document.getElementById('taskFormId').value = s.id;
+  const taskModal = document.getElementById('taskModalBackdrop');
+  if (!taskModal) return;
+  const taskIdEl = document.getElementById('taskFormId');
+  if (taskIdEl) taskIdEl.value = s.id;
   const sel = document.getElementById('taskFormClient');
   if (sel) sel.value = s.clientId || '';
   const nameInp = document.getElementById('taskFormClientName');
@@ -198,15 +211,20 @@ function openTaskModal(taskId) {
   if (timeInp) timeInp.value = s.sessionTime || '';
   const detailsInp = document.getElementById('taskFormTitle');
   if (detailsInp) detailsInp.value = s.details || s.title || '';
-  document.getElementById('taskModalBackdrop').classList.add('open');
+  taskModal.classList.add('open');
 }
 
 function openPostponeModal(sessionId) {
   const s = appState.tasks.find(item => item.id === sessionId);
   if (!s) return;
-  document.getElementById('postponeSessionId').value = s.id;
-  document.getElementById('postponeClientNameDisplay').textContent = s.clientName + (s.appealNum ? (' (طعن رقم: ' + s.appealNum + ')') : '');
-  document.getElementById('postponeOldDateDisplay').textContent = s.sessionDate || 'غير محدد';
+  const postponeModal = document.getElementById('postponeModalBackdrop');
+  if (!postponeModal) return;
+  const pIdEl = document.getElementById('postponeSessionId');
+  const pNameEl = document.getElementById('postponeClientNameDisplay');
+  const pOldEl = document.getElementById('postponeOldDateDisplay');
+  if (pIdEl) pIdEl.value = s.id;
+  if (pNameEl) pNameEl.textContent = s.clientName + (s.appealNum ? (' (طعن رقم: ' + s.appealNum + ')') : '');
+  if (pOldEl) pOldEl.textContent = s.sessionDate || 'غير محدد';
   const newDateInput = document.getElementById('postponeNewDateInput');
   if (newDateInput) {
     newDateInput.value = '';
@@ -223,7 +241,7 @@ function openPostponeModal(sessionId) {
   if (historyPreview) {
     historyPreview.innerHTML = renderSessionPostponementTimelineHtml(s.history);
   }
-  document.getElementById('postponeModalBackdrop').classList.add('open');
+  postponeModal.classList.add('open');
   if (newDateInput) setTimeout(() => newDateInput.focus(), 40);
 }
 
@@ -258,11 +276,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   updateHeaderSaveTime();
   updateUndoRedoButtons();
   updateStorageStatusBadge();
-  if (isAppUnlocked()) {
+  if (!isAppLocked()) {
     pullFromSupabase(false);
     evaluateAndFireScheduledNotifications(false);
+    initSupabaseRealtimeSocket();
   }
-  initSupabaseRealtimeSocket();
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').then(() => {
       updateNotificationUiBar();
