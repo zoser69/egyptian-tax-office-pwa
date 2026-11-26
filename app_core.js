@@ -42,11 +42,17 @@ const BASE_TASK_TYPES = [
 let monotonicTimeCursor = 0;
 let entitySeqCounter = 0;
 
+function parseIsoMs(isoStr) {
+  if (!isoStr || typeof isoStr !== 'string') return 0;
+  const ms = Date.parse(isoStr.trim());
+  return Number.isFinite(ms) ? ms : 0;
+}
+
 function getNextMonotonicIso() {
   const prevSavedMs = (typeof appState !== 'undefined' && appState && appState.lastSaved)
-    ? Date.parse(appState.lastSaved)
+    ? parseIsoMs(appState.lastSaved)
     : 0;
-  const baseMs = Math.max(Date.now(), isNaN(prevSavedMs) ? 0 : prevSavedMs, monotonicTimeCursor);
+  const baseMs = Math.max(Date.now(), prevSavedMs, monotonicTimeCursor);
   monotonicTimeCursor = baseMs + 1;
   return new Date(monotonicTimeCursor).toISOString();
 }
@@ -142,6 +148,10 @@ function isAppUnlocked() {
   return false;
 }
 
+function isAppLocked() {
+  return !isAppUnlocked();
+}
+
 function applyAuthLockState() {
   const lockScreen = document.getElementById('authLockScreen');
   const appShell = document.querySelector('.app-shell');
@@ -193,6 +203,7 @@ function unlockApp(rememberDevice) {
   showToast('تم فتح دفتر المكتب الضريبي');
   pullFromSupabase(false);
   evaluateAndFireScheduledNotifications(false);
+  initSupabaseRealtimeSocket();
 }
 
 function lockApp() {
@@ -287,11 +298,25 @@ function formatArabicTime12h(hhmm) {
 }
 
 function addLocalDaysToIso(dateStr, days) {
-  if (!dateStr || typeof dateStr !== 'string') return '';
+  if (!dateStr || typeof dateStr !== 'string') return null;
   const m = dateStr.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return '';
-  const dt = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10) + Number(days || 0));
-  if (isNaN(dt.getTime())) return '';
+  if (!m) return null;
+  const year = parseInt(m[1], 10);
+  const month = parseInt(m[2], 10);
+  const day = parseInt(m[3], 10);
+  const baseDt = new Date(year, month - 1, day);
+  if (
+    isNaN(baseDt.getTime()) ||
+    baseDt.getFullYear() !== year ||
+    baseDt.getMonth() !== month - 1 ||
+    baseDt.getDate() !== day
+  ) {
+    return null;
+  }
+  const offset = Number(days || 0);
+  if (!Number.isFinite(offset)) return null;
+  const dt = new Date(year, month - 1, day + offset);
+  if (isNaN(dt.getTime())) return null;
   const y = dt.getFullYear();
   const mo = String(dt.getMonth() + 1).padStart(2, '0');
   const d = String(dt.getDate()).padStart(2, '0');
@@ -412,48 +437,61 @@ function mergeSessionHistories(histA, histB) {
       map.set(key, JSON.parse(JSON.stringify(h)));
     } else {
       const existing = map.get(key);
-      if ((h.note && !existing.note) || (String(h.changedAt || '') > String(existing.changedAt || ''))) {
+      if ((h.note && !existing.note) || (parseIsoMs(h.changedAt) > parseIsoMs(existing.changedAt))) {
         map.set(key, JSON.parse(JSON.stringify(h)));
       }
     }
   });
   return Array.from(map.values()).sort((a, b) => {
-    return String(a.changedAt || '').localeCompare(String(b.changedAt || ''));
+    return parseIsoMs(a.changedAt) - parseIsoMs(b.changedAt);
   });
 }
 
 function mergeTwoAppStates(localObj, remoteObj) {
-  if (!remoteObj || typeof remoteObj !== 'object') return localObj;
-  sanitizeLegacySeedState(localObj);
-  sanitizeLegacySeedState(remoteObj);
-  ensureDeletedIdsShape(localObj);
-  ensureDeletedIdsShape(remoteObj);
+  const localBase = (localObj && typeof localObj === 'object') ? JSON.parse(JSON.stringify(localObj)) : {
+    version: 3,
+    seedVersion: 3,
+    lastSaved: SEED_EPOCH_ISO,
+    clients: [],
+    tasks: [],
+    deletedIds: { clients: {}, tasks: {} },
+    customLists: { categories: [], statuses: [], taskTypes: [] }
+  };
+  if (!remoteObj || typeof remoteObj !== 'object') return localBase;
+  const remoteBase = JSON.parse(JSON.stringify(remoteObj));
 
-  const mergedDeletedClients = Object.assign({}, localObj.deletedIds.clients, remoteObj.deletedIds.clients);
-  Object.keys(localObj.deletedIds.clients).forEach(id => {
-    const tA = localObj.deletedIds.clients[id] || '';
-    const tB = remoteObj.deletedIds.clients[id] || '';
-    mergedDeletedClients[id] = tA >= tB ? tA : tB;
+  sanitizeLegacySeedState(localBase);
+  sanitizeLegacySeedState(remoteBase);
+  ensureDeletedIdsShape(localBase);
+  ensureDeletedIdsShape(remoteBase);
+
+  const mergedDeletedClients = Object.assign({}, localBase.deletedIds.clients, remoteBase.deletedIds.clients);
+  Object.keys(mergedDeletedClients).forEach(id => {
+    const tA = localBase.deletedIds.clients[id] || '';
+    const tB = remoteBase.deletedIds.clients[id] || '';
+    mergedDeletedClients[id] = parseIsoMs(tA) >= parseIsoMs(tB) ? tA : tB;
   });
 
-  const mergedDeletedTasks = Object.assign({}, localObj.deletedIds.tasks, remoteObj.deletedIds.tasks);
-  Object.keys(localObj.deletedIds.tasks).forEach(id => {
-    const tA = localObj.deletedIds.tasks[id] || '';
-    const tB = remoteObj.deletedIds.tasks[id] || '';
-    mergedDeletedTasks[id] = tA >= tB ? tA : tB;
+  const mergedDeletedTasks = Object.assign({}, localBase.deletedIds.tasks, remoteBase.deletedIds.tasks);
+  Object.keys(mergedDeletedTasks).forEach(id => {
+    const tA = localBase.deletedIds.tasks[id] || '';
+    const tB = remoteBase.deletedIds.tasks[id] || '';
+    mergedDeletedTasks[id] = parseIsoMs(tA) >= parseIsoMs(tB) ? tA : tB;
   });
 
   // 1. Merge Clients by ID (preserve local ordering first, then merge remote updates/additions)
   const clientMap = new Map();
-  const localClients = Array.isArray(localObj.clients) ? localObj.clients : [];
-  const remoteClients = Array.isArray(remoteObj.clients) ? remoteObj.clients : [];
+  const localClients = Array.isArray(localBase.clients) ? localBase.clients : [];
+  const remoteClients = Array.isArray(remoteBase.clients) ? remoteBase.clients : [];
 
   localClients.forEach(lc => {
     if (!lc || !lc.id) return;
     const delTime = mergedDeletedClients[lc.id];
     const lcTime = lc.updatedAt || SEED_EPOCH_ISO;
-    if (delTime && delTime >= lcTime) return;
-    if (delTime && lcTime > delTime) delete mergedDeletedClients[lc.id];
+    const delMs = parseIsoMs(delTime);
+    const lcMs = parseIsoMs(lcTime);
+    if (delTime && delMs >= lcMs) return;
+    if (delTime && lcMs > delMs) delete mergedDeletedClients[lc.id];
     const copy = JSON.parse(JSON.stringify(lc));
     normalizeClientDates(copy);
     clientMap.set(copy.id, copy);
@@ -463,16 +501,18 @@ function mergeTwoAppStates(localObj, remoteObj) {
     if (!rc || !rc.id) return;
     const delTime = mergedDeletedClients[rc.id];
     const rcTime = rc.updatedAt || SEED_EPOCH_ISO;
-    if (delTime && delTime >= rcTime) return;
-    if (delTime && rcTime > delTime) delete mergedDeletedClients[rc.id];
+    const delMs = parseIsoMs(delTime);
+    const rcMs = parseIsoMs(rcTime);
+    if (delTime && delMs >= rcMs) return;
+    if (delTime && rcMs > delMs) delete mergedDeletedClients[rc.id];
     const copy = JSON.parse(JSON.stringify(rc));
     normalizeClientDates(copy);
     if (!clientMap.has(copy.id)) {
       clientMap.set(copy.id, copy);
     } else {
       const lc = clientMap.get(copy.id);
-      const lcTime = lc.updatedAt || SEED_EPOCH_ISO;
-      if (rcTime > lcTime) {
+      const lcMs = parseIsoMs(lc.updatedAt || SEED_EPOCH_ISO);
+      if (rcMs > lcMs) {
         clientMap.set(copy.id, copy);
       }
     }
@@ -480,17 +520,19 @@ function mergeTwoAppStates(localObj, remoteObj) {
 
   // 2. Merge Sessions (tasks) by ID + union of postponement history
   const taskMap = new Map();
-  const localTasks = Array.isArray(localObj.tasks) ? localObj.tasks : [];
-  const remoteTasks = Array.isArray(remoteObj.tasks) ? remoteObj.tasks : [];
+  const localTasks = Array.isArray(localBase.tasks) ? localBase.tasks : [];
+  const remoteTasks = Array.isArray(remoteBase.tasks) ? remoteBase.tasks : [];
 
   localTasks.forEach(ltRaw => {
     if (!ltRaw || typeof ltRaw !== 'object') return;
     const lt = normalizeSessionItem(JSON.parse(JSON.stringify(ltRaw)));
     if (!lt || !lt.id) return;
     const delTime = mergedDeletedTasks[lt.id];
-    const ltTime = lt.updatedAt || localObj.lastSaved || SEED_EPOCH_ISO;
-    if (delTime && delTime >= ltTime) return;
-    if (delTime && ltTime > delTime) delete mergedDeletedTasks[lt.id];
+    const ltTime = lt.updatedAt || localBase.lastSaved || SEED_EPOCH_ISO;
+    const delMs = parseIsoMs(delTime);
+    const ltMs = parseIsoMs(ltTime);
+    if (delTime && delMs >= ltMs) return;
+    if (delTime && ltMs > delMs) delete mergedDeletedTasks[lt.id];
     taskMap.set(lt.id, lt);
   });
 
@@ -499,19 +541,21 @@ function mergeTwoAppStates(localObj, remoteObj) {
     const rt = normalizeSessionItem(JSON.parse(JSON.stringify(rtRaw)));
     if (!rt || !rt.id) return;
     const delTime = mergedDeletedTasks[rt.id];
-    const rtTime = rt.updatedAt || remoteObj.lastSaved || SEED_EPOCH_ISO;
-    if (delTime && delTime >= rtTime) return;
-    if (delTime && rtTime > delTime) delete mergedDeletedTasks[rt.id];
+    const rtTime = rt.updatedAt || remoteBase.lastSaved || SEED_EPOCH_ISO;
+    const delMs = parseIsoMs(delTime);
+    const rtMs = parseIsoMs(rtTime);
+    if (delTime && delMs >= rtMs) return;
+    if (delTime && rtMs > delMs) delete mergedDeletedTasks[rt.id];
     if (!taskMap.has(rt.id)) {
       taskMap.set(rt.id, rt);
     } else {
       const lt = taskMap.get(rt.id);
-      const ltTime = lt.updatedAt || localObj.lastSaved || SEED_EPOCH_ISO;
-      const winner = (ltTime >= rtTime) ? JSON.parse(JSON.stringify(lt)) : JSON.parse(JSON.stringify(rt));
+      const ltMs = parseIsoMs(lt.updatedAt || localBase.lastSaved || SEED_EPOCH_ISO);
+      const winner = (ltMs >= rtMs) ? JSON.parse(JSON.stringify(lt)) : JSON.parse(JSON.stringify(rt));
       winner.history = mergeSessionHistories(lt.history, rt.history);
       if (winner.history.length > 0) {
         const lastHist = winner.history[winner.history.length - 1];
-        if (lastHist.toDate && String(lastHist.changedAt || '') > String(winner.updatedAt || '')) {
+        if (lastHist.toDate && parseIsoMs(lastHist.changedAt) > parseIsoMs(winner.updatedAt)) {
           winner.sessionDate = lastHist.toDate;
           winner.due = lastHist.toDate;
         }
@@ -527,15 +571,15 @@ function mergeTwoAppStates(localObj, remoteObj) {
     taskTypes: []
   };
   ['categories', 'statuses', 'taskTypes'].forEach(k => {
-    const a = (localObj.customLists && Array.isArray(localObj.customLists[k])) ? localObj.customLists[k] : [];
-    const b = (remoteObj.customLists && Array.isArray(remoteObj.customLists[k])) ? remoteObj.customLists[k] : [];
+    const a = (localBase.customLists && Array.isArray(localBase.customLists[k])) ? localBase.customLists[k] : [];
+    const b = (remoteBase.customLists && Array.isArray(remoteBase.customLists[k])) ? remoteBase.customLists[k] : [];
     const set = new Set(a.concat(b).filter(Boolean));
     mergedCustomLists[k] = Array.from(set);
   });
 
-  const latestSaved = (String(remoteObj.lastSaved || '') > String(localObj.lastSaved || ''))
-    ? remoteObj.lastSaved
-    : localObj.lastSaved;
+  const latestSaved = (parseIsoMs(remoteBase.lastSaved) > parseIsoMs(localBase.lastSaved))
+    ? remoteBase.lastSaved
+    : localBase.lastSaved;
 
   return {
     version: 3,
@@ -547,7 +591,7 @@ function mergeTwoAppStates(localObj, remoteObj) {
       clients: mergedDeletedClients,
       tasks: mergedDeletedTasks
     },
-    taskFilter: localObj.taskFilter || 'OPEN',
+    taskFilter: localBase.taskFilter || 'OPEN',
     customLists: mergedCustomLists
   };
 }
@@ -614,7 +658,10 @@ function persistUndoHistory() {
     try {
       const tx = db.transaction(DB_STORE, 'readwrite');
       tx.objectStore(DB_STORE).put(payload, 'undo_history');
-      tx.oncomplete = () => { try { db.close(); } catch (e) {} };
+      const closeDb = () => { try { db.close(); } catch (e) {} };
+      tx.oncomplete = closeDb;
+      tx.onerror = closeDb;
+      tx.onabort = closeDb;
     } catch (e) {
       try { db.close(); } catch (err) {}
     }
@@ -636,6 +683,8 @@ async function loadUndoHistory() {
           const req = tx.objectStore(DB_STORE).get('undo_history');
           req.onsuccess = () => res(req.result);
           req.onerror = () => res(null);
+          tx.onerror = () => res(null);
+          tx.onabort = () => res(null);
         });
         try { db.close(); } catch (e) {}
         if (idbRaw) parsed = JSON.parse(idbRaw);
@@ -692,18 +741,32 @@ function pushUndoState(actionLabel) {
   updateUndoRedoButtons();
 }
 
+function sortObjectKeysDeep(val) {
+  if (Array.isArray(val)) return val.map(sortObjectKeysDeep);
+  if (val && typeof val === 'object') {
+    const sorted = {};
+    Object.keys(val).sort().forEach(k => {
+      sorted[k] = sortObjectKeysDeep(val[k]);
+    });
+    return sorted;
+  }
+  return val;
+}
+
 function entityContentSignature(obj) {
   if (!obj || typeof obj !== 'object') return '';
   const clone = Object.assign({}, obj);
   delete clone.updatedAt;
-  return JSON.stringify(clone);
+  return JSON.stringify(sortObjectKeysDeep(clone));
 }
 
 function reviveRestoredEntities(prevClientsMap, prevTasksMap, prevDeletedClients, prevDeletedTasks) {
   ensureDeletedIdsShape(appState);
   const reviveIso = getNextMonotonicIso();
+  const currentClientIds = new Set();
   (appState.clients || []).forEach(c => {
     if (!c || !c.id) return;
+    currentClientIds.add(c.id);
     const prev = prevClientsMap.get(c.id);
     const wasDeletedOrMissing = !prev || Boolean(prevDeletedClients[c.id]);
     const wasModified = prev && entityContentSignature(c) !== entityContentSignature(prev);
@@ -712,14 +775,27 @@ function reviveRestoredEntities(prevClientsMap, prevTasksMap, prevDeletedClients
       delete appState.deletedIds.clients[c.id];
     }
   });
+  prevClientsMap.forEach((_, prevId) => {
+    if (!currentClientIds.has(prevId)) {
+      appState.deletedIds.clients[prevId] = reviveIso;
+    }
+  });
+
+  const currentTaskIds = new Set();
   (appState.tasks || []).forEach(t => {
     if (!t || !t.id) return;
+    currentTaskIds.add(t.id);
     const prev = prevTasksMap.get(t.id);
     const wasDeletedOrMissing = !prev || Boolean(prevDeletedTasks[t.id]);
     const wasModified = prev && entityContentSignature(t) !== entityContentSignature(prev);
     if (wasDeletedOrMissing || wasModified) {
       t.updatedAt = reviveIso;
       delete appState.deletedIds.tasks[t.id];
+    }
+  });
+  prevTasksMap.forEach((_, prevId) => {
+    if (!currentTaskIds.has(prevId)) {
+      appState.deletedIds.tasks[prevId] = reviveIso;
     }
   });
 }
@@ -754,54 +830,77 @@ function applySnapshotStringToAppState(snapshotStr, options) {
   return true;
 }
 
+let isUndoRedoInFlight = false;
 async function performUndo() {
+  if (isUndoRedoInFlight) return;
   if (undoStack.length === 0) {
     showToast('لا توجد خطوات سابقة للتراجع عنها');
     return;
   }
-  const entry = undoStack.pop();
-  const currentSnapshotStr = getDeepStateSnapshotString();
-  redoStack.push({
-    label: entry.label,
-    timestamp: getNextMonotonicIso(),
-    snapshotStr: currentSnapshotStr
-  });
-  if (redoStack.length > MAX_UNDO_STEPS) {
-    redoStack.shift();
+  isUndoRedoInFlight = true;
+  try {
+    const entry = undoStack.pop();
+    const currentSnapshotStr = getDeepStateSnapshotString();
+    const applied = applySnapshotStringToAppState(entry.snapshotStr, { reviveDeleted: true });
+    if (!applied) {
+      undoStack.push(entry);
+      showToast('تعذر استرجاع الخطوة السابقة');
+      return;
+    }
+    redoStack.push({
+      label: entry.label,
+      timestamp: getNextMonotonicIso(),
+      snapshotStr: currentSnapshotStr
+    });
+    if (redoStack.length > MAX_UNDO_STEPS) {
+      redoStack.shift();
+    }
+    persistUndoHistory();
+    updateUndoRedoButtons();
+    await saveState(true, 'تراجع عن: ' + entry.label);
+    renderClients();
+    renderTasks();
+    renderCheckpointsTimeline();
+    showToast('تم التراجع عن: ' + entry.label, { canUndo: false });
+  } finally {
+    isUndoRedoInFlight = false;
   }
-  applySnapshotStringToAppState(entry.snapshotStr, { reviveDeleted: true });
-  persistUndoHistory();
-  updateUndoRedoButtons();
-  await saveState(true, 'تراجع عن: ' + entry.label);
-  renderClients();
-  renderTasks();
-  renderCheckpointsTimeline();
-  showToast('تم التراجع عن: ' + entry.label, { canUndo: false });
 }
 
 async function performRedo() {
+  if (isUndoRedoInFlight) return;
   if (redoStack.length === 0) {
     showToast('لا توجد خطوات لإعادتها');
     return;
   }
-  const entry = redoStack.pop();
-  const currentSnapshotStr = getDeepStateSnapshotString();
-  undoStack.push({
-    label: entry.label,
-    timestamp: getNextMonotonicIso(),
-    snapshotStr: currentSnapshotStr
-  });
-  if (undoStack.length > MAX_UNDO_STEPS) {
-    undoStack.shift();
+  isUndoRedoInFlight = true;
+  try {
+    const entry = redoStack.pop();
+    const currentSnapshotStr = getDeepStateSnapshotString();
+    const applied = applySnapshotStringToAppState(entry.snapshotStr, { reviveDeleted: true });
+    if (!applied) {
+      redoStack.push(entry);
+      showToast('تعذر إعادة الخطوة');
+      return;
+    }
+    undoStack.push({
+      label: entry.label,
+      timestamp: getNextMonotonicIso(),
+      snapshotStr: currentSnapshotStr
+    });
+    if (undoStack.length > MAX_UNDO_STEPS) {
+      undoStack.shift();
+    }
+    persistUndoHistory();
+    updateUndoRedoButtons();
+    await saveState(true, 'إعادة: ' + entry.label);
+    renderClients();
+    renderTasks();
+    renderCheckpointsTimeline();
+    showToast('تمت إعادة: ' + entry.label, { canUndo: true });
+  } finally {
+    isUndoRedoInFlight = false;
   }
-  applySnapshotStringToAppState(entry.snapshotStr, { reviveDeleted: true });
-  persistUndoHistory();
-  updateUndoRedoButtons();
-  await saveState(true, 'إعادة: ' + entry.label);
-  renderClients();
-  renderTasks();
-  renderCheckpointsTimeline();
-  showToast('تمت إعادة: ' + entry.label, { canUndo: true });
 }
 
 // =========================================================================
@@ -856,6 +955,7 @@ async function persistCheckpoints() {
       await new Promise((res) => {
         tx.oncomplete = () => res();
         tx.onerror = () => res();
+        tx.onabort = () => res();
       });
       try { db.close(); } catch (e) {}
     }
@@ -872,6 +972,8 @@ async function loadCheckpoints() {
         const req = tx.objectStore(DB_STORE).get('checkpoints_list');
         req.onsuccess = () => res(req.result);
         req.onerror = () => res(null);
+        tx.onerror = () => res(null);
+        tx.onabort = () => res(null);
       });
       if (idbRaw) {
         loadedList = typeof idbRaw === 'string' ? JSON.parse(idbRaw) : idbRaw;
@@ -936,7 +1038,7 @@ function renderCheckpointsTimeline() {
     }
     const badgeHtml = cp.isManual
       ? '<span class="tag-inline safe">يدوي</span>'
-      : (index === 0 ? '<span class="tag-inline brass">الأحدث (HEAD)</span>' : '<span class="tag-inline">تلقائي</span>');
+      : (index === 0 ? '<span class="tag-inline brass">الأحدث</span>' : '<span class="tag-inline">تلقائي</span>');
     return '<div class="checkpoint-card" data-checkpoint-row="' + escapeHtml(cp.id) + '">' +
       '<div class="checkpoint-info">' +
         '<div class="checkpoint-top-line">' +
@@ -951,7 +1053,7 @@ function renderCheckpointsTimeline() {
         '</div>' +
       '</div>' +
       '<div class="checkpoint-actions">' +
-        '<button type="button" class="btn btn-sm btn-soft" data-action="restore-checkpoint" data-cp-id="' + escapeHtml(cp.id) + '" title="استرجاع الحالة إلى هذه النقطة">استرجاع (Checkout)</button>' +
+        '<button type="button" class="btn btn-sm btn-soft" data-action="restore-checkpoint" data-cp-id="' + escapeHtml(cp.id) + '" title="استرجاع الحالة إلى هذه النقطة">استرجاع</button>' +
         '<button type="button" class="btn btn-sm" data-action="download-checkpoint" data-cp-id="' + escapeHtml(cp.id) + '" title="تنزيل هذه النقطة كملف JSON">تحميل ملف</button>' +
       '</div>' +
     '</div>';
@@ -959,18 +1061,31 @@ function renderCheckpointsTimeline() {
 }
 
 async function restoreCheckpointById(cpId) {
+  if (isUndoRedoInFlight) return;
   const cp = checkpointsList.find(item => item.id === cpId);
   if (!cp || !cp.snapshot) {
     showToast('لم يتم العثور على نقطة الاسترجاع المطلوبة');
     return;
   }
-  pushUndoState('استرجاع نقطة حفظ: ' + cp.id);
-  applySnapshotStringToAppState(cp.snapshot, { reviveDeleted: true });
-  await saveState(true, 'استرجاع نقطة حفظ (' + cp.id + '): ' + cp.message);
-  renderClients();
-  renderTasks();
-  renderCheckpointsTimeline();
-  showToast('تم استرجاع نقطة الحفظ (' + cp.id + ') بنجاح', { canUndo: true });
+  isUndoRedoInFlight = true;
+  try {
+    pushUndoState('استرجاع نقطة حفظ: ' + cp.id);
+    const applied = applySnapshotStringToAppState(cp.snapshot, { reviveDeleted: true });
+    if (!applied) {
+      undoStack.pop();
+      persistUndoHistory();
+      updateUndoRedoButtons();
+      showToast('تعذر استرجاع نقطة الحفظ المطلوبة');
+      return;
+    }
+    await saveState(true, 'استرجاع نقطة حفظ (' + cp.id + '): ' + cp.message);
+    renderClients();
+    renderTasks();
+    renderCheckpointsTimeline();
+    showToast('تم استرجاع نقطة الحفظ (' + cp.id + ') بنجاح', { canUndo: true });
+  } finally {
+    isUndoRedoInFlight = false;
+  }
 }
 
 function downloadCheckpointById(cpId) {
@@ -1253,14 +1368,16 @@ async function evaluateAndFireScheduledNotifications(forceNotifyForEntityId) {
         ? (' (مؤجلة من ' + s.history[s.history.length - 1].fromDate + ')')
         : '';
 
-      markNotifKeySent(notifKey);
-      sentLog[notifKey] = true;
-      await sendLocalDeviceNotification(
+      const sentSession = await sendLocalDeviceNotification(
         'تنبيه جلسة: ' + s.clientName + appealLabel,
         'موعد الجلسة: ' + timingLabel + timeDisplay + prevInfo + (s.details ? ' - ' + s.details : ''),
         notifKey,
         './index.html#view-tasks'
       );
+      if (sentSession) {
+        markNotifKeySent(notifKey);
+        sentLog[notifKey] = true;
+      }
     }
 
     // 2. Check Client 30-day appeal deadlines & custom dates
@@ -1287,14 +1404,16 @@ async function evaluateAndFireScheduledNotifications(forceNotifyForEntityId) {
               const remainingLabel = diffDeadline === 0
                 ? ('اليوم آخر ميعاد للطعن (' + deadlineIso + ')' + timeDisplay)
                 : ('متبقي ' + diffDeadline + ' يوم (آخر ميعاد ' + deadlineIso + ')' + timeDisplay);
-              markNotifKeySent(key);
-              sentLog[key] = true;
-              await sendLocalDeviceNotification(
+              const sent30 = await sendLocalDeviceNotification(
                 'مهلة طعن 30 يوم: ' + c.name,
                 (d.label || 'استلام نموذج') + ' بتاريخ ' + d.date + ' - ' + remainingLabel,
                 key,
                 './index.html#view-clients'
               );
+              if (sent30) {
+                markNotifKeySent(key);
+                sentLog[key] = true;
+              }
             }
           }
         } else {
@@ -1303,14 +1422,16 @@ async function evaluateAndFireScheduledNotifications(forceNotifyForEntityId) {
             if (!isClientForced && diffDate === 0 && !hasTargetTimeArrived(d.time)) continue;
             const key = 'clientdate_' + c.id + '_' + d.id + '_' + d.date + '_' + timeTag + '_' + todayIso;
             if (!isClientForced && sentLog[key]) continue;
-            markNotifKeySent(key);
-            sentLog[key] = true;
-            await sendLocalDeviceNotification(
+            const sentDate = await sendLocalDeviceNotification(
               'ميعاد ملف ممول: ' + c.name,
               (d.label || 'ميعاد') + ' بتاريخ ' + d.date + timeDisplay + (diffDate === 0 ? ' (اليوم)' : (' (خلال ' + diffDate + ' يوم)')),
               key,
               './index.html#view-clients'
             );
+            if (sentDate) {
+              markNotifKeySent(key);
+              sentLog[key] = true;
+            }
           }
         }
       }
@@ -1337,7 +1458,10 @@ async function persistAppStateLocallyOnly() {
     if (db) {
       const tx = db.transaction(DB_STORE, 'readwrite');
       tx.objectStore(DB_STORE).put(raw, 'main');
-      tx.oncomplete = () => { try { db.close(); } catch (e) {} };
+      const closeDb = () => { try { db.close(); } catch (e) {} };
+      tx.oncomplete = closeDb;
+      tx.onerror = closeDb;
+      tx.onabort = closeDb;
     }
   } catch (err) {}
 }
@@ -1354,7 +1478,9 @@ async function syncToSupabase(commitMsg, syncOpts) {
   }
   if (isSyncInFlight) {
     pendingResyncMessage = message;
-    pendingResyncOpts = sOpts;
+    pendingResyncOpts = Object.assign({}, pendingResyncOpts || {}, sOpts, {
+      forceReplaceCloud: Boolean((pendingResyncOpts && pendingResyncOpts.forceReplaceCloud) || sOpts.forceReplaceCloud)
+    });
     setPendingSync(true);
     return false;
   }
@@ -1497,7 +1623,9 @@ async function applyIncomingRemoteState(remoteRecord) {
   }
   const remoteTime = remoteRecord.updated_at || remoteState.lastSaved || '';
   const localTime = appState.lastSaved || '';
-  if (remoteTime && localTime && remoteTime <= localTime && !isPendingSync()) {
+  const remoteMs = parseIsoMs(remoteTime);
+  const localMs = parseIsoMs(localTime);
+  if (remoteMs && localMs && remoteMs <= localMs && !isPendingSync()) {
     return false;
   }
 
@@ -1505,16 +1633,28 @@ async function applyIncomingRemoteState(remoteRecord) {
   const oldSessionDates = new Map((appState.tasks || []).map(s => [s.id, s.sessionDate]));
   const oldClientDates = new Map((appState.clients || []).map(c => [c.id, JSON.stringify(c.dates || [])]));
 
-  pushUndoState('مزامنة واردة من جهاز آخر');
-  await createLocalCheckpoint('نقطة حفظ تلقائية قبل مزامنة واردة من جهاز آخر', false);
-
   // Merge entity-by-entity so no local or remote addition/postponement is ever lost
+  const beforeSnap = getDeepStateSnapshotString(appState);
   const mergedState = mergeTwoAppStates(appState, remoteState);
+  const afterSnap = getDeepStateSnapshotString(mergedState);
   const remoteNormalized = mergeTwoAppStates(remoteState, remoteState);
-  const hasLocalUnpushedDiff = getDeepStateSnapshotString(mergedState) !== getDeepStateSnapshotString(remoteNormalized);
+  const hasLocalUnpushedDiff = afterSnap !== getDeepStateSnapshotString(remoteNormalized);
+
+  if (beforeSnap === afterSnap && !hasLocalUnpushedDiff) {
+    appState.lastSaved = remoteMs > localMs ? remoteTime : appState.lastSaved;
+    await persistAppStateLocallyOnly();
+    updateHeaderSaveTime();
+    updateStorageStatusBadge('SYNCED');
+    return false;
+  }
+
+  if (beforeSnap !== afterSnap) {
+    pushUndoState('مزامنة واردة من جهاز آخر');
+    await createLocalCheckpoint('نقطة حفظ تلقائية قبل مزامنة واردة من جهاز آخر', false);
+  }
 
   appState = mergedState;
-  appState.lastSaved = remoteTime > localTime ? remoteTime : getNextMonotonicIso();
+  appState.lastSaved = remoteMs > localMs ? remoteTime : getNextMonotonicIso();
 
   ensureCustomListsShape();
   normalizeAllClientsDates();
@@ -1589,14 +1729,12 @@ async function pullFromSupabase(isManualTrigger) {
     if (!res.ok) {
       let errBody = null;
       try { errBody = await res.json(); } catch (e) {}
-      isSyncInFlight = false;
-      setSyncButtonSpinning(false);
       if (errBody && errBody.code === 'PGRST205') {
         updateStorageStatusBadge('TABLE_MISSING');
         const banner = document.getElementById('supabaseSetupAlertBanner');
         if (banner) banner.style.display = 'block';
         if (isManualTrigger) {
-          showToast('لتفعيل المزامنة السحابية: انسخ كود SQL من نافذة النسخة الاحتياطية وشغله مرة واحدة في Supabase SQL Editor');
+          showToast('لتفعيل المزامنة السحابية: انسخ أوامر إعداد قاعدة البيانات من نافذة النسخة الاحتياطية ونفذها في لوحة إعداد قاعدة البيانات');
         }
       } else {
         updateStorageStatusBadge('OFFLINE');
@@ -1622,10 +1760,14 @@ async function pullFromSupabase(isManualTrigger) {
     const remote = rows[0];
     const remoteUpdatedAt = remote.updated_at || (remote.state_json && remote.state_json.lastSaved) || '';
     const localUpdatedAt = appState.lastSaved || '';
+    const remoteMs = parseIsoMs(remoteUpdatedAt);
+    const localMs = parseIsoMs(localUpdatedAt);
 
-    if (remote.device_id !== myDeviceId && remoteUpdatedAt > localUpdatedAt) {
+    if (remote.device_id !== myDeviceId && remoteMs > localMs) {
+      isSyncInFlight = false;
+      setSyncButtonSpinning(false);
       await applyIncomingRemoteState(remote);
-    } else if (localUpdatedAt > remoteUpdatedAt) {
+    } else if (localMs > remoteMs) {
       isSyncInFlight = false;
       setSyncButtonSpinning(false);
       const pushed = await syncToSupabase('مزامنة أحدث التعديلات المحلية');
@@ -1636,22 +1778,21 @@ async function pullFromSupabase(isManualTrigger) {
       updateStorageStatusBadge('SYNCED');
       if (isManualTrigger) showToast('البيانات متطابقة ومتزامنة بين جهازك والسحابة');
     }
-    isSyncInFlight = false;
-    setSyncButtonSpinning(false);
     return true;
   } catch (err) {
     updateStorageStatusBadge('OFFLINE');
-    isSyncInFlight = false;
-    setSyncButtonSpinning(false);
     if (isManualTrigger) {
       showToast('محفوظ محلياً (أوفلاين) - تعذر الوصول للسحابة حالياً');
     }
     return false;
+  } finally {
+    isSyncInFlight = false;
+    setSyncButtonSpinning(false);
   }
 }
 
 function initSupabaseRealtimeSocket() {
-  if (typeof window.WebSocket !== 'function' || navigator.onLine === false) return;
+  if (isAppLocked() || typeof window.WebSocket !== 'function' || navigator.onLine === false) return;
   try {
     if (realtimeSocket && (realtimeSocket.readyState === 0 || realtimeSocket.readyState === 1)) {
       return;
@@ -1691,16 +1832,17 @@ function initSupabaseRealtimeSocket() {
     };
     realtimeSocket.onmessage = function(event) {
       try {
+        const msg = JSON.parse(event.data);
+        if (!msg || msg.topic === 'phoenix' || msg.event === 'heartbeat' || msg.event === 'phx_reply') return;
         if (isPendingSync()) {
           syncToSupabase('مزامنة أحدث التعديلات المحلية المعلقة');
           return;
         }
-        const msg = JSON.parse(event.data);
-        if (!msg || !msg.payload) return;
+        if (!msg.payload) return;
         const data = msg.payload.data || msg.payload;
         const record = data.record || data.new;
         if (record && record.id === 'main_office' && record.device_id !== myDeviceId) {
-          if (record.updated_at && record.updated_at > appState.lastSaved) {
+          if (record.updated_at && parseIsoMs(record.updated_at) > parseIsoMs(appState.lastSaved)) {
             applyIncomingRemoteState(record);
           }
         }
@@ -1714,7 +1856,7 @@ function initSupabaseRealtimeSocket() {
       }
       if (realtimeReconnectTimer) clearTimeout(realtimeReconnectTimer);
       realtimeReconnectTimer = setTimeout(() => {
-        if (navigator.onLine !== false) initSupabaseRealtimeSocket();
+        if (navigator.onLine !== false && !isAppLocked()) initSupabaseRealtimeSocket();
       }, 30000);
     };
   } catch (e) {}
@@ -1771,11 +1913,13 @@ async function loadState() {
         const req = tx.objectStore(DB_STORE).get('main');
         req.onsuccess = () => res(req.result);
         req.onerror = () => res(null);
+        tx.onerror = () => res(null);
+        tx.onabort = () => res(null);
       });
       try { db.close(); } catch (e) {}
       if (idbRaw) {
         const idbParsed = JSON.parse(idbRaw);
-        if (!loaded || (idbParsed.lastSaved > loaded.lastSaved)) {
+        if (!loaded || parseIsoMs(idbParsed.lastSaved) > parseIsoMs(loaded.lastSaved)) {
           loaded = idbParsed;
         }
       }
@@ -1825,7 +1969,12 @@ function updateHeaderSaveTime() {
   const el = document.getElementById('lastSavedText');
   if (!el) return;
   try {
-    const dt = new Date(appState.lastSaved);
+    const ms = parseIsoMs(appState.lastSaved);
+    if (!ms) {
+      el.textContent = 'محفوظ تلقائياً';
+      return;
+    }
+    const dt = new Date(ms);
     el.textContent = 'آخر حفظ: ' + dt.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
   } catch (e) {
     el.textContent = 'محفوظ تلقائياً';
@@ -1858,7 +2007,8 @@ function escapeHtml(str) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function formatMoney(num) {
