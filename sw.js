@@ -1,4 +1,4 @@
-const CACHE_NAME = 'egyptian-tax-office-pwa-v14';
+const CACHE_NAME = 'tax-office-v15';
 const ASSETS = [
   './',
   './index.html',
@@ -32,7 +32,12 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  if (event.request.url.indexOf('supabase.co') !== -1) return;
+  try {
+    const reqUrl = new URL(event.request.url);
+    if (reqUrl.hostname.endsWith('supabase.co')) return;
+  } catch (e) {
+    return;
+  }
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const fetchPromise = fetch(event.request)
@@ -43,7 +48,7 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResp;
         })
-        .catch(() => cached);
+        .catch(() => cached || new Response('', { status: 503, statusText: 'Offline' }));
       return cached || fetchPromise;
     })
   );

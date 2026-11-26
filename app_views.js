@@ -151,11 +151,11 @@ function createClientDateRowElement(dateObj) {
   row.className = 'client-date-row';
   row.setAttribute('data-date-id', item.id || ('d_' + Date.now()));
   row.innerHTML =
-    '<input type="text" class="input-field date-row-label" list="clientDateLabelsList" placeholder="المسمى (مثال: استلام نموذج 19 / جلسة لجنة...)" value="' + escapeHtml(item.label || '') + '">' +
-    '<input type="date" class="input-field date-row-value" value="' + escapeHtml(item.date || '') + '">' +
-    '<input type="time" class="input-field date-row-time" title="وقت الإشعار (اختياري - الافتراضي 12:00 منتصف الليل)" value="' + escapeHtml(item.time || '') + '">' +
+    '<input type="text" class="input-field date-row-label" list="clientDateLabelsList" aria-label="مسمى التاريخ أو الميعاد" placeholder="المسمى (مثال: استلام نموذج 19 / جلسة لجنة...)" value="' + escapeHtml(item.label || '') + '">' +
+    '<input type="date" dir="ltr" class="input-field date-row-value" aria-label="التاريخ" value="' + escapeHtml(item.date || '') + '">' +
+    '<input type="time" dir="ltr" class="input-field date-row-time" aria-label="وقت الإشعار" title="وقت الإشعار (اختياري - الافتراضي 12:00 منتصف الليل)" value="' + escapeHtml(item.time || '') + '">' +
     '<label class="checkbox-inline-label" title="حساب مهلة الطعن 30 يوماً تلقائياً">' +
-      '<input type="checkbox" class="date-row-appeal30"' + (item.hasAppeal30 ? ' checked' : '') + '>' +
+      '<input type="checkbox" class="date-row-appeal30" aria-label="حساب مهلة الطعن 30 يوماً"' + (item.hasAppeal30 ? ' checked' : '') + '>' +
       '<span>مهلة 30 يوم</span>' +
     '</label>' +
     '<button type="button" class="btn btn-danger btn-remove-date-row" title="حذف التاريخ" aria-label="حذف التاريخ">&times;</button>';
@@ -231,7 +231,7 @@ function renderClients() {
     populatePrintOfficeReport();
     return;
   }
-  container.innerHTML = filtered.map((c, idx) => {
+  container.innerHTML = filtered.map((c) => {
     let statusClass = 'brass';
     let cardStateClass = '';
     if (c.status === 'عاجل / طعن') {
@@ -241,10 +241,9 @@ function renderClients() {
       statusClass = 'safe';
       cardStateClass = 'status-safe';
     }
-    const delay = Math.min(idx * 20, 200);
     const datesBadgesHtml = getClientDatesBadgesHtml(c);
     const metaLine = [c.office, c.category].filter(Boolean).map(escapeHtml).join(' · ');
-    return '<article class="client-card ' + cardStateClass + '" style="animation-delay:' + delay + 'ms;" data-client-id="' + escapeHtml(c.id) + '">' +
+    return '<article class="client-card ' + cardStateClass + '" data-client-id="' + escapeHtml(c.id) + '">' +
       '<div class="client-card-top">' +
         '<div>' +
           '<h3 class="client-name">' +
@@ -407,15 +406,14 @@ function renderTasks() {
     return;
   }
 
-  container.innerHTML = filtered.map((s, idx) => {
-    const delay = Math.min(idx * 20, 200);
+  container.innerHTML = filtered.map((s) => {
     const timingBadge = getSessionTimingBadgeHtml(s);
     const appealBadge = s.appealNum
       ? '<span class="tag-inline appeal-num-badge">طعن رقم: <strong class="num-tabular">' + escapeHtml(s.appealNum) + '</strong></span>'
-      : '<span class="tag-inline">بدون رقم طعن</span>';
+      : '';
     const historyHtml = renderSessionPostponementTimelineHtml(s.history);
 
-    return '<div class="task-row session-card-row ' + (s.done ? 'done' : '') + '" style="animation-delay:' + delay + 'ms;" data-session-id="' + escapeHtml(s.id) + '">' +
+    return '<div class="task-row session-card-row ' + (s.done ? 'done' : '') + '" data-session-id="' + escapeHtml(s.id) + '">' +
       '<div class="task-main">' +
         '<button type="button" class="task-check-btn" data-action="toggle-task" data-id="' + escapeHtml(s.id) + '" title="' + (s.done ? 'إعادة فتح الجلسة' : 'تحديد الجلسة كمنتهية') + '" aria-label="تغيير حالة الجلسة">' +
           (s.done
@@ -487,7 +485,7 @@ function populatePrintOfficeReport() {
           '<td class="num-tabular" style="width:28px; text-align:center; font-weight:700;">' + (i + 1) + '</td>' +
           '<td style="width:24%;"><strong>' + escapeHtml(s.clientName || '-') + '</strong></td>' +
           '<td class="num-tabular" style="width:16%; font-weight:700;">' + escapeHtml(s.appealNum || '-') + '</td>' +
-          '<td class="num-tabular" style="width:22%;"><strong>' + escapeHtml(s.sessionDate || '-') + '</strong><br><span style="font-size:8pt;">السابق: ' + escapeHtml(prevDatesStr) + '</span></td>' +
+          '<td style="width:22%;"><strong class="num-tabular">' + escapeHtml(s.sessionDate || '-') + '</strong><br><span style="font-size:8pt;">السابق: ' + escapeHtml(prevDatesStr) + '</span></td>' +
           '<td style="width:34%;">' + escapeHtml(s.details || '-') + '</td>' +
         '</tr>';
       }).join('');
@@ -598,4 +596,140 @@ function renderAndPrintLegalMemo() {
   currentPrintMode = 'MEMO';
   populatePrintLegalMemo();
   window.print();
+}
+
+function getFocusableElements(container) {
+  if (!container) return [];
+  const selector = 'a[href], button:not([disabled]), input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  return Array.from(container.querySelectorAll(selector)).filter(el => {
+    return el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
+  });
+}
+
+function getActiveDialogElement() {
+  const lockScreen = document.getElementById('authLockScreen');
+  if (lockScreen && !lockScreen.classList.contains('unlocked')) {
+    return lockScreen;
+  }
+  const modalIds = ['postponeModalBackdrop', 'taskModalBackdrop', 'backupModalBackdrop', 'clientModalBackdrop'];
+  for (let i = 0; i < modalIds.length; i++) {
+    const el = document.getElementById(modalIds[i]);
+    if (el && el.classList.contains('open')) return el;
+  }
+  return null;
+}
+
+function initModalAndTabAccessibility() {
+  if (typeof document === 'undefined') return;
+  const modalIds = ['clientModalBackdrop', 'backupModalBackdrop', 'taskModalBackdrop', 'postponeModalBackdrop'];
+  const returnFocusMap = new Map();
+
+  function focusFirstInDialog(dialog) {
+    const focusables = getFocusableElements(dialog);
+    if (focusables.length > 0 && !dialog.contains(document.activeElement)) {
+      setTimeout(() => focusables[0].focus(), 10);
+    }
+  }
+
+  modalIds.forEach(id => {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('open');
+      }
+    });
+    if (typeof MutationObserver !== 'undefined') {
+      let wasOpen = modal.classList.contains('open');
+      const obs = new MutationObserver(() => {
+        const isOpen = modal.classList.contains('open');
+        if (isOpen && !wasOpen) {
+          if (document.activeElement && !modal.contains(document.activeElement)) {
+            returnFocusMap.set(id, document.activeElement);
+          }
+          focusFirstInDialog(modal);
+        } else if (!isOpen && wasOpen) {
+          const prev = returnFocusMap.get(id);
+          returnFocusMap.delete(id);
+          if (prev && typeof prev.focus === 'function' && document.contains(prev)) {
+            setTimeout(() => prev.focus(), 10);
+          }
+        }
+        wasOpen = isOpen;
+      });
+      obs.observe(modal, { attributes: true, attributeFilter: ['class'] });
+    }
+  });
+
+  const lockScreen = document.getElementById('authLockScreen');
+  if (lockScreen && typeof MutationObserver !== 'undefined') {
+    let wasUnlocked = lockScreen.classList.contains('unlocked');
+    if (!wasUnlocked) {
+      focusFirstInDialog(lockScreen);
+    }
+    const lockObs = new MutationObserver(() => {
+      const isUnlocked = lockScreen.classList.contains('unlocked');
+      if (!isUnlocked && wasUnlocked) {
+        if (document.activeElement && !lockScreen.contains(document.activeElement)) {
+          returnFocusMap.set('authLockScreen', document.activeElement);
+        }
+        focusFirstInDialog(lockScreen);
+      } else if (isUnlocked && !wasUnlocked) {
+        const prev = returnFocusMap.get('authLockScreen');
+        returnFocusMap.delete('authLockScreen');
+        if (prev && typeof prev.focus === 'function' && document.contains(prev)) {
+          setTimeout(() => prev.focus(), 10);
+        }
+      }
+      wasUnlocked = isUnlocked;
+    });
+    lockObs.observe(lockScreen, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    const activeDialog = getActiveDialogElement();
+    if (!activeDialog) return;
+
+    if (e.key === 'Escape' && activeDialog.id !== 'authLockScreen') {
+      activeDialog.classList.remove('open');
+      return;
+    }
+
+    if (e.key === 'Tab') {
+      const focusables = getFocusableElements(activeDialog);
+      if (focusables.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first || !activeDialog.contains(document.activeElement)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last || !activeDialog.contains(document.activeElement)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+  });
+
+  document.querySelectorAll('.calc-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.calc-mode-btn').forEach(b => {
+        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+      });
+    });
+  });
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initModalAndTabAccessibility);
+  } else {
+    initModalAndTabAccessibility();
+  }
 }

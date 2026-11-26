@@ -10,10 +10,12 @@ function generateLegalMemo() {
   const type = typeSelectEl.value;
   const rawFormNum = (formNumEl ? formNumEl.value : '').trim();
   const formNum = rawFormNum || 'المقيد بالملف';
-  const client = appState.clients.find(c => c.id === clientId) || appState.clients[0];
+  const clientsList = (typeof appState !== 'undefined' && appState && Array.isArray(appState.clients)) ? appState.clients : [];
+  const client = clientsList.find(c => c.id === clientId) || clientsList[0];
   if (!client) return;
-  const clientDates = normalizeClientDates(client);
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const clientName = (client.name || '').trim() || 'الممول';
+  const clientDates = typeof normalizeClientDates === 'function' ? normalizeClientDates(client) : (Array.isArray(client.dates) ? client.dates : []);
+  const todayStr = typeof getLocalTodayIso === 'function' ? getLocalTodayIso() : new Date().toISOString().slice(0, 10);
   function pickBestDateEntryForMemo(keywords) {
     const kwList = Array.isArray(keywords) ? keywords : (keywords ? [keywords] : []);
     for (let i = 0; i < kwList.length; i++) {
@@ -64,7 +66,7 @@ function generateLegalMemo() {
     text =
       'السيد الأستاذ / رئيس ' + officeName + '\n' +
       'تحية طيبة وبعد،،،\n\n' +
-      'مقدمه لسيادتكم الممول / ' + client.name + ' (أو وكيله الرسمي بموجب توكيل / تفويض معتمد)، بشأن نشاط: (' + activityName + ').\n' +
+      'مقدمه لسيادتكم الممول / ' + clientName + ' (أو وكيله الرسمي بموجب توكيل / تفويض معتمد)، بشأن نشاط: (' + activityName + ').\n' +
       'الموضوع: صحيفة طعن قانوني على نموذج (19 ضرائب دخل - إخطار عناصر ربط الضريبة وقيمتها) رقم (' + formNum + ') والمرتبط ببيان (' + dEntry.label + ': ' + dEntry.date + ').\n\n' +
       datesSummaryLine +
       'حيث أُعلن الممول بالنموذج المشار إليه، فإنه يطعن عليه في الميعاد القانوني المقرر (خلال ثلاثين يوماً من تاريخ الإعلان طبقاً لنص المادة 54 من قانون الإجراءات الضريبية الموحد رقم 206 لسنة 2020) للأسباب والأسانيد القانونية الآتية:\n\n' +
@@ -81,7 +83,7 @@ function generateLegalMemo() {
     text =
       'السيد الأستاذ / رئيس ' + officeName + ' (مأمورية ضريبة القيمة المضافة)\n' +
       'تحية طيبة وبعد،،،\n\n' +
-      'مقدمه لسيادتكم المسجل / ' + client.name + ' (أو وكيله الرسمي بموجب توكيل / تفويض معتمد)، بشأن نشاط: (' + activityName + ').\n' +
+      'مقدمه لسيادتكم المسجل / ' + clientName + ' (أو وكيله الرسمي بموجب توكيل / تفويض معتمد)، بشأن نشاط: (' + activityName + ').\n' +
       'الموضوع: صحيفة طعن قانوني على نموذج (15 ضريبة قيمة مضافة - إخطار تعديل الإقرار / تقدير الضريبة) رقم (' + formNum + ') والمرتبط ببيان (' + dEntry.label + ': ' + dEntry.date + ').\n\n' +
       datesSummaryLine +
       'حيث أُخطر المسجل بالنموذج المشار إليه، فإنه يطعن عليه خلال الميعاد القانوني المقرر (ثلاثين يوماً من تاريخ الإعلان طبقاً لنص المادة 54 من قانون الإجراءات الضريبية الموحد رقم 206 لسنة 2020 والمادة 14 من قانون الضريبة على القيمة المضافة رقم 67 لسنة 2016) للأسباب الآتية:\n\n' +
@@ -95,7 +97,7 @@ function generateLegalMemo() {
     text =
       'السيد الأستاذ / رئيس ' + officeName + ' / رئيس اللجنة الداخلية المختصة\n' +
       'تحية طيبة وبعد،،،\n\n' +
-      'مقدمه لسيادتكم الممول / ' + client.name + ' (أو وكيله الرسمي بالتفويض)، بشأن نشاط: (' + activityName + ').\n' +
+      'مقدمه لسيادتكم الممول / ' + clientName + ' (أو وكيله الرسمي بالتفويض)، بشأن نشاط: (' + activityName + ').\n' +
       'الموضوع: طلب المحاسبة الضريبية المبسطة وتعديل الربط وأوراد التحصيل وفقاً لأحكام المادة الثالثة من القانون رقم 30 لسنة 2023 والقانون رقم 6 لسنة 2025، والمرتبط ببيان (' + dEntry.label + ': ' + dEntry.date + ') ورقم المرجع (' + formNum + ').\n\n' +
       datesSummaryLine +
       'أولاً - السند التشريعي للمحاسبة المبسطة: نصت المادة الثالثة من القانون رقم 30 لسنة 2023 (وكذلك القانون رقم 6 لسنة 2025 بشأن بعض الحوافز والتسهيلات الضريبية للمشروعات التي لا يتجاوز حجم أعمالها السنوي عشرين مليون جنيه) على أحقية الممول في المحاسبة الضريبية المبسطة (ضريبة قطعية أو نسبية مقطوعة من رقم الأعمال السنوي تتدرج من 1,000 جنيه أو 0.4% وحتى 1.5% بحسب الشريحة) دون الدخول في فحص تقديري للمصروفات أو نسب صافي الربح الحكمية متى كان ذلك أوفر للممول.\n\n' +
@@ -109,7 +111,7 @@ function generateLegalMemo() {
     text =
       'السيد الأستاذ / رئيس ' + officeName + '\n' +
       'تحية طيبة وبعد،،،\n\n' +
-      'مقدمه لسيادتكم الممول / ' + client.name + ' (أو وكيله الرسمي بالتفويض)، بشأن نشاط: (' + activityName + ').\n' +
+      'مقدمه لسيادتكم الممول / ' + clientName + ' (أو وكيله الرسمي بالتفويض)، بشأن نشاط: (' + activityName + ').\n' +
       'الموضوع: طلب استخراج شهادة موقف ضريبي تسلسلي وإثبات حالة التوقف / التسوية لحفظ الملف ورفع الالتزامات، والمرتبط ببيان (' + dEntry.label + ': ' + dEntry.date + ') ورقم المرجع (' + formNum + ').\n\n' +
       datesSummaryLine +
       'أولاً - السند القانوني للطلب: استناداً إلى أحكام المادتين (29 و70) من قانون الإجراءات الضريبية الموحد رقم 206 لسنة 2020، يتشرف الممول بطلب استخراج شهادة رسمية بالموقف الضريبي التسلسلي توضح التاريخ الفعلي لبداية النشاط، وسنوات المحاسبة الضريبية المنتهية، وتاريخ التوقف الفعلي أو التسوية الضريبية على منظومة (SAP) والملف الورقي.\n\n' +
@@ -121,7 +123,7 @@ function generateLegalMemo() {
     text =
       'السيد الأستاذ / رئيس ' + officeName + ' - شعبة الحجز والتحصيل والشؤون القانونية\n' +
       'تحية طيبة وبعد،،،\n\n' +
-      'مقدمه لسيادتكم الممول / ' + client.name + ' (أو وكيله الرسمي بالتفويض)، بشأن نشاط: (' + activityName + ').\n' +
+      'مقدمه لسيادتكم الممول / ' + clientName + ' (أو وكيله الرسمي بالتفويض)، بشأن نشاط: (' + activityName + ').\n' +
       'الموضوع: مذكرة طعن ومنازعة في محضر الحجز الإداري وأوراد التحصيل رقم (' + formNum + ') والمرتبط ببيان (' + dEntry.label + ': ' + dEntry.date + ') لبطلان الإعلان بسند التنفيذ وطلب فتح باب الطعن الموضوعي في أصل الربط الضريبي.\n\n' +
       datesSummaryLine +
       'أولاً - بطلان سند التنفيذ وأوراد التحصيل لانعدام الإعلان القانوني الصحيح بنموذج الربط: استقر قضاء محكمة النقض والمحكمة الإدارية العليا على أن أوراد التحصيل وإجراءات الحجز الإداري المتخذة بالتطبيق للقانون رقم 308 لسنة 1955 والمادة (69) من القانون رقم 206 لسنة 2020 تدور وجوداً وعدماً مع صحة إعلان الممول بنموذج ربط الضريبة (نموذج 19 دخل / نموذج 15 قيمة مضافة) إعلاناً قانونياً منتجاً لآثاره يتحقق به العلم اليقيني. وحيث لم يتحقق علم الممول اليقيني بنموذج الربط قبل فوات ميعاد الثلاثين يوماً المقرر بالمادة (54) من القانون رقم 206 لسنة 2020، فإن الربط لعدم الطعن يكون باطلاً ولا يصلح سنداً تنفيذياً لتوقيع الحجز الإداري.\n\n' +
@@ -136,7 +138,7 @@ function generateLegalMemo() {
     text =
       'السيد الأستاذ / رئيس ' + officeName + ' - شعبة الحصر والفحص الضريبي\n' +
       'تحية طيبة وبعد،،،\n\n' +
-      'مقدمه لسيادتكم الممول / ' + client.name + ' (أو وكيله الرسمي بالتفويض)، بشأن نشاط: (' + activityName + ').\n' +
+      'مقدمه لسيادتكم الممول / ' + clientName + ' (أو وكيله الرسمي بالتفويض)، بشأن نشاط: (' + activityName + ').\n' +
       'الموضوع: إخطار رسمي بالتوقف عن مزاولة النشاط (كلي / جزئي) وطلب رفع المحاسبة الضريبية وحفظ الالتزامات عن فترة التوقف (نموذج 16 مكرر حصر رقم: ' + formNum + ')، والمرتبط ببيان (' + dEntry.label + ': ' + dEntry.date + ').\n\n' +
       datesSummaryLine +
       'أولاً - السند التشريعي لإخطار التوقف ورفع المحاسبة: عملاً بنص المادتين (58 و59) من قانون الضريبة على الدخل رقم 91 لسنة 2005، والمادة (26) من قانون الإجراءات الضريبية الموحد رقم 206 لسنة 2020، يخطر الممول المأمورية بتوقفه الفعلي عن مزاولة النشاط، ويتمسك بمحاسبته ضريبياً عن الفترة التي زاول فيها النشاط فعلياً فقط حتى تاريخ التوقف دون تحميله بأية أرباح تقديرية عن فترات التوقف التي لم تتحقق فيها أية واقعة منشئة للضريبة.\n\n' +
@@ -150,7 +152,7 @@ function generateLegalMemo() {
     text =
       'السيد الأستاذ / رئيس ' + officeName + ' / رئيس اللجنة الداخلية / رئيس لجنة الطعن الضريبي\n' +
       'تحية طيبة وبعد،،،\n\n' +
-      'مقدمه لسيادتكم الممول / ' + client.name + ' (أو وكيله الرسمي بالتفويض)، بشأن نشاط: (' + activityName + ').\n' +
+      'مقدمه لسيادتكم الممول / ' + clientName + ' (أو وكيله الرسمي بالتفويض)، بشأن نشاط: (' + activityName + ').\n' +
       'الموضوع: مذكرة دفاع قانونية بالدفع الأصلي بسقوط حق المصلحة في المطالبة بالضريبة بالتقادم الخمسي طبقاً للمادة (91) من القانون رقم 91 لسنة 2005 والمادة (377) من القانون المدني، بشأن الإخطار / الطعن رقم (' + formNum + ') والمرتبط ببيان (' + dEntry.label + ': ' + dEntry.date + ').\n\n' +
       datesSummaryLine +
       'أولاً - السند التشريعي للدفع بالتقادم الخمسي: تنص المادة (91 فقرة 2) من قانون الضريبة على الدخل رقم 91 لسنة 2005 على أنه: «يسقط حق المصلحة في المطالبة بالضريبة أو باقيها بمضي خمس سنوات تبدأ من اليوم التالي لانتهاء الأجل المحدد لتقديم الإقرار المنصوص عليه في المادة 82 من هذا القانون»، وهو ما يتفق مع الأصل العام المقرر بالمادة (377) من القانون المدني بشأن تقادم الضرائب والرسوم بخمس سنوات.\n\n' +
@@ -163,11 +165,16 @@ function generateLegalMemo() {
   }
   outputEl.value = text;
 }
+
 function renderReferenceList() {
-  const q = (document.getElementById('refSearchInput').value || '').trim().toLowerCase();
-  const cat = document.getElementById('refCategorySelect').value;
+  const searchEl = document.getElementById('refSearchInput');
+  const catEl = document.getElementById('refCategorySelect');
   const container = document.getElementById('referenceListContainer');
-  const filtered = REFERENCE_ITEMS.filter(item => {
+  if (!container) return;
+  const q = ((searchEl ? searchEl.value : '') || '').trim().toLowerCase();
+  const cat = catEl ? catEl.value : 'ALL';
+  const items = (typeof REFERENCE_ITEMS !== 'undefined' && Array.isArray(REFERENCE_ITEMS)) ? REFERENCE_ITEMS : [];
+  const filtered = items.filter(item => {
     if (cat !== 'ALL' && item.category !== cat) return false;
     if (q) {
       const hay = (item.title + ' ' + item.legal + ' ' + item.balady + ' ' + item.category).toLowerCase();
@@ -192,7 +199,7 @@ function renderReferenceList() {
       '</summary>' +
       '<div class="ref-body">' +
         '<blockquote class="ref-legal"><strong>النص / القاعدة الرسمية:</strong> ' + escapeHtml(item.legal) + '</blockquote>' +
-        '<p class="ref-balady"><strong>الشرح بالبلدي في المكتب:</strong> ' + escapeHtml(item.balady) + '</p>' +
+        '<p class="ref-balady"><strong>الشرح العملي في المكتب:</strong> ' + escapeHtml(item.balady) + '</p>' +
       '</div>' +
     '</details>';
   }).join('');

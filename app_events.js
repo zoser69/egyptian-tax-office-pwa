@@ -126,11 +126,11 @@ function initEventListeners() {
         const resp = await window.fetch('./supabase_setup.sql');
         if (resp.ok) {
           const sqlText = await resp.text();
-          copyTextToClipboard(sqlText, 'تم نسخ كود SQL بالكامل - الصقه في Supabase SQL Editor واضغط Run');
+          copyTextToClipboard(sqlText, 'تم نسخ أوامر إعداد قاعدة البيانات بالكامل - الصقها في لوحة إعداد قاعدة البيانات ثم نفذها');
           return;
         }
       } catch (e) {}
-      showToast('افتح ملف supabase_setup.sql من المستودع وانسخه إلى Supabase SQL Editor');
+      showToast('افتح ملف إعداد قاعدة البيانات وانسخ محتواه إلى لوحة إعداد قاعدة البيانات');
     });
   }
 
@@ -248,7 +248,8 @@ function initEventListeners() {
     currentPrintMode = 'REPORT';
   });
 
-  document.getElementById('btnToggleTheme').addEventListener('click', () => {
+  const btnToggleTheme = document.getElementById('btnToggleTheme');
+  if (btnToggleTheme) btnToggleTheme.addEventListener('click', () => {
     const curr = document.documentElement.getAttribute('data-theme');
     const next = (curr === 'dark') ? 'light' : 'dark';
     applyTheme(next);
@@ -281,7 +282,8 @@ function initEventListeners() {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
       switchMainTab('view-clients');
-      document.getElementById('clientSearchInput').focus();
+      const searchEl = document.getElementById('clientSearchInput');
+      if (searchEl) searchEl.focus();
     } else if (e.key === 'Escape') {
       if (typeof setMobileMenuOpen === 'function') setMobileMenuOpen(false);
       ['clientModalBackdrop', 'backupModalBackdrop', 'taskModalBackdrop', 'postponeModalBackdrop'].forEach(id => {
@@ -304,26 +306,42 @@ function initEventListeners() {
     });
   }
 
-  document.getElementById('clientSearchInput').addEventListener('input', renderClients);
-  document.getElementById('clientCategoryFilter').addEventListener('change', renderClients);
-  document.getElementById('clientStatusFilter').addEventListener('change', renderClients);
-  document.getElementById('btnResetFilters').addEventListener('click', () => {
-    document.getElementById('clientSearchInput').value = '';
-    document.getElementById('clientCategoryFilter').value = 'ALL';
-    document.getElementById('clientStatusFilter').value = 'ALL';
+  const clientSearchInputEl = document.getElementById('clientSearchInput');
+  if (clientSearchInputEl) clientSearchInputEl.addEventListener('input', renderClients);
+  const clientCategoryFilterEl = document.getElementById('clientCategoryFilter');
+  if (clientCategoryFilterEl) clientCategoryFilterEl.addEventListener('change', renderClients);
+  const clientStatusFilterEl = document.getElementById('clientStatusFilter');
+  if (clientStatusFilterEl) clientStatusFilterEl.addEventListener('change', renderClients);
+  const btnResetFiltersEl = document.getElementById('btnResetFilters');
+  if (btnResetFiltersEl) btnResetFiltersEl.addEventListener('click', () => {
+    if (clientSearchInputEl) clientSearchInputEl.value = '';
+    if (clientCategoryFilterEl) clientCategoryFilterEl.value = 'ALL';
+    if (clientStatusFilterEl) clientStatusFilterEl.value = 'ALL';
     renderClients();
   });
 
-  document.getElementById('btnExportClientsCsv').addEventListener('click', exportClientsCsv);
-  document.getElementById('btnQuickAddClient').addEventListener('click', () => openClientModal(null));
-  document.getElementById('btnCloseClientModal').addEventListener('click', () => {
-    document.getElementById('clientModalBackdrop').classList.remove('open');
+  const btnExportClientsCsvEl = document.getElementById('btnExportClientsCsv');
+  if (btnExportClientsCsvEl) btnExportClientsCsvEl.addEventListener('click', exportClientsCsv);
+  const btnQuickAddClientEl = document.getElementById('btnQuickAddClient');
+  if (btnQuickAddClientEl) btnQuickAddClientEl.addEventListener('click', () => openClientModal(null));
+  const btnCloseClientModalEl = document.getElementById('btnCloseClientModal');
+  if (btnCloseClientModalEl) btnCloseClientModalEl.addEventListener('click', () => {
+    const modal = document.getElementById('clientModalBackdrop');
+    if (modal) modal.classList.remove('open');
   });
 
-  document.getElementById('clientForm').addEventListener('submit', async (e) => {
+  const clientFormEl = document.getElementById('clientForm');
+  if (clientFormEl) clientFormEl.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const id = document.getElementById('clientFormId').value;
-    const clientName = document.getElementById('clientFormName').value.trim();
+    const idEl = document.getElementById('clientFormId');
+    const nameEl = document.getElementById('clientFormName');
+    const id = idEl ? idEl.value : '';
+    const clientName = (nameEl ? nameEl.value : '').trim();
+    if (!clientName) {
+      showToast('يرجى إدخال اسم الممول أولاً');
+      if (nameEl) nameEl.focus();
+      return;
+    }
     const actionMsg = (id ? 'تعديل ملف: ' : 'إضافة ممول: ') + clientName;
     pushUndoState(actionMsg);
     const categoryVal = resolveSelectOrPendingCustomValue('clientFormCategory', 'categories', BASE_CATEGORIES[0]);
@@ -367,7 +385,8 @@ function initEventListeners() {
     document.getElementById('clientModalBackdrop').classList.remove('open');
   });
 
-  document.getElementById('btnDeleteClientInModal').addEventListener('click', async () => {
+  const btnDeleteClientInModalEl = document.getElementById('btnDeleteClientInModal');
+  if (btnDeleteClientInModalEl) btnDeleteClientInModalEl.addEventListener('click', async () => {
     const id = document.getElementById('clientFormId').value;
     if (!id) return;
     const targetClient = appState.clients.find(c => c.id === id);
@@ -383,7 +402,8 @@ function initEventListeners() {
     showToast('تم ' + delMsg, { canUndo: true });
   });
 
-  document.getElementById('clientsListContainer').addEventListener('click', async (e) => {
+  const clientsListContainerEl = document.getElementById('clientsListContainer');
+  if (clientsListContainerEl) clientsListContainerEl.addEventListener('click', async (e) => {
     const btn = e.target.closest('button[data-action]');
     if (!btn) return;
     const action = btn.getAttribute('data-action');
@@ -446,7 +466,8 @@ function initEventListeners() {
     sessionSearchInput.addEventListener('input', renderTasks);
   }
 
-  document.getElementById('btnAddTask').addEventListener('click', async () => {
+  const btnAddTaskEl = document.getElementById('btnAddTask');
+  if (btnAddTaskEl) btnAddTaskEl.addEventListener('click', async () => {
     const sel = document.getElementById('newSessionClientSelect');
     const nameInput = document.getElementById('newSessionClientName');
     const appealInput = document.getElementById('newSessionAppealNum');
@@ -513,7 +534,8 @@ function initEventListeners() {
     });
   });
 
-  document.getElementById('tasksListContainer').addEventListener('click', async (e) => {
+  const tasksListContainerEl = document.getElementById('tasksListContainer');
+  if (tasksListContainerEl) tasksListContainerEl.addEventListener('click', async (e) => {
     const btn = e.target.closest('button[data-action]');
     if (!btn) return;
     const action = btn.getAttribute('data-action');
@@ -609,11 +631,14 @@ function initEventListeners() {
   }
 
   // Edit Session Modal Listeners
-  document.getElementById('btnCloseTaskModal').addEventListener('click', () => {
-    document.getElementById('taskModalBackdrop').classList.remove('open');
+  const btnCloseTaskModalEl = document.getElementById('btnCloseTaskModal');
+  if (btnCloseTaskModalEl) btnCloseTaskModalEl.addEventListener('click', () => {
+    const modal = document.getElementById('taskModalBackdrop');
+    if (modal) modal.classList.remove('open');
   });
 
-  document.getElementById('taskForm').addEventListener('submit', async (e) => {
+  const taskFormEl = document.getElementById('taskForm');
+  if (taskFormEl) taskFormEl.addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = document.getElementById('taskFormId').value;
     const targetBefore = appState.tasks.find(item => item.id === id);
@@ -674,7 +699,8 @@ function initEventListeners() {
       el.addEventListener('change', runInspectionCalculator);
     }
   });
-  document.getElementById('btnPresetAudio1').addEventListener('click', () => {
+  const btnPresetAudio1El = document.getElementById('btnPresetAudio1');
+  if (btnPresetAudio1El) btnPresetAudio1El.addEventListener('click', () => {
     document.getElementById('inspInputMethod').value = 'DIRECT';
     document.getElementById('inspTurnover').value = '4561230';
     document.getElementById('inspProfitMargin').value = '20';
@@ -682,7 +708,8 @@ function initEventListeners() {
     initCalcYearMonthOptions();
     runInspectionCalculator();
   });
-  document.getElementById('btnPresetAudio2').addEventListener('click', () => {
+  const btnPresetAudio2El = document.getElementById('btnPresetAudio2');
+  if (btnPresetAudio2El) btnPresetAudio2El.addEventListener('click', () => {
     document.getElementById('inspInputMethod').value = 'DIRECT';
     document.getElementById('inspTurnover').value = '4561230';
     document.getElementById('inspProfitMargin').value = '5';
@@ -691,7 +718,8 @@ function initEventListeners() {
   });
   const btnResetInsp = document.getElementById('btnResetInspCalc');
   if (btnResetInsp) btnResetInsp.addEventListener('click', resetInspectionCalculator);
-  document.getElementById('btnPresetAudio3').addEventListener('click', () => {
+  const btnPresetAudio3El = document.getElementById('btnPresetAudio3');
+  if (btnPresetAudio3El) btnPresetAudio3El.addEventListener('click', () => {
     document.getElementById('inspInputMethod').value = 'DAILY';
     document.getElementById('inspDailyRev').value = '1000';
     document.getElementById('inspWorkDays').value = '310';
@@ -833,43 +861,59 @@ function initEventListeners() {
       el.addEventListener('input', generateLegalMemo);
     }
   });
-  document.getElementById('btnCopyMemo').addEventListener('click', () => {
-    copyTextToClipboard(document.getElementById('memoOutputArea').value, 'تم نسخ نص المذكرة القانونية للحافظة');
+  const btnCopyMemoEl = document.getElementById('btnCopyMemo');
+  if (btnCopyMemoEl) btnCopyMemoEl.addEventListener('click', () => {
+    const area = document.getElementById('memoOutputArea');
+    if (area) copyTextToClipboard(area.value, 'تم نسخ نص المذكرة القانونية للحافظة');
   });
   const btnPrintMemo = document.getElementById('btnPrintMemo');
   if (btnPrintMemo) {
     btnPrintMemo.addEventListener('click', renderAndPrintLegalMemo);
   }
-  document.getElementById('refSearchInput').addEventListener('input', renderReferenceList);
-  document.getElementById('refCategorySelect').addEventListener('change', renderReferenceList);
-  document.getElementById('btnOpenBackupModal').addEventListener('click', () => {
+  const refSearchInputEl = document.getElementById('refSearchInput');
+  if (refSearchInputEl) refSearchInputEl.addEventListener('input', renderReferenceList);
+  const refCategorySelectEl = document.getElementById('refCategorySelect');
+  if (refCategorySelectEl) refCategorySelectEl.addEventListener('change', renderReferenceList);
+  const btnOpenBackupModalEl = document.getElementById('btnOpenBackupModal');
+  if (btnOpenBackupModalEl) btnOpenBackupModalEl.addEventListener('click', () => {
     renderCheckpointsTimeline();
-    document.getElementById('backupModalBackdrop').classList.add('open');
+    const modal = document.getElementById('backupModalBackdrop');
+    if (modal) modal.classList.add('open');
   });
-  document.getElementById('btnCloseBackupModal').addEventListener('click', () => {
-    document.getElementById('backupModalBackdrop').classList.remove('open');
+  const btnCloseBackupModalEl = document.getElementById('btnCloseBackupModal');
+  if (btnCloseBackupModalEl) btnCloseBackupModalEl.addEventListener('click', () => {
+    const modal = document.getElementById('backupModalBackdrop');
+    if (modal) modal.classList.remove('open');
   });
-  document.getElementById('btnDownloadBackupFile').addEventListener('click', downloadBackupFile);
-  document.getElementById('btnShareBackupFile').addEventListener('click', shareBackupFile);
-  document.getElementById('btnCopyBackupJson').addEventListener('click', () => {
+  const btnDownloadBackupFileEl = document.getElementById('btnDownloadBackupFile');
+  if (btnDownloadBackupFileEl) btnDownloadBackupFileEl.addEventListener('click', downloadBackupFile);
+  const btnShareBackupFileEl = document.getElementById('btnShareBackupFile');
+  if (btnShareBackupFileEl) btnShareBackupFileEl.addEventListener('click', shareBackupFile);
+  const btnCopyBackupJsonEl = document.getElementById('btnCopyBackupJson');
+  if (btnCopyBackupJsonEl) btnCopyBackupJsonEl.addEventListener('click', () => {
     copyTextToClipboard(getBackupPayloadString(), 'تم نسخ كود النسخة الاحتياطية بالكامل');
   });
-  document.getElementById('restoreFileInput').addEventListener('change', (e) => {
+  const restoreFileInputEl = document.getElementById('restoreFileInput');
+  if (restoreFileInputEl) restoreFileInputEl.addEventListener('change', (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = function(evt) {
       const content = evt.target.result;
-      document.getElementById('restoreJsonTextarea').value = content;
+      const ta = document.getElementById('restoreJsonTextarea');
+      if (ta) ta.value = content;
       previewRestoreJson(content);
     };
     reader.readAsText(file, 'UTF-8');
   });
-  document.getElementById('restoreJsonTextarea').addEventListener('input', (e) => {
+  const restoreJsonTextareaEl = document.getElementById('restoreJsonTextarea');
+  if (restoreJsonTextareaEl) restoreJsonTextareaEl.addEventListener('input', (e) => {
     previewRestoreJson(e.target.value);
   });
-  document.getElementById('btnExecuteRestore').addEventListener('click', executeRestore);
-  document.getElementById('btnResetToDefaultData').addEventListener('click', async () => {
+  const btnExecuteRestoreEl = document.getElementById('btnExecuteRestore');
+  if (btnExecuteRestoreEl) btnExecuteRestoreEl.addEventListener('click', executeRestore);
+  const btnResetToDefaultDataEl = document.getElementById('btnResetToDefaultData');
+  if (btnResetToDefaultDataEl) btnResetToDefaultDataEl.addEventListener('click', async () => {
     pushUndoState('استعادة البيانات المعتمدة للـ 21 ممولاً');
     const resetIso = getNextMonotonicIso();
     appState.clients = JSON.parse(JSON.stringify(DEFAULT_CLIENTS)).map(c => {
@@ -895,8 +939,8 @@ function initEventListeners() {
     } else {
       pullFromSupabase(false);
     }
-    initSupabaseRealtimeSocket();
-    if (isAppUnlocked()) {
+    if (!isAppLocked()) {
+      initSupabaseRealtimeSocket();
       evaluateAndFireScheduledNotifications(false);
     }
   });
@@ -926,11 +970,12 @@ function initEventListeners() {
     const installBtn = document.getElementById('btnInstallPwa');
     if (installBtn) installBtn.style.display = 'inline-flex';
   });
-  document.getElementById('btnInstallPwa').addEventListener('click', async () => {
+  const btnInstallPwaEl = document.getElementById('btnInstallPwa');
+  if (btnInstallPwaEl) btnInstallPwaEl.addEventListener('click', async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     await deferredPrompt.userChoice;
     deferredPrompt = null;
-    document.getElementById('btnInstallPwa').style.display = 'none';
+    btnInstallPwaEl.style.display = 'none';
   });
 }

@@ -21,7 +21,7 @@ jobs:
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
           echo "REST status code: ${HTTP_STATUS}"
-          curl -s -X POST "${SUPABASE_URL}/rest/v1/rpc/keep_project_alive" \
+          curl -fsS -X POST "${SUPABASE_URL}/rest/v1/rpc/keep_project_alive" \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
-            -H "Content-Type: application/json" || true
+            -H "Content-Type: application/json"
